@@ -1,0 +1,109 @@
+IRIV EDGE AI SOFTWARE LICENCE
+
+Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
+
+This software is proprietary. It is licensed, not sold. Read this before
+using the product; using it means you accept these terms.
+
+
+1. WHAT YOU MAY DO
+
+You may run this software on IRIV Edge AI hardware supplied by Cytron, for
+your own purposes, for as long as your licence key is valid. One licence
+covers one device.
+
+You may make one copy for backup.
+
+
+2. WHAT YOU MAY NOT DO
+
+You may not:
+
+  (a) copy, publish, sell, rent, lend or give away the software, or any part
+      of it, to anyone else;
+
+  (b) run it on hardware not supplied by Cytron, or on more devices than your
+      licence covers;
+
+  (c) modify, adapt, translate or create anything derived from the software;
+
+  (d) reverse engineer, decompile or disassemble it, except where the law
+      gives you a right to do so that a contract cannot take away;
+
+  (e) remove, disable, bypass or interfere with any part of the software that
+      checks a licence, identifies the device, or verifies the secure element
+      on the board;
+
+  (f) remove or obscure any copyright notice, product name or serial number.
+
+
+3. WHAT VOIDS THE WARRANTY
+
+The warranty and any support obligation end immediately, without notice and
+without refund, if any of the following happens to your device:
+
+  (a) the software is modified, patched or replaced in whole or in part,
+      other than by an update supplied by Cytron;
+
+  (b) the software is copied onto other hardware, or hardware is copied,
+      cloned or imaged in order to run the software on another device;
+
+  (c) any licence check, device binding or secure element verification is
+      bypassed, disabled or tampered with;
+
+  (d) the secure element or the board is opened, altered, substituted or
+      re-programmed by anyone other than Cytron.
+
+Cytron may verify any of the above from the device itself. A device found in
+any of these states is out of warranty and out of support, and Cytron is not
+obliged to restore, repair or replace it or to recover any data on it.
+
+Nothing in this section removes a right you have under law that cannot be
+removed by agreement.
+
+
+4. WHAT REMAINS OURS
+
+Cytron owns the software and everything in it, including its source code,
+interfaces, models, templates, documentation and names. You get the right to
+use it under this licence. You get nothing else.
+
+
+5. OTHER PEOPLE'S SOFTWARE
+
+The product includes open-source components, each under its own licence.
+Those licences govern those components and nothing in this document takes
+away a right they grant you. The list ships with the product.
+
+
+6. NO WARRANTY
+
+Except where the law says otherwise, the software is provided as it is, with
+no warranty of any kind: not of merchantability, not of fitness for a
+particular purpose, and not that it will run without fault or interruption.
+You are responsible for deciding whether it is suitable for what you intend
+to do with it, and for the consequences of using it.
+
+
+7. LIMIT OF LIABILITY
+
+Except where the law says otherwise, Cytron is not liable for lost profit,
+lost data, lost production, or any indirect or consequential loss arising
+from the software. Cytron's total liability for any claim is limited to what
+you paid for the licence.
+
+
+8. ENDING THIS LICENCE
+
+This licence ends automatically if you break any term of it. When it ends,
+stop using the software and delete every copy you hold.
+
+
+9. LAW
+
+This licence is governed by the laws of Malaysia, and the courts of Malaysia
+have jurisdiction over any dispute arising from it.
+
+
+Cytron Technologies Sdn Bhd
+https://www.cytron.io

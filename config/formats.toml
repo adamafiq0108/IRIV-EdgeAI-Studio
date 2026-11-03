@@ -1,0 +1,424 @@
+# formats.toml - built-in detection formats authored on this box.
+#
+# Written by the System Templates page (developer accounts only) and
+# COMMITTED on purpose: a format authored here is meant to ship.
+# Keys absent here fall back to core/services/provision.py TEMPLATES.
+
+[formats.counting]
+label = "People Counting"
+hint = "Count people crossing a line and standing inside an area."
+category = "built-in"
+model = "yolov8s"
+classes = ["person"]
+workflows_json = "{\"version\":3,\"workflows\":[{\"id\":\"main\",\"name\":\"Workflow\",\"description\":\"Imported from this system's existing functions\",\"enabled\":true,\"author\":\"\",\"created\":0,\"modified\":0,\"graph\":{\"version\":10,\"nodes\":[{\"id\":\"nmtuxdr341\",\"type\":\"source.detection\",\"position\":{\"x\":119.95705145721877,\"y\":480.82905487007037},\"data\":{\"model\":\"\",\"camera\":\"\"}},{\"id\":\"nmtuxdy1a2\",\"type\":\"filter.class\",\"position\":{\"x\":410.6817158606048,\"y\":480.8290548700703},\"data\":{\"classes\":[\"person\"]}},{\"id\":\"nmtuxe70r4\",\"type\":\"analytics.entry_exit\",\"position\":{\"x\":790.7918253885066,\"y\":428.5572300681713},\"data\":{\"fnId\":\"line_counter_70r4\",\"name\":\"Line counter\",\"mode\":\"both\"}},{\"id\":\"nmtuxeb8j6\",\"type\":\"zone.ref\",\"position\":{\"x\":412.984745115839,\"y\":602.8823070335104},\"data\":{\"zone\":\"\"}},{\"id\":\"nmtuxmbs61\",\"type\":\"output.dataset\",\"position\":{\"x\":1148.0506130918081,\"y\":762.5171476924532},\"data\":{\"dataset\":\"people_counting\",\"name\":\"People Counting\",\"op\":\"insert\",\"mode\":\"change\",\"interval_s\":60,\"min_interval_s\":0,\"sources\":{}}},{\"id\":\"nmtuxn1cx3\",\"type\":\"dashboard.card\",\"position\":{\"x\":1145.5286042560344,\"y\":401.67431335755725},\"data\":{\"name\":\"In\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"label_size\":\"medium\",\"value_size\":\"medium\",\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"nmtuxn5vf5\",\"type\":\"dashboard.card\",\"position\":{\"x\":1147.5286042560344,\"y\":489.67431335755725},\"data\":{\"name\":\"Out\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"label_size\":\"medium\",\"value_size\":\"medium\",\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"nmtuxng4e7\",\"type\":\"dashboard.card\",\"position\":{\"x\":1149.5286042560344,\"y\":577.6743133575571},\"data\":{\"name\":\"Inside\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"label_size\":\"medium\",\"value_size\":\"medium\",\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"nmtuxnnfb9\",\"type\":\"dashboard.card\",\"position\":{\"x\":1148.5286042560344,\"y\":672.6743133575571},\"data\":{\"name\":\"Crossing\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"label_size\":\"medium\",\"value_size\":\"medium\",\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"nmtva8s542\",\"type\":\"dashboard.graph\",\"position\":{\"x\":1552.9844827811812,\"y\":-386.4589036932172},\"data\":{\"kind\":\"line\",\"metric\":\"\",\"color\":\"#04dc9b\",\"range\":\"page\",\"window\":\"live\",\"name\":\"In Zone Now (Total)\",\"template\":\"stripe\",\"unit\":\"people\"}},{\"id\":\"nmtva8s543\",\"type\":\"output.dataset\",\"position\":{\"x\":1137.9921506107398,\"y\":-467.645551155196},\"data\":{\"dataset\":\"counting\",\"name\":\"Counting\",\"op\":\"insert\",\"mode\":\"change\",\"interval_s\":60,\"min_interval_s\":0,\"sources\":{\"total_counting\":{\"src\":\"stat\"}}}},{\"id\":\"nmtva8s544\",\"type\":\"dashboard.card\",\"position\":{\"x\":1549.2190323810623,\"y\":-489.9844910231212},\"data\":{\"kind\":\"tile\",\"metric\":\"\",\"color\":\"\",\"unit\":\"Total_Person_Frame\",\"window\":\"follow\",\"agg\":\"unique\",\"range\":\"page\",\"name\":\"Total People Counting\"}},{\"id\":\"nmtva8s545\",\"type\":\"dashboard.events\",\"position\":{\"x\":1547.5590163083277,\"y\":-615.9199752089088},\"data\":{\"name\":\"People Counting Table\",\"kind\":\"table\",\"agg\":\"count\",\"field\":\"\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"\",\"filters\":{},\"conditions\":[],\"sub\":\"\",\"color\":\"\",\"limit\":15,\"source_mode\":\"events\",\"metric\":\"\",\"dataset\":\"\",\"show\":[]}},{\"id\":\"nmtva8s546\",\"type\":\"dashboard.card\",\"position\":{\"x\":1119.6077367466046,\"y\":-637.8141648330518},\"data\":{\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"Total Counting\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"show\":[],\"ok_label\":\"NORMAL\",\"alert_label\":\"VIOLATION\",\"states\":[],\"op\":\">=\",\"value\":1,\"name\":\"Live People Counting\"}},{\"id\":\"nmtva8s547\",\"type\":\"analytics.counter\",\"position\":{\"x\":703.3432982809273,\"y\":-645.0437192931078},\"data\":{\"fnId\":\"in_frame_now_s547\",\"name\":\"In frame now\",\"mode\":\"realtime\",\"OID\":true}},{\"id\":\"nmtva8s548\",\"type\":\"dashboard.card\",\"position\":{\"x\":1524.404461807989,\"y\":-282.95712145869356},\"data\":{\"kind\":\"tile\",\"metric\":\"\",\"color\":\"\",\"unit\":\"Total_Person_Frame\",\"window\":\"follow\",\"agg\":\"unique\",\"range\":\"page\",\"name\":\"Total People In Zone Counting\"}},{\"id\":\"nmtva8s549\",\"type\":\"dashboard.card\",\"position\":{\"x\":1132.6526694237743,\"y\":-14.655438059270978},\"data\":{\"name\":\"Zone Counting Now\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"nmtva8s54a\",\"type\":\"source.detection\",\"position\":{\"x\":110.26956224862667,\"y\":-409.8548594127127},\"data\":{\"model\":\"\",\"camera\":\"\"}},{\"id\":\"nmtva8s54e\",\"type\":\"output.trigger\",\"position\":{\"x\":1507.4379433094691,\"y\":99.0121787829346},\"data\":{\"name\":\"Alert\",\"alert\":true,\"severity\":\"crit\",\"message\":\"\",\"cooldown_s\":30,\"draw\":true,\"box_color\":\"#00FF04\",\"color_target\":\"box\"}},{\"id\":\"nmtva8s54g\",\"type\":\"dashboard.card\",\"position\":{\"x\":1857.5481949244263,\"y\":12.097434615391421},\"data\":{\"name\":\"People enter zone\",\"metric\":\"\",\"kind\":\"verdict\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"nmtva8s54h\",\"type\":\"branch.cases\",\"position\":{\"x\":1132.4240519117382,\"y\":-303.01261349146046},\"data\":{\"fnId\":\"if_else_if_s54h\",\"metric\":\"count\",\"hold_s\":0,\"otherwise\":true,\"rules\":[{\"op\":\">\",\"value\":0,\"input\":\"in1\"}],\"name\":\"If / Else if\"}},{\"id\":\"nmtva8s54i\",\"type\":\"output.trigger\",\"position\":{\"x\":1530.1266552017441,\"y\":-151.84905955154352},\"data\":{\"name\":\"object in Zone 1\",\"alert\":true,\"severity\":\"warn\",\"message\":\"object in Zone 1\",\"cooldown_s\":2,\"box_color\":\"\",\"zone_color\":\"\",\"draw\":false,\"repeat\":\"new_object\"}},{\"id\":\"nmtvagtib1\",\"type\":\"filter.class\",\"position\":{\"x\":392.95705145721877,\"y\":-409.1709451299296},\"data\":{\"classes\":[\"person\"]}},{\"id\":\"nmtvahjjn6\",\"type\":\"zone.ref\",\"position\":{\"x\":372.4261482536935,\"y\":-74.63731167090918},\"data\":{\"zone\":\"\"}},{\"id\":\"nmtvahz868\",\"type\":\"analytics.counter\",\"position\":{\"x\":706.3555867501035,\"y\":-315.93644978657295},\"data\":{\"fnId\":\"counter_z868\",\"name\":\"Zone 1 violations now\",\"mode\":\"realtime\",\"OID\":true,\"enter_after_s\":0,\"leave_after_s\":0}},{\"id\":\"nmtvamoz0f\",\"type\":\"branch.cases\",\"position\":{\"x\":1136.9570514572188,\"y\":74.82905487007042},\"data\":{\"fnId\":\"if_else_if_oz0f\",\"metric\":\"\",\"rules\":[{\"op\":\">\",\"value\":1,\"input\":\"in1\"}],\"otherwise\":false,\"name\":\"If / Else if\"}}],\"edges\":[{\"id\":\"e_nmtuxe9rp5\",\"source\":\"nmtuxdy1a2\",\"target\":\"nmtuxe70r4\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtuxeepa7\",\"source\":\"nmtuxeb8j6\",\"target\":\"nmtuxe70r4\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmtv06mzt1\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxn1cx3\",\"sourceHandle\":\"in\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtv06obx2\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxn5vf5\",\"sourceHandle\":\"out\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtv06pp33\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxng4e7\",\"sourceHandle\":\"net\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtv06rpq4\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxnnfb9\",\"sourceHandle\":\"cross\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s54l\",\"source\":\"nmtva8s543\",\"target\":\"nmtva8s545\",\"sourceHandle\":\"table\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s54n\",\"source\":\"nmtva8s543\",\"target\":\"nmtva8s544\",\"sourceHandle\":\"o_frame_pid\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s54q\",\"source\":\"nmtva8s547\",\"target\":\"nmtva8s543\",\"sourceHandle\":\"out\",\"targetHandle\":\"c_live_counting\"},{\"id\":\"e_nmtva8s54r\",\"source\":\"nmtva8s547\",\"target\":\"nmtva8s543\",\"sourceHandle\":\"OID\",\"targetHandle\":\"c_frame_pid\"},{\"id\":\"e_nmtva8s54s\",\"source\":\"nmtva8s543\",\"target\":\"nmtva8s548\",\"sourceHandle\":\"o_zone_pid\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s54u\",\"source\":\"nmtva8s547\",\"target\":\"nmtva8s546\",\"sourceHandle\":\"out\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s54x\",\"source\":\"nmtva8s543\",\"target\":\"nmtva8s542\",\"sourceHandle\":\"o_total_in_zone\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s5412\",\"source\":\"nmtva8s54e\",\"target\":\"nmtva8s54g\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s5414\",\"source\":\"nmtva8s54h\",\"target\":\"nmtva8s54i\",\"sourceHandle\":\"out0\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8zvr17\",\"source\":\"nmtuxdr341\",\"target\":\"nmtuxdy1a2\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtvabdyb18\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxmbs61\",\"sourceHandle\":\"in\",\"targetHandle\":\"c_in\"},{\"id\":\"e_nmtvabv5f19\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxmbs61\",\"sourceHandle\":\"out\",\"targetHandle\":\"c_out\"},{\"id\":\"e_nmtvagw6b2\",\"source\":\"nmtva8s54a\",\"target\":\"nmtvagtib1\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtvagysk3\",\"source\":\"nmtvagtib1\",\"target\":\"nmtva8s547\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtvai1ye9\",\"source\":\"nmtvahjjn6\",\"target\":\"nmtvahz868\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmtvai3i8a\",\"source\":\"nmtvagtib1\",\"target\":\"nmtvahz868\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtvaiiszb\",\"source\":\"nmtvahz868\",\"target\":\"nmtva8s549\",\"sourceHandle\":\"out\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtvaiqodd\",\"source\":\"nmtvahz868\",\"target\":\"nmtva8s54h\",\"sourceHandle\":\"out\",\"targetHandle\":\"in1\"},{\"id\":\"e_nmtvamrzkg\",\"source\":\"nmtvahz868\",\"target\":\"nmtvamoz0f\",\"sourceHandle\":\"out\",\"targetHandle\":\"in1\"},{\"id\":\"e_nmtvamtpuh\",\"source\":\"nmtvamoz0f\",\"target\":\"nmtva8s54e\",\"sourceHandle\":\"out0\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtwcg6zx1\",\"source\":\"nmtvahz868\",\"target\":\"nmtva8s54i\",\"sourceHandle\":\"OID\",\"targetHandle\":\"oid\"},{\"id\":\"e_nmtwcgp2m2\",\"source\":\"nmtvahz868\",\"target\":\"nmtva8s543\",\"sourceHandle\":\"OID\",\"targetHandle\":\"c_zone_pid\"},{\"id\":\"e_nmtwcgtbr3\",\"source\":\"nmtvahz868\",\"target\":\"nmtva8s543\",\"sourceHandle\":\"out\",\"targetHandle\":\"c_total_in_zone\"}]}}]}"
+dashboard_json = "{\"pages\":[{\"id\":\"main\",\"name\":\"Dashboard\",\"widgets\":[{\"id\":\"verdict_mtlasa040\",\"title\":\"People enter zone\",\"kind\":\"verdict\",\"source\":\"stat\",\"key\":\"fn_if_else_if_1c81_b0_active\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":0,\"w\":6,\"h\":3},\"status\":{},\"states\":[{\"value\":0.0,\"label\":\"COMPLIANT\",\"tone\":\"ok\"},{\"value\":1.0,\"label\":\"VIOLATION\",\"tone\":\"alert\"}],\"range\":\"\",\"node\":\"nmtlaqcwq1\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"video_mttkyu0m1\",\"title\":\"Live video\",\"kind\":\"video\",\"source\":\"stat\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":6,\"h\":6},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtuxoce60\",\"title\":\"In\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_line_counter_70r4_in\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":6,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxn1cx3\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtuxoi9h1\",\"title\":\"Out\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_line_counter_70r4_out\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":9,\"y\":6,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxn5vf5\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtuxon832\",\"title\":\"Inside\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_line_counter_70r4_net\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":9,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxng4e7\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtuxos9z3\",\"title\":\"Crossing\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_line_counter_70r4_cross\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":9,\"y\":9,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxnnfb9\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtvajo5m0\",\"title\":\"Zone Counting Now\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_counter_z868_count\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":9,\"y\":3,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtva8s549\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtvakqe71\",\"title\":\"Live People Counting\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_in_frame_now_s547_count\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"Total Counti\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":3,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtva8s546\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]},{\"id\":\"overview\",\"name\":\"Overview\",\"widgets\":[{\"id\":\"line_msrdvqyi0\",\"title\":\"In Zone Now (Total)\",\"kind\":\"line\",\"source\":\"dataset\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"#04dc9b\",\"bg\":\"\",\"template\":\"gradient\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"people\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"max\",\"field\":\"total_in_zone\",\"group_by\":\"\",\"bucket\":\"hour\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"counting\",\"columns\":[{\"name\":\"live_counting\",\"type\":\"text\"},{\"name\":\"frame_pid\",\"type\":\"text\"},{\"name\":\"total_in_zone\",\"type\":\"number\"},{\"name\":\"zone_pid\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":2,\"w\":12,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmsfv3ur21\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtcgt9qw1\",\"title\":\"Total People Counting\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"Total_Person\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"unique\",\"field\":\"frame_pid\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"counting\",\"columns\":[{\"name\":\"live_counting\",\"type\":\"text\"},{\"name\":\"frame_pid\",\"type\":\"text\"},{\"name\":\"total_in_zone\",\"type\":\"number\"},{\"name\":\"zone_pid\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":3,\"h\":2},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmsie3s4t1\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"table_mtcgtqxr2\",\"title\":\"People Counting Table\",\"kind\":\"table\",\"source\":\"dataset\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"count\",\"field\":\"\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"\",\"filters\":{}},\"dataset\":\"counting\",\"columns\":[{\"name\":\"live_counting\",\"type\":\"text\"},{\"name\":\"frame_pid\",\"type\":\"text\"},{\"name\":\"total_in_zone\",\"type\":\"number\"},{\"name\":\"zone_pid\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":5,\"w\":12,\"h\":5},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmsikdc021\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtcgu2cj3\",\"title\":\"Total People In Zone Counting\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"Total_Person\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"unique\",\"field\":\"zone_pid\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"counting\",\"columns\":[{\"name\":\"live_counting\",\"type\":\"text\"},{\"name\":\"frame_pid\",\"type\":\"text\"},{\"name\":\"total_in_zone\",\"type\":\"number\"},{\"name\":\"zone_pid\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":3,\"y\":0,\"w\":3,\"h\":2},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmsrd53eg7\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]}],\"hidden\":[\"wf_nmsfw7kzw3\",\"wf_nmsfv3ur21\",\"wf_nmsr7795u3\",\"wf_nmsikkzy24\",\"wf_nmsrdi9ao3\",\"wf_nmsre8ewp3\"]}"
+tables_json = "[{\"key\":\"counting\",\"name\":\"Counting\",\"columns\":[{\"name\":\"live_counting\",\"type\":\"text\"},{\"name\":\"frame_pid\",\"type\":\"text\"},{\"name\":\"total_in_zone\",\"type\":\"text\"},{\"name\":\"zone_pid\",\"type\":\"text\"}]},{\"key\":\"people_counting\",\"name\":\"People Counting\",\"columns\":[{\"name\":\"in\",\"type\":\"number\"},{\"name\":\"out\",\"type\":\"number\"},{\"name\":\"status\",\"type\":\"text\"}]}]"
+settings_json = "{\"capture\":{\"snap\":false,\"record\":false},\"hud\":{\"model\":false,\"camera\":false,\"hailo_fps\":true,\"camera_fps\":true}}"
+
+[formats.counting.zone]
+mode = "optional"
+hint = ""
+
+[[formats.counting.widgets]]
+id = "verdict_mtlasa040"
+title = "People enter zone"
+kind = "verdict"
+source = "stat"
+key = "fn_if_else_if_1c81_b0_active"
+span = 4
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 6, y = 0, w = 6, h = 3 }
+status = {  }
+states = [{ value = 0.0, label = "COMPLIANT", tone = "ok" }, { value = 1.0, label = "VIOLATION", tone = "alert" }]
+range = ""
+node = "nmtlaqcwq1"
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.counting.widgets]]
+id = "video_mttkyu0m1"
+title = "Live video"
+kind = "video"
+source = "stat"
+key = ""
+span = 4
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 0, y = 0, w = 6, h = 6 }
+status = {  }
+states = []
+range = ""
+node = ""
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.counting.widgets]]
+id = "tile_mtuxoce60"
+title = "In"
+kind = "tile"
+source = "stat"
+key = "fn_line_counter_70r4_in"
+span = 1
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "huge"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 6, y = 6, w = 3, h = 3 }
+status = {  }
+states = []
+range = ""
+node = "nmtuxn1cx3"
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.counting.widgets]]
+id = "tile_mtuxoi9h1"
+title = "Out"
+kind = "tile"
+source = "stat"
+key = "fn_line_counter_70r4_out"
+span = 1
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "huge"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 9, y = 6, w = 3, h = 3 }
+status = {  }
+states = []
+range = ""
+node = "nmtuxn5vf5"
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.counting.widgets]]
+id = "tile_mtuxon832"
+title = "Inside"
+kind = "tile"
+source = "stat"
+key = "fn_line_counter_70r4_net"
+span = 1
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "huge"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 6, y = 9, w = 3, h = 3 }
+status = {  }
+states = []
+range = ""
+node = "nmtuxng4e7"
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.counting.widgets]]
+id = "tile_mtuxos9z3"
+title = "Crossing"
+kind = "tile"
+source = "stat"
+key = "fn_line_counter_70r4_cross"
+span = 1
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "huge"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 9, y = 9, w = 3, h = 3 }
+status = {  }
+states = []
+range = ""
+node = "nmtuxnnfb9"
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.counting.widgets]]
+id = "tile_mtvajo5m0"
+title = "Zone Counting Now"
+kind = "tile"
+source = "stat"
+key = "fn_counter_z868_count"
+span = 1
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "huge"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 9, y = 3, w = 3, h = 3 }
+status = {  }
+states = []
+range = ""
+node = "nmtva8s549"
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.counting.widgets]]
+id = "tile_mtvakqe71"
+title = "Live People Counting"
+kind = "tile"
+source = "stat"
+key = "fn_in_frame_now_s547_count"
+span = 1
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = "Total Counti"
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "huge"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 6, y = 3, w = 3, h = 3 }
+status = {  }
+states = []
+range = ""
+node = "nmtva8s546"
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[formats.object_detection]
+label = "Object Detection"
+hint = "Detect and count the objects you choose on a live camera."
+category = "built-in"
+model = "yolov8n"
+classes = ["person", "chair"]
+widgets = []
+workflows_json = "{\"version\":3,\"workflows\":[{\"id\":\"main\",\"name\":\"Workflow\",\"description\":\"Imported from this system's existing functions\",\"enabled\":true,\"author\":\"\",\"created\":0,\"modified\":0,\"graph\":{\"version\":10,\"nodes\":[{\"id\":\"m1\",\"type\":\"source.detection\",\"position\":{\"x\":-492.0,\"y\":-105.0},\"data\":{}},{\"id\":\"nmsya3cb91\",\"type\":\"filter.class\",\"position\":{\"x\":-239.0,\"y\":-105.0},\"data\":{\"classes\":[]}}],\"edges\":[]}}]}"
+dashboard_json = "{\"pages\":[{\"id\":\"main\",\"name\":\"Dashboard\",\"widgets\":[]}]}"
+settings_json = "{\"capture\":{\"snap\":false,\"record\":false},\"hud\":{\"model\":false,\"camera\":false,\"hailo_fps\":false,\"camera_fps\":true}}"
+
+[formats.object_detection.zone]
+mode = "optional"
+hint = ""
+
+[formats.blank_canvas]
+label = "Blank Canvas"
+hint = "Start from nothing and build the workflow yourself."
+category = "built-in"
+model = "yolov8n"
+classes = ["person"]
+widgets = []
+workflows_json = "{\"version\":3,\"workflows\":[{\"id\":\"main\",\"name\":\"Workflow\",\"description\":\"Imported from this system's existing functions\",\"enabled\":true,\"author\":\"\",\"created\":0,\"modified\":0,\"graph\":{\"version\":10,\"nodes\":[{\"id\":\"m1\",\"type\":\"source.detection\",\"position\":{\"x\":-353.0,\"y\":-34.0},\"data\":{}}],\"edges\":[]}}]}"
+dashboard_json = "{\"pages\":[{\"id\":\"main\",\"name\":\"Dashboard\",\"widgets\":[]}]}"
+settings_json = "{\"capture\":{\"snap\":false,\"record\":false},\"hud\":{\"model\":false,\"camera\":false,\"hailo_fps\":false,\"camera_fps\":false}}"
+
+[formats.blank_canvas.zone]
+mode = "optional"
+hint = ""
+
+[formats.restricted_zone]
+label = "Restricted Zone"
+hint = "Alert when someone enters an area that should stay clear."
+category = "built-in"
+model = "yolov8s"
+classes = ["person"]
+workflows_json = "{\"version\":3,\"workflows\":[{\"id\":\"main\",\"name\":\"Workflow\",\"description\":\"Imported from this system's existing functions\",\"enabled\":true,\"author\":\"\",\"created\":0,\"modified\":0,\"graph\":{\"version\":10,\"nodes\":[{\"id\":\"m1\",\"type\":\"source.detection\",\"position\":{\"x\":357.1427015702229,\"y\":108.78607489427895},\"data\":{}},{\"id\":\"zn_c274fca580_a\",\"type\":\"analytics.violations\",\"position\":{\"x\":960.0,\"y\":60.0},\"data\":{\"mode\":\"realtime\",\"fnId\":\"z_zone_mss97pz4_amss97vcn0_viol\",\"name\":\"Zone 1 violations\",\"OID\":false}},{\"id\":\"zn_c274fca580_f\",\"type\":\"filter.class\",\"position\":{\"x\":657.1427015702229,\"y\":108.78607489427895},\"data\":{\"classes\":[\"person\"]}},{\"id\":\"zn_c274fca580_z0\",\"type\":\"zone.ref\",\"position\":{\"x\":658.6811631086845,\"y\":205.0720580447112},\"data\":{\"zone\":\"\"}},{\"id\":\"zn_c274fca580_al\",\"type\":\"output.alert\",\"position\":{\"x\":1260.0,\"y\":60.0},\"data\":{\"metric\":\"count\",\"op\":\">=\",\"value\":1,\"severity\":\"crit\",\"message\":\"at least 1 in Zone 1\",\"cooldown_s\":30}},{\"id\":\"zn_c274fca580_v\",\"type\":\"dashboard.card\",\"position\":{\"x\":1560.0,\"y\":59.42565082250148},\"data\":{\"name\":\"Zone 1\",\"metric\":\"active\",\"kind\":\"verdict\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"n_trig_zn_c274fca580_a\",\"type\":\"output.alert\",\"position\":{\"x\":1281.354345932933,\"y\":188.4923388597731},\"data\":{\"metric\":\"count\",\"op\":\">=\",\"value\":1,\"severity\":\"crit\",\"message\":\"at least 1 in Zone 1\",\"cooldown_s\":30,\"box_color\":\"\",\"color_target\":\"box\"}}],\"edges\":[{\"id\":\"ezn_c274fca580_al\",\"source\":\"zn_c274fca580_a\",\"target\":\"zn_c274fca580_al\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"ezn_c274fca580_v\",\"source\":\"zn_c274fca580_al\",\"target\":\"zn_c274fca580_v\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"ezn_c274fca580_f\",\"source\":\"m1\",\"target\":\"zn_c274fca580_f\",\"sourceHandle\":null,\"targetHandle\":null},{\"id\":\"e_zmig_zn_c274fca580_f_zn_c274fca580_a\",\"source\":\"zn_c274fca580_f\",\"target\":\"zn_c274fca580_a\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtazrjm51\",\"source\":\"zn_c274fca580_z0\",\"target\":\"zn_c274fca580_a\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_trig_zn_c274fca580_a\",\"source\":\"zn_c274fca580_a\",\"target\":\"n_trig_zn_c274fca580_a\",\"sourceHandle\":null,\"targetHandle\":\"in\"}]}}]}"
+dashboard_json = "{\"pages\":[{\"id\":\"main\",\"name\":\"Dashboard\",\"widgets\":[{\"id\":\"verdict_mss9z4vp1\",\"title\":\"Restricted Zone\",\"kind\":\"verdict\",\"source\":\"stat\",\"key\":\"fn_z_zone_mss97pz4_zoneviol_active\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":7,\"y\":0,\"w\":5,\"h\":4},\"status\":{},\"states\":[{\"value\":0.0,\"label\":\"COMPLIANT\",\"tone\":\"ok\"},{\"value\":1.0,\"label\":\"VIOLATION\",\"tone\":\"alert\"}],\"range\":\"\",\"node\":\"nmss9xusi6\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"video_mss9zavc2\",\"title\":\"Live video\",\"kind\":\"video\",\"source\":\"stat\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":7,\"h\":4},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]},{\"id\":\"overview\",\"name\":\"Overview\",\"widgets\":[{\"id\":\"wf_zn_c274fca580_v\",\"title\":\"Zone 1\",\"kind\":\"verdict\",\"source\":\"stat\",\"key\":\"fn_z_zone_mss97pz4_amss97vcn0_viol_active\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{},\"status\":{},\"states\":[{\"value\":0.0,\"label\":\"COMPLIANT\",\"tone\":\"ok\"},{\"value\":1.0,\"label\":\"VIOLATION\",\"tone\":\"alert\"}],\"range\":\"\",\"node\":\"\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]}],\"hidden\":[\"wf_zn_c274fca580_v\"]}"
+settings_json = "{\"capture\":{\"snap\":false,\"record\":false},\"hud\":{\"model\":false,\"camera\":false,\"hailo_fps\":false,\"camera_fps\":false}}"
+
+[formats.restricted_zone.zone]
+mode = "optional"
+hint = ""
+
+[[formats.restricted_zone.widgets]]
+id = "verdict_mss9z4vp1"
+title = "Restricted Zone"
+kind = "verdict"
+source = "stat"
+key = "fn_z_zone_mss97pz4_zoneviol_active"
+span = 4
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 7, y = 0, w = 5, h = 4 }
+status = {  }
+states = [{ value = 0.0, label = "COMPLIANT", tone = "ok" }, { value = 1.0, label = "VIOLATION", tone = "alert" }]
+range = ""
+node = "nmss9xusi6"
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.restricted_zone.widgets]]
+id = "video_mss9zavc2"
+title = "Live video"
+kind = "video"
+source = "stat"
+key = ""
+span = 4
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 0, y = 0, w = 7, h = 4 }
+status = {  }
+states = []
+range = ""
+node = ""
+bands = {  }
+by_day = false
+series = []
+interval = ""

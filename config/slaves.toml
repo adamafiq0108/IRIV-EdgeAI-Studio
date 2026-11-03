@@ -1,0 +1,68 @@
+# Slaves -- the devices a system's master polls.
+#
+# One block per device, keyed by host_serial (docs/contract-v1.md sec 5 --
+# never a bare "serial"). `system_slug` is how one shared file serves every
+# master: each master loads only the entries whose system_slug matches the
+# system it was started with (--system).
+#
+# Tokens are secrets and never belong here. Pair the device first
+# (docs/setup.md sec 5), then record its token in slaves.local.toml:
+#
+#   [slaves.<host_serial>]
+#   token = "<token issued at pairing>"
+#
+# Sub-tables merge field-by-field (core/config.py), so this committed file
+# holds host/label/system_slug and the local file holds only the token --
+# neither file wipes the other's fields.
+#
+# `url` is optional when [discovery] is on -- the master sweeps for the device's
+# host_serial and fills the address in. Give it here to skip the first sweep, or
+# leave it out and let discovery find the device.
+#
+# [slaves.<host_serial>]
+# system_slug = "<slug>"
+# label = "Slave 01"
+# url = "http://192.0.2.20:5101"
+
+[sync]
+# Seconds between poll cycles. Every configured slave for this master is
+# polled once per interval: /api/health (liveness), then /api/summary (events
+# + stats) if online. 600s = 10 minutes.
+interval_s = 600
+
+# Seconds between light liveness ticks. A separate, cheap loop that hits only
+# /api/health + /api/agent/info (no /api/summary), so a device going up or down
+# flips on the dashboard within seconds instead of a full interval_s. Two tiny
+# unauthenticated GETs per device -- safe to keep low. Clamped to >= 3s.
+health_interval_s = 15
+
+[discovery]
+# Re-find a device's address by sweeping the subnet for agents and matching the
+# host_serial each one reports. Without this a DHCP lease change reports a
+# healthy device as down until an operator edits the url above by hand.
+#
+# Only devices already listed in [slaves.*] are ever adopted, and only while
+# url-less or offline: a reachable device is never re-addressed. Discovery
+# finds a known device, it cannot enroll an unknown one -- that needs a token
+# and an operator (docs/setup.md sec 5).
+#
+# TRUST: this accepts an address from whoever answers the sweep, and serials are
+# not secrets (/api/agent/info is unauthenticated by contract). A rogue agent on
+# this LAN claiming a known host_serial could attract that device's token. That
+# is the LAN trust docs/setup.md sec 8 already requires, but it is more surface
+# than a static url. Set enabled = false to keep addresses operator-only.
+enabled = true
+
+# Agent port. Contract v1 fixes this at 5101; here because a deployment that
+# has moved it should not have to patch code.
+port = 5101
+
+# Empty = sweep the /24 of every interface this master has an address on. Set
+# explicitly when the devices are not on the master's own subnet, or when a
+# multi-homed master would otherwise sweep the wrong side:
+#   subnets = ["10.0.0.0/24"]
+subnets = []
+
+# Per-address TCP connect budget during the sweep. Almost every address has
+# nothing listening and must fail fast; raise it on a slow or congested LAN.
+timeout_s = 0.4

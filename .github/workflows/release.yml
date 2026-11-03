@@ -1,0 +1,213 @@
+name: Release
+
+# Cut a platform release that appliances in the field can install themselves.
+#
+# Triggered by a tag, and the tag must match the VERSION file -- a release is
+# a claim about what a box will report running, so the two can never disagree.
+#
+# What CI produces is what a board consumes: a bundle with the customer
+# frontend already built and every Python wheel already downloaded, plus a
+# signed manifest. Nothing is compiled, resolved or built on the appliance.
+#
+#     git tag -a v2.1.1 -m "what changed"
+#     git push origin v2.1.1
+#
+# Two channels, each published to a release repo of its OWN with a write
+# token of its own, told apart by the tag:
+#
+#     v2.1.1        the CUSTOMER build -- frontend built with build:customer,
+#                   core/dev and scripts/dev left out. Every appliance is
+#                   offered this. Goes to config/update.toml [release] repo
+#                   (irivai-release) with secrets.RELEASE_REPO_TOKEN.
+#     v2.1.1-dev    the DEVELOPER build -- the owner frontend and the owner
+#                   tooling included. Only a box declared a dev box, signed
+#                   into by a developer account, is ever offered it. Goes to
+#                   [release] dev_repo (irivai-release-dev) with
+#                   secrets.RELEASE_DEV_REPO_TOKEN.
+#
+# Separate repos because every customer box holds the read token for the
+# customer repo, and a dev bundle (core/dev, scripts/dev as plain .py) beside
+# the customer ones would be downloadable with it. The channel is derived from
+# the tag here and passed to every step that can get it wrong;
+# publish_release.py refuses if the VERSION file and the channel disagree, and
+# refuses a --repo naming the other channel's repo. Each publish step sees only
+# its own channel's secret. Both bundles are signed with the same key, and the
+# manifest's app name is what stops one channel's bundle installing on the
+# other's box.
+#
+# Every release also carries irivai-update-v<VERSION>.tar.gz: the offline
+# update file (bundle + manifest + signature in one archive) that "Update
+# manually" on a box takes when the box has no internet or no token.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: smoke tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # The interpreter the appliance will run, not the one the ordinary
+          # CI job uses: a release is the wrong moment to discover that the
+          # suite has only ever been executed under a different Python.
+          python-version: "3.13"
+      # The same pins the bundle's wheels are resolved to (wheelhouse below),
+      # so the suite runs on the stack the boxes will get.
+      - run: pip install -r requirements.txt -c requirements.constraints.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      # A handful of checks (tests/check_*.mjs) bundle a piece of the frontend
+      # with esbuild to pin its logic directly -- they need frontend's own
+      # node_modules on the path, or they fail with MODULE_NOT_FOUND before
+      # they ever run a single assertion.
+      - run: npm ci
+        working-directory: frontend
+      # The same suite CI runs on every push. A release that skips it is a
+      # release that ships to boxes nobody can reach a keyboard on.
+      - run: python tests/run_all.py
+
+  release:
+    name: build, sign and publish
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Tags are needed for the release notes below, and a tag-triggered
+          # checkout does not necessarily bring the annotation with it.
+          fetch-depth: 0
+
+      - name: The tag and the VERSION file must agree, and name the channel
+        id: channel
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          file="$(tr -d ' \t\r\n' < VERSION)"
+          if [ "$tag" != "$file" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match VERSION ($file)"
+            exit 1
+          fi
+          # The tag decides the channel, and it decides it here rather than in
+          # four separate steps: one place to read, one place to be wrong.
+          #
+          # Every spelling must be named. A box picks its channel by matching
+          # the tag too (core/services/update.py is_customer_tag / is_dev_tag),
+          # and it matches STRICTLY -- a customer release is a plain version and
+          # nothing else. So a tag that is neither shape would be published
+          # here and then offered to nobody: a release that exists, appears in
+          # the repo, and silently never reaches a single box. Refused instead.
+          case "$tag" in
+            *[!0-9.]*-dev) echo "::error::$GITHUB_REF_NAME is not a version plus -dev"; exit 1 ;;
+            *-dev)         channel=dev ;;
+            *[!0-9.]*)     echo "::error::$GITHUB_REF_NAME is neither a plain version nor a -dev tag; no box would be offered it"; exit 1 ;;
+            *)             channel=stable ;;
+          esac
+          echo "channel=$channel" >> "$GITHUB_OUTPUT"
+          echo "::notice::publishing the $channel channel as $GITHUB_REF_NAME"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build the frontend for this channel
+        working-directory: frontend
+        # build:customer drops the owner panels entirely (vite.config.js
+        # __DEV_TOOLS__); the plain build keeps them. pack checks it got the
+        # one it asked for, in both directions -- a dev bundle built with
+        # build:customer would strip a dev box's own tooling on update.
+        run: |
+          npm ci
+          if [ "${{ steps.channel.outputs.channel }}" = "dev" ]; then
+            npm run build
+          else
+            npm run build:customer
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install cryptography packaging
+
+      - name: Collect aarch64 wheels and lock to what was found
+        # Resolves directly against requirements.txt for the BOARD's platform
+        # and writes requirements.lock from whatever wheels actually landed --
+        # a plain pip-compile lock has no notion of which platform a version
+        # was built for, and can pin one with no aarch64 wheel at all. Binary
+        # only: a board must never compile at install time, and if some
+        # dependency's entire history lacks an aarch64 wheel, that is a fact
+        # to learn here rather than half-way through an update on a
+        # customer's line. Versions are held by requirements.constraints.txt
+        # (the tested stack); wheelhouse refuses if that file is missing.
+        run: python scripts/dev/publish_release.py wheelhouse
+
+      - name: Pack
+        run: |
+          python scripts/dev/publish_release.py pack \
+            --channel "${{ steps.channel.outputs.channel }}"
+
+      - name: Manifest
+        # actions/checkout stores a pushed tag as a plain ref to the commit,
+        # so %(contents) gave the COMMIT message and v1.0.7 was published
+        # with "fix: remove_orphan..." as its notes instead of the tag's
+        # thirty lines. Fetch the real annotated tag object first, forcing
+        # over the lightweight one checkout left.
+        run: |
+          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+          git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > dist/release/notes.md || true
+          test -s dist/release/notes.md || echo "::warning::the tag carries no notes; the Update card will show nothing under What changed"
+          python scripts/dev/publish_release.py manifest \
+            --channel "${{ steps.channel.outputs.channel }}" \
+            --created "$(git log -1 --format=%ct)" \
+            --hailort "${{ vars.HAILORT_DRIVER_REQUIRES }}" \
+            --notes "$(head -c 400 dist/release/notes.md || true)"
+
+      - name: Sign
+        env:
+          OTA_SIGNING_KEY: ${{ secrets.OTA_SIGNING_KEY }}
+        run: python scripts/dev/publish_release.py sign --key-env OTA_SIGNING_KEY
+
+      - name: Verify the way an appliance will
+        run: |
+          python scripts/dev/publish_release.py verify \
+            --channel "${{ steps.channel.outputs.channel }}"
+
+      # The offline update file for "Update manually" (a box with no internet
+      # or no token): the three files above in one archive,
+      # irivai-update-v<VERSION>.tar.gz, checked here with the box's own code.
+      # No secret: nothing new is signed. The publish step below attaches it
+      # to the same release, in the same channel's repo.
+      - name: Offline update file
+        run: |
+          python scripts/dev/publish_release.py offline \
+            --channel "${{ steps.channel.outputs.channel }}"
+
+      # One step per channel, each with ONLY its own secret in scope: a dev
+      # tag never has the customer repo's write token in its environment, and
+      # a customer tag never the dev repo's. The repo comes from the channel
+      # (publish_release.py _repo: repo or dev_repo).
+      - name: Publish to the customer release repo
+        if: steps.channel.outputs.channel == 'stable'
+        env:
+          RELEASE_REPO_TOKEN: ${{ secrets.RELEASE_REPO_TOKEN }}
+        run: |
+          python scripts/dev/publish_release.py publish --token-env RELEASE_REPO_TOKEN \
+            --channel stable
+
+      - name: Publish to the developer release repo
+        if: steps.channel.outputs.channel == 'dev'
+        env:
+          RELEASE_DEV_REPO_TOKEN: ${{ secrets.RELEASE_DEV_REPO_TOKEN }}
+        run: |
+          python scripts/dev/publish_release.py publish --token-env RELEASE_DEV_REPO_TOKEN \
+            --channel dev

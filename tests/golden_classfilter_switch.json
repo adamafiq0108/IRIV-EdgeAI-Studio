@@ -1,0 +1,134 @@
+{
+ "object watch with class wires": {
+  "class_filters": [
+   {
+    "base": [
+     "ppe"
+    ],
+    "name": "ppe",
+    "node": "f",
+    "out_base": []
+   }
+  ],
+  "errors": [],
+  "functions": [
+   {
+    "enabled": true,
+    "id": "ppe",
+    "name": "PPE",
+    "params": {
+     "classes": [
+      "helmet",
+      "person"
+     ]
+    },
+    "type": "object_detect"
+   }
+  ],
+  "outputs": [],
+  "widgets": []
+ },
+ "one filter": {
+  "class_filters": null,
+  "errors": [],
+  "functions": [
+   {
+    "enabled": true,
+    "id": "people",
+    "name": "People",
+    "params": {
+     "classes": [
+      "person"
+     ]
+    },
+    "type": "frame_count"
+   }
+  ],
+  "outputs": [],
+  "widgets": []
+ },
+ "two named filters, counters, zone, trigger": {
+  "class_filters": [
+   {
+    "base": [
+     "pa",
+     "switch_b0",
+     "switch_b1"
+    ],
+    "name": "people",
+    "node": "fa",
+    "out_base": []
+   },
+   {
+    "base": [
+     "cb"
+    ],
+    "name": "chairs",
+    "node": "fb",
+    "out_base": []
+   }
+  ],
+  "errors": [],
+  "functions": [
+   {
+    "enabled": true,
+    "id": "pa",
+    "name": "People here",
+    "params": {
+     "classes": [
+      "person"
+     ],
+     "zone": "z1"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "cb",
+    "name": "Chairs here",
+    "params": {
+     "classes": [
+      "chair"
+     ]
+    },
+    "type": "frame_count"
+   },
+   {
+    "enabled": true,
+    "id": "switch_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "expr": "(fn_pa_count > 3)"
+    },
+    "trigger": {
+     "cooldown_s": 30,
+     "message": "Crowd",
+     "metric": "value",
+     "op": ">",
+     "severity": "warn",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "switch_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "expr": "not (fn_pa_count > 3)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   }
+  ],
+  "outputs": [],
+  "widgets": []
+ }
+}

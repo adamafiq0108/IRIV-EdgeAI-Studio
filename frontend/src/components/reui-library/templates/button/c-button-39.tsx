@@ -1,0 +1,32 @@
+import { Badge } from "@/components/reui-library/reui/badge"
+
+import { Button } from "@/components/reui-library/ui/button"
+import { IconPlaceholder } from "@/app/(create)/components/icon-placeholder"
+
+export default function Pattern() {
+  return (
+    <Button
+      variant="outline"
+      className="relative gap-2"
+      aria-label="Inbox (8 unread)"
+    >
+      <IconPlaceholder
+        lucide="MailIcon"
+        tabler="IconMail"
+        hugeicons="MailIcon"
+        phosphor="EnvelopeIcon"
+        remixicon="RiMailLine"
+        aria-hidden="true"
+      />
+      Inbox
+      <Badge
+        variant="destructive"
+        size="sm"
+        className="absolute -top-1.5 -right-2 rounded-full px-1"
+        aria-hidden="true"
+      >
+        8
+      </Badge>
+    </Button>
+  )
+}

@@ -1,0 +1,13 @@
+{
+  "_about": "One chart input (CAM 1, the total_panel column of pcb_sensata) as the workflow node stores it (conf, data.series.s1) and as the compiled widget row stores it (rows, after builder.validate). tests/smoke_seriesedits.py checks the real compile produces exactly these rows for an area, line, spline and bar chart; tests/check_seriessync.mjs renders the node's Inputs row from conf and the Builder's series row from rows and checks both panels show the same answers.",
+  "conf": {
+    "count": {"agg": "count"},
+    "sum": {"agg": "sum"},
+    "avg": {}
+  },
+  "rows": {
+    "count": {"label": "CAM 1", "agg": "count", "field": "total_panel", "ts_field": "", "query": {"agg": "count", "range": "page"}},
+    "sum": {"label": "CAM 1", "agg": "sum", "field": "total_panel", "ts_field": "", "query": {"agg": "sum", "range": "page"}},
+    "avg": {"label": "CAM 1", "agg": "avg", "field": "total_panel", "ts_field": "", "query": {"agg": "avg", "range": "page"}}
+  }
+}

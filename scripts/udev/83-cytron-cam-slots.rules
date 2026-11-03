@@ -1,0 +1,41 @@
+# Camera slot pinning for the IRIV Edge AI's two USB-A sockets.
+#
+# The kernel numbers /dev/video* by ENUMERATION ORDER, so which camera is
+# "video0" changes with plug order and with every re-enumeration of a flaky
+# link. These rules key on the PORT PATH instead -- the hub port a device
+# hangs off, which is soldered -- and publish one stable symlink per physical
+# socket:
+#
+#   /dev/cam-usb0   whatever camera is in socket 0 (its video-CAPTURE node)
+#   /dev/cam-usb1   whatever camera is in socket 1
+#
+# CAMERAS ONLY -- serial/RS485 is deliberately not touched here.
+#
+# The app opens numeric camera "0"/"1" through these symlinks when they
+# exist (camera.py _capture_spec / detector_control.open_capture_spec).
+#
+# Each physical USB3 socket appears on TWO hubs: the USB2 hub (bus 4, hub
+# 4-1) when a USB2 device is plugged in, and the USB3 hub (bus 5, hub 5-1)
+# for a USB3 device -- both sides of the same hub chip, same port number.
+# So every socket needs a rule per side. KERNELS matches the parent USB
+# device name "<bus>-<hubport>.<port>".
+#
+# ENV{ID_V4L_CAPABILITIES}=="*:capture:*" keeps the rule off a UVC camera's
+# METADATA node, which sits on the same USB device but can never produce a
+# frame.
+#
+# Port map measured on the board (Node-RED-era wiring, 2026-08):
+#   4-1.1 = internal USB serial (RS485)        4-1.5 = internal billboard
+#   socket 0 = port 2 (5-1.2 USB3 side / 4-1.2 USB2 side)
+#   socket 1 = port 3 (4-1.3 USB2 side / 5-1.3 USB3 side)
+#
+# Install: sudo cp scripts/udev/83-cytron-cam-slots.rules /etc/udev/rules.d/
+#          sudo udevadm control --reload && sudo udevadm trigger
+
+# socket 0 -> /dev/cam-usb0
+SUBSYSTEM=="video4linux", KERNELS=="5-1.2", ENV{ID_V4L_CAPABILITIES}=="*:capture:*", SYMLINK+="cam-usb0"
+SUBSYSTEM=="video4linux", KERNELS=="4-1.2", ENV{ID_V4L_CAPABILITIES}=="*:capture:*", SYMLINK+="cam-usb0"
+
+# socket 1 -> /dev/cam-usb1
+SUBSYSTEM=="video4linux", KERNELS=="4-1.3", ENV{ID_V4L_CAPABILITIES}=="*:capture:*", SYMLINK+="cam-usb1"
+SUBSYSTEM=="video4linux", KERNELS=="5-1.3", ENV{ID_V4L_CAPABILITIES}=="*:capture:*", SYMLINK+="cam-usb1"

@@ -1,0 +1,15 @@
+# Auth -- roles and login policy.
+#
+# Role names are deployment vocabulary, not product code. A customer calling
+# their operators something else changes this file and nothing more.
+
+mode = "master_password"    # master_password | users
+
+[roles]
+# id = display label. The first role is the highest privilege.
+master = "MASTER"
+supervisor = "SUPERVISOR"
+staff = "STAFF"
+
+[session]
+idle_timeout_minutes = 60

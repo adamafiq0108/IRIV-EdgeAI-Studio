@@ -1,0 +1,58 @@
+{
+ "group chat": {
+  "bot_token": "",
+  "chat_id": "-1001234567890",
+  "enabled": true,
+  "function": "clock",
+  "id": "wf_m",
+  "label": "Nightly \u2192 Telegram",
+  "message": "hello {label}",
+  "trigger": "alert",
+  "type": "telegram"
+ },
+ "named bot": {
+  "account": "bot_x",
+  "bot_token": "",
+  "chat_id": "42",
+  "enabled": true,
+  "function": "clock",
+  "id": "wf_m",
+  "label": "Nightly \u2192 Telegram",
+  "message": "hello {label}",
+  "trigger": "alert",
+  "type": "telegram"
+ },
+ "no chat": {
+  "bot_token": "",
+  "chat_id": "",
+  "enabled": true,
+  "function": "clock",
+  "id": "wf_m",
+  "label": "Nightly \u2192 Telegram",
+  "message": "hello {label}",
+  "trigger": "alert",
+  "type": "telegram"
+ },
+ "own token": {
+  "bot_token": "123456789:AAF-abcdefghijklmnopqrstuvwxyz012345",
+  "chat_id": "42",
+  "enabled": true,
+  "function": "clock",
+  "id": "wf_m",
+  "label": "Nightly \u2192 Telegram",
+  "message": "hello {label}",
+  "trigger": "alert",
+  "type": "telegram"
+ },
+ "typed chat": {
+  "bot_token": "",
+  "chat_id": "781784546",
+  "enabled": true,
+  "function": "clock",
+  "id": "wf_m",
+  "label": "Nightly \u2192 Telegram",
+  "message": "hello {label}",
+  "trigger": "alert",
+  "type": "telegram"
+ }
+}

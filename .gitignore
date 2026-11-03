@@ -1,0 +1,59 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Local config — secrets and per-device values. Committed *.toml holds
+# structure and safe defaults only.
+config/*.local.toml
+# Key files a crash can leave beside https.local.toml (core/services/https.py
+# LEFTOVERS, swept at the hub's start).
+config/.https*
+config/email_config.json
+/config.json
+# The store signing key exists ONLY on the owner's hub -- committing it would
+# let anyone sign templates and license keys.
+config/store_signing.pem
+
+# User-generated content lives in a persistent store OUTSIDE the repo
+# (core/config.py store_dir: $CYTRON_STORE, the NVMe, or ~/.local/share), so a
+# git pull never loses it. `var/` is the last-resort in-repo fallback -- ignored
+# so a generated system that landed there is never committed. Same for any
+# layouts written before the store existed.
+var/
+config/layouts/
+
+*.log
+logs/
+.DS_Store
+
+# Frontend (React SPA). IRIV Edge AI Studio builds the bundle on the host in setup_pi.sh, so
+# neither the deps nor the built output is committed (unlike the edge apps, which
+# ship a pre-built dist because a Pi should never need Node).
+frontend/node_modules/
+core/static/app/
+
+# Local dev tooling — not part of the deployable app
+.claude/skills/
+devnotes/
+DEVNOTES.md
+frontend/_shot.mjs
+
+# Internal planning docs — not meant to ship/commit
+docs/baseline-plan.md
+
+# Test sandboxes: a smoke test builds a throwaway system tree here.
+tests/store_sandbox/
+tests/pygate_sandbox/
+
+# The cross-process write lock beside a system's config.local.toml
+# (core/services/cfg_lock.py). Empty; never content.
+.config.local.toml.lock
+
+# The shared poll cache's write stamp (core/services/pollshare.py). Empty;
+# only its modification time means anything.
+config/.pollcache.epoch
+
+# Team notes and reviews stay on the laptop; never published.
+docs/team/

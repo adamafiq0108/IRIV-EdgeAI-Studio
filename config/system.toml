@@ -1,0 +1,34 @@
+# Box-wide switches -- the settings that are about the BOX rather than about a
+# system, an account or a page. The Settings > System page edits them; the
+# machine writes its answers to system.local.toml beside this file.
+[system]
+# Does this appliance use email at all?
+#
+# Off means no reset links, no reset requests, and no recovery addresses
+# offered on accounts -- the Forgot screen stops asking for an address and
+# sends people to the box itself. Turn it off on a deployment with no mail
+# path, where an address on file reads as a way back in without being one.
+#
+# On by default, so a box already in the field keeps the behaviour it has.
+# Turning it off closes the emailed way back in for EVERY account at once,
+# which is why it is master-and-developer only, like every other setting that
+# touches the recovery path.
+email = true
+
+# The Hailo load balancer (testing): split the AI chip's frame rate fairly
+# between every camera on this box, weighted by what each model costs, never
+# below 10 fps per camera (the tracker's floor) and never above what a camera
+# delivers. Off = the fixed pacing rule (no cap up to four cameras on the
+# box, 10 fps beyond). The detection apps read this live -- a change lands
+# within ~10 s, no restart -- through the IRIVAI_BOX_CONFIG directory the hub
+# and masters export. See systems/demo/app/chipshare.py for the knobs.
+chip_balance = false
+
+# The shared poll cache (testing): compute the dashboard, event list, meters
+# and the hub's system cards once and hand the answer to every open page
+# that is entitled to exactly that answer (same role, same grants, same
+# visible systems), instead of once per tab. Every request still needs its
+# own login and passes its own permission checks first; any write anywhere
+# on the box empties it. Off = today's behaviour exactly. Read live, no
+# restart. See core/services/pollshare.py.
+share_polls = false

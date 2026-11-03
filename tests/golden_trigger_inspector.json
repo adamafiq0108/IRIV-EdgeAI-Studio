@@ -1,0 +1,2432 @@
+{
+ "dup_guard_timer": {
+  "catalog": [
+   {
+    "key": "fn_cnt_count",
+    "kind": "area",
+    "label": "People \u00b7 count",
+    "node": "cnt",
+    "origin": "measure",
+    "range": "24h",
+    "role": "gauge_count",
+    "source": "history",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "People"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 oid",
+    "origin": "table",
+    "query": {
+     "agg": "count",
+     "field": "oid"
+    },
+    "role": "total",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "oid"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 weight",
+    "origin": "table",
+    "query": {
+     "agg": "latest",
+     "field": "weight"
+    },
+    "role": "gauge_count",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "weight"
+   }
+  ],
+  "commands": [],
+  "errors": [],
+  "frames_free": {
+   "_plan": {
+    "base": [
+     "busy_b0",
+     "busy_b1",
+     "cnt"
+    ],
+    "fed": [
+     "cmp",
+     "cnt",
+     "ds",
+     "src",
+     "trg"
+    ],
+    "node_fns": {
+     "cmp": [
+      "busy_b0",
+      "busy_b1"
+     ],
+     "cnt": [
+      "cnt"
+     ],
+     "trg": [
+      "busy_b0"
+     ]
+    },
+    "out_base": [
+     "wf_ds"
+    ],
+    "out_node": {
+     "wf_cmp": "cmp",
+     "wf_cnt": "cnt",
+     "wf_ds": "ds",
+     "wf_src": "src",
+     "wf_trg": "trg",
+     "wf_z": "z"
+    }
+   },
+   "functions": [
+    "tgo_trg_cur_oid",
+    "tgv_trg_cur_value"
+   ],
+   "outputs": [],
+   "version": 5
+  },
+  "functions": [
+   {
+    "enabled": true,
+    "id": "cnt",
+    "name": "People",
+    "params": {
+     "camera": "cam1",
+     "zone": "bay"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "camera": "cam1",
+     "expr": "(fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 30,
+     "cur_oid_key": "fn_tgo_trg_cur_oid_value",
+     "cur_value_key": "fn_tgv_trg_cur_value_value",
+     "dup_diff": 4.0,
+     "message": "Seen",
+     "metric": "value",
+     "oid_source": "cnt",
+     "op": ">",
+     "severity": "warn",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "camera": "cam1",
+     "expr": "not (fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "tgo_trg_cur_oid",
+    "name": "oid (latest)",
+    "params": {
+     "agg": "latest",
+     "column": "",
+     "dataset": "visits",
+     "fallback": 0.0,
+     "field": "oid",
+     "interval_s": 10.0,
+     "json_path": "value",
+     "pick": "first",
+     "range": "",
+     "tables": [
+      {
+       "columns": [
+        {
+         "name": "oid",
+         "type": "text"
+        },
+        {
+         "name": "weight",
+         "type": "number"
+        }
+       ],
+       "key": "visits",
+       "name": "Visits"
+      }
+     ],
+     "text": true,
+     "url": "http://127.0.0.1:5110/api/workflow/query-value?fn=tgo_trg_cur_oid"
+    },
+    "type": "query_value"
+   },
+   {
+    "enabled": true,
+    "id": "tgv_trg_cur_value",
+    "name": "weight (latest)",
+    "params": {
+     "agg": "latest",
+     "column": "",
+     "dataset": "visits",
+     "fallback": 0.0,
+     "field": "weight",
+     "interval_s": 10.0,
+     "json_path": "value",
+     "pick": "first",
+     "range": "",
+     "tables": [
+      {
+       "columns": [
+        {
+         "name": "oid",
+         "type": "text"
+        },
+        {
+         "name": "weight",
+         "type": "number"
+        }
+       ],
+       "key": "visits",
+       "name": "Visits"
+      }
+     ],
+     "url": "http://127.0.0.1:5110/api/workflow/query-value?fn=tgv_trg_cur_value"
+    },
+    "type": "query_value"
+   }
+  ],
+  "outputs": [
+   {
+    "columns": [
+     {
+      "field": "track_id",
+      "handle": "c_oid",
+      "name": "oid",
+      "src": "event",
+      "type": "text",
+      "zone": "bay"
+     },
+     {
+      "handle": "c_weight",
+      "key": "fn_cnt_count",
+      "name": "weight",
+      "src": "wire",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "enabled": true,
+    "function": "busy_b0",
+    "id": "wf_ds",
+    "label": "Data Table visits",
+    "mode": "alert",
+    "name": "Visits",
+    "trigger": "alert",
+    "type": "dataset"
+   }
+  ],
+  "tables": {
+   "visits": {
+    "columns": [
+     {
+      "identity": true,
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "name": "Visits"
+   }
+  },
+  "waits_for_detection": [
+   "cmp",
+   "cnt",
+   "ds",
+   "src",
+   "trg"
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "cnt"
+   },
+   {
+    "message": "Current value is compared with the value this Trigger carries, and a branch only carries 1 - wire the Formula that works out the value into the Trigger to compare real numbers",
+    "node": "trg"
+   }
+  ],
+  "watches": [],
+  "widgets": []
+ },
+ "dup_guard_watchdog": {
+  "catalog": [
+   {
+    "key": "fn_cnt_count",
+    "kind": "area",
+    "label": "People \u00b7 count",
+    "node": "cnt",
+    "origin": "measure",
+    "range": "24h",
+    "role": "gauge_count",
+    "source": "history",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "People"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 oid",
+    "origin": "table",
+    "query": {
+     "agg": "count",
+     "field": "oid"
+    },
+    "role": "total",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "oid"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 weight",
+    "origin": "table",
+    "query": {
+     "agg": "latest",
+     "field": "weight"
+    },
+    "role": "gauge_count",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "weight"
+   }
+  ],
+  "commands": [],
+  "errors": [],
+  "frames_free": {
+   "_plan": {
+    "base": [
+     "busy_b0",
+     "busy_b1",
+     "cnt"
+    ],
+    "fed": [
+     "cmp",
+     "cnt",
+     "ds",
+     "src",
+     "trg"
+    ],
+    "node_fns": {
+     "cmp": [
+      "busy_b0",
+      "busy_b1"
+     ],
+     "cnt": [
+      "cnt"
+     ],
+     "trg": [
+      "busy_b0"
+     ]
+    },
+    "out_base": [
+     "wf_ds"
+    ],
+    "out_node": {
+     "wf_cmp": "cmp",
+     "wf_cnt": "cnt",
+     "wf_ds": "ds",
+     "wf_src": "src",
+     "wf_trg": "trg",
+     "wf_z": "z"
+    }
+   },
+   "functions": [
+    "tgo_trg_cur_oid"
+   ],
+   "outputs": [],
+   "version": 5
+  },
+  "functions": [
+   {
+    "enabled": true,
+    "id": "cnt",
+    "name": "People",
+    "params": {
+     "camera": "cam1",
+     "zone": "bay"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "camera": "cam1",
+     "expr": "(fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 30,
+     "cur_oid_key": "fn_tgo_trg_cur_oid_value",
+     "dup_diff": 0.0,
+     "message": "Seen",
+     "metric": "value",
+     "oid_source": "cnt",
+     "op": ">",
+     "repeat": "new_object",
+     "severity": "warn",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "camera": "cam1",
+     "expr": "not (fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "tgo_trg_cur_oid",
+    "name": "oid (latest)",
+    "params": {
+     "agg": "latest",
+     "column": "",
+     "dataset": "visits",
+     "fallback": 0.0,
+     "field": "oid",
+     "interval_s": 10.0,
+     "json_path": "value",
+     "pick": "first",
+     "range": "",
+     "tables": [
+      {
+       "columns": [
+        {
+         "name": "oid",
+         "type": "text"
+        },
+        {
+         "name": "weight",
+         "type": "number"
+        }
+       ],
+       "key": "visits",
+       "name": "Visits"
+      }
+     ],
+     "text": true,
+     "url": "http://127.0.0.1:5110/api/workflow/query-value?fn=tgo_trg_cur_oid"
+    },
+    "type": "query_value"
+   }
+  ],
+  "outputs": [
+   {
+    "columns": [
+     {
+      "field": "track_id",
+      "handle": "c_oid",
+      "name": "oid",
+      "src": "event",
+      "type": "text",
+      "zone": "bay"
+     },
+     {
+      "handle": "c_weight",
+      "key": "fn_cnt_count",
+      "name": "weight",
+      "src": "wire",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "enabled": true,
+    "function": "busy_b0",
+    "id": "wf_ds",
+    "label": "Data Table visits",
+    "mode": "alert",
+    "name": "Visits",
+    "trigger": "alert",
+    "type": "dataset"
+   }
+  ],
+  "tables": {
+   "visits": {
+    "columns": [
+     {
+      "identity": true,
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "name": "Visits"
+   }
+  },
+  "waits_for_detection": [
+   "cmp",
+   "cnt",
+   "ds",
+   "src",
+   "trg"
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "cnt"
+   }
+  ],
+  "watches": [],
+  "widgets": []
+ },
+ "legacy_hold_seconds": {
+  "catalog": [
+   {
+    "key": "fn_cnt_count",
+    "kind": "area",
+    "label": "People \u00b7 count",
+    "node": "cnt",
+    "origin": "measure",
+    "range": "24h",
+    "role": "gauge_count",
+    "source": "history",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "People"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 oid",
+    "origin": "table",
+    "query": {
+     "agg": "count",
+     "field": "oid"
+    },
+    "role": "total",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "oid"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 weight",
+    "origin": "table",
+    "query": {
+     "agg": "latest",
+     "field": "weight"
+    },
+    "role": "gauge_count",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "weight"
+   }
+  ],
+  "commands": [],
+  "errors": [],
+  "frames_free": {
+   "_plan": {
+    "base": [
+     "busy_b0",
+     "busy_b1",
+     "cnt"
+    ],
+    "fed": [
+     "cmp",
+     "cnt",
+     "src",
+     "trg"
+    ],
+    "node_fns": {
+     "cmp": [
+      "busy_b0",
+      "busy_b1"
+     ],
+     "cnt": [
+      "cnt"
+     ],
+     "trg": [
+      "busy_b0"
+     ]
+    },
+    "out_base": [],
+    "out_node": {
+     "wf_cmp": "cmp",
+     "wf_cnt": "cnt",
+     "wf_src": "src",
+     "wf_trg": "trg",
+     "wf_z": "z"
+    }
+   },
+   "functions": [],
+   "outputs": [],
+   "version": 5
+  },
+  "functions": [
+   {
+    "enabled": true,
+    "id": "cnt",
+    "name": "People",
+    "params": {
+     "camera": "cam1",
+     "zone": "bay"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "camera": "cam1",
+     "expr": "(fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "Old hold",
+     "metric": "value",
+     "op": ">",
+     "out": {
+      "hold_s": 15.0
+     },
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "camera": "cam1",
+     "expr": "not (fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   }
+  ],
+  "outputs": [],
+  "tables": {},
+  "waits_for_detection": [
+   "cmp",
+   "cnt",
+   "src",
+   "trg"
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "cnt"
+   }
+  ],
+  "watches": [],
+  "widgets": []
+ },
+ "once_per_oid_interval": {
+  "catalog": [
+   {
+    "key": "fn_cnt_count",
+    "kind": "area",
+    "label": "People \u00b7 count",
+    "node": "cnt",
+    "origin": "measure",
+    "range": "24h",
+    "role": "gauge_count",
+    "source": "history",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "People"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 oid",
+    "origin": "table",
+    "query": {
+     "agg": "count",
+     "field": "oid"
+    },
+    "role": "total",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "oid"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 weight",
+    "origin": "table",
+    "query": {
+     "agg": "latest",
+     "field": "weight"
+    },
+    "role": "gauge_count",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "weight"
+   }
+  ],
+  "commands": [],
+  "errors": [],
+  "frames_free": {
+   "_plan": {
+    "base": [
+     "busy_b0",
+     "busy_b1",
+     "cnt"
+    ],
+    "fed": [
+     "cmp",
+     "cnt",
+     "src",
+     "trg"
+    ],
+    "node_fns": {
+     "cmp": [
+      "busy_b0",
+      "busy_b1"
+     ],
+     "cnt": [
+      "cnt"
+     ],
+     "trg": [
+      "busy_b0"
+     ]
+    },
+    "out_base": [],
+    "out_node": {
+     "wf_cmp": "cmp",
+     "wf_cnt": "cnt",
+     "wf_src": "src",
+     "wf_trg": "trg",
+     "wf_z": "z"
+    }
+   },
+   "functions": [],
+   "outputs": [],
+   "version": 5
+  },
+  "functions": [
+   {
+    "enabled": true,
+    "id": "cnt",
+    "name": "People",
+    "params": {
+     "camera": "cam1",
+     "zone": "bay"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "camera": "cam1",
+     "expr": "(fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "Each one",
+     "metric": "value",
+     "oid_source": "cnt",
+     "op": ">",
+     "out": {
+      "hold": "interval",
+      "hold_s": 30.0
+     },
+     "rate": "once_per_oid",
+     "severity": "warn",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "camera": "cam1",
+     "expr": "not (fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   }
+  ],
+  "outputs": [],
+  "tables": {},
+  "waits_for_detection": [
+   "cmp",
+   "cnt",
+   "src",
+   "trg"
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "cnt"
+   }
+  ],
+  "watches": [],
+  "widgets": []
+ },
+ "paint_boxes_everywhere": {
+  "catalog": [
+   {
+    "key": "fn_cnt_count",
+    "kind": "area",
+    "label": "People \u00b7 count",
+    "node": "cnt",
+    "origin": "measure",
+    "range": "24h",
+    "role": "gauge_count",
+    "source": "history",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "People"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 oid",
+    "origin": "table",
+    "query": {
+     "agg": "count",
+     "field": "oid"
+    },
+    "role": "total",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "oid"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 weight",
+    "origin": "table",
+    "query": {
+     "agg": "latest",
+     "field": "weight"
+    },
+    "role": "gauge_count",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "weight"
+   }
+  ],
+  "commands": [],
+  "errors": [],
+  "frames_free": {
+   "_plan": {
+    "base": [
+     "busy_b0",
+     "busy_b1",
+     "cnt"
+    ],
+    "fed": [
+     "cmp",
+     "cnt",
+     "src",
+     "trg"
+    ],
+    "node_fns": {
+     "cmp": [
+      "busy_b0",
+      "busy_b1"
+     ],
+     "cnt": [
+      "cnt"
+     ],
+     "trg": [
+      "busy_b0"
+     ]
+    },
+    "out_base": [],
+    "out_node": {
+     "wf_cmp": "cmp",
+     "wf_cnt": "cnt",
+     "wf_src": "src",
+     "wf_trg": "trg",
+     "wf_z": "z"
+    }
+   },
+   "functions": [],
+   "outputs": [],
+   "version": 5
+  },
+  "functions": [
+   {
+    "enabled": true,
+    "id": "cnt",
+    "name": "People",
+    "params": {
+     "camera": "cam1",
+     "zone": "bay"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "camera": "cam1",
+     "expr": "(fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "box_color": "#FF8800",
+     "cooldown_s": 0,
+     "message": "Boxes",
+     "metric": "value",
+     "op": ">",
+     "paint_camera": "cam1",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "camera": "cam1",
+     "expr": "not (fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   }
+  ],
+  "outputs": [],
+  "tables": {},
+  "waits_for_detection": [
+   "cmp",
+   "cnt",
+   "src",
+   "trg"
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "cnt"
+   },
+   {
+    "message": "no Class Filter behind this Trigger - every class in view is recoloured; wire one into the rule it watches",
+    "node": "trg"
+   }
+  ],
+  "watches": [],
+  "widgets": []
+ },
+ "paint_boxes_in_zone_and_zone": {
+  "catalog": [
+   {
+    "key": "fn_cnt_count",
+    "kind": "area",
+    "label": "People \u00b7 count",
+    "node": "cnt",
+    "origin": "measure",
+    "range": "24h",
+    "role": "gauge_count",
+    "source": "history",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "People"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 oid",
+    "origin": "table",
+    "query": {
+     "agg": "count",
+     "field": "oid"
+    },
+    "role": "total",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "oid"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 weight",
+    "origin": "table",
+    "query": {
+     "agg": "latest",
+     "field": "weight"
+    },
+    "role": "gauge_count",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "weight"
+   }
+  ],
+  "commands": [],
+  "errors": [],
+  "frames_free": {
+   "_plan": {
+    "base": [
+     "busy_b0",
+     "busy_b1",
+     "cnt"
+    ],
+    "fed": [
+     "cmp",
+     "cnt",
+     "src",
+     "trg"
+    ],
+    "node_fns": {
+     "cmp": [
+      "busy_b0",
+      "busy_b1"
+     ],
+     "cnt": [
+      "cnt"
+     ],
+     "trg": [
+      "busy_b0"
+     ]
+    },
+    "out_base": [],
+    "out_node": {
+     "wf_cmp": "cmp",
+     "wf_cnt": "cnt",
+     "wf_src": "src",
+     "wf_trg": "trg",
+     "wf_z": "z"
+    }
+   },
+   "functions": [],
+   "outputs": [],
+   "version": 5
+  },
+  "functions": [
+   {
+    "enabled": true,
+    "id": "cnt",
+    "name": "People",
+    "params": {
+     "camera": "cam1",
+     "zone": "bay"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "camera": "cam1",
+     "expr": "(fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "box_color": "#FF0000",
+     "box_zone": "bay",
+     "cooldown_s": 0,
+     "message": "Paint",
+     "metric": "value",
+     "op": ">",
+     "paint_camera": "cam1",
+     "severity": "info",
+     "value": 0.0,
+     "zone_color": "#00FF00",
+     "zone_paint": "bay"
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "camera": "cam1",
+     "expr": "not (fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   }
+  ],
+  "outputs": [],
+  "tables": {},
+  "waits_for_detection": [
+   "cmp",
+   "cnt",
+   "src",
+   "trg"
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "cnt"
+   },
+   {
+    "message": "no Class Filter behind this Trigger - every class in view is recoloured; wire one into the rule it watches",
+    "node": "trg"
+   }
+  ],
+  "watches": [],
+  "widgets": []
+ },
+ "plain_event": {
+  "catalog": [
+   {
+    "key": "fn_cnt_count",
+    "kind": "area",
+    "label": "People \u00b7 count",
+    "node": "cnt",
+    "origin": "measure",
+    "range": "24h",
+    "role": "gauge_count",
+    "source": "history",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "People"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 oid",
+    "origin": "table",
+    "query": {
+     "agg": "count",
+     "field": "oid"
+    },
+    "role": "total",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "oid"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 weight",
+    "origin": "table",
+    "query": {
+     "agg": "latest",
+     "field": "weight"
+    },
+    "role": "gauge_count",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "weight"
+   }
+  ],
+  "commands": [],
+  "errors": [],
+  "frames_free": {
+   "_plan": {
+    "base": [
+     "busy_b0",
+     "busy_b1",
+     "cnt"
+    ],
+    "fed": [
+     "cmp",
+     "cnt",
+     "src",
+     "trg"
+    ],
+    "node_fns": {
+     "cmp": [
+      "busy_b0",
+      "busy_b1"
+     ],
+     "cnt": [
+      "cnt"
+     ],
+     "trg": [
+      "busy_b0"
+     ]
+    },
+    "out_base": [],
+    "out_node": {
+     "wf_cmp": "cmp",
+     "wf_cnt": "cnt",
+     "wf_src": "src",
+     "wf_trg": "trg",
+     "wf_z": "z"
+    }
+   },
+   "functions": [],
+   "outputs": [],
+   "version": 5
+  },
+  "functions": [
+   {
+    "enabled": true,
+    "id": "cnt",
+    "name": "People",
+    "params": {
+     "camera": "cam1",
+     "zone": "bay"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "camera": "cam1",
+     "expr": "(fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "Seen",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "camera": "cam1",
+     "expr": "not (fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   }
+  ],
+  "outputs": [],
+  "tables": {},
+  "waits_for_detection": [
+   "cmp",
+   "cnt",
+   "src",
+   "trg"
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "cnt"
+   }
+  ],
+  "watches": [],
+  "widgets": []
+ },
+ "rate_cooldown_alert_hold": {
+  "catalog": [
+   {
+    "key": "fn_cnt_count",
+    "kind": "area",
+    "label": "People \u00b7 count",
+    "node": "cnt",
+    "origin": "measure",
+    "range": "24h",
+    "role": "gauge_count",
+    "source": "history",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "People"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 oid",
+    "origin": "table",
+    "query": {
+     "agg": "count",
+     "field": "oid"
+    },
+    "role": "total",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "oid"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 weight",
+    "origin": "table",
+    "query": {
+     "agg": "latest",
+     "field": "weight"
+    },
+    "role": "gauge_count",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "weight"
+   }
+  ],
+  "commands": [],
+  "errors": [],
+  "frames_free": {
+   "_plan": {
+    "base": [
+     "busy_b0",
+     "busy_b1",
+     "cnt"
+    ],
+    "fed": [
+     "cmp",
+     "cnt",
+     "src",
+     "trg"
+    ],
+    "node_fns": {
+     "cmp": [
+      "busy_b0",
+      "busy_b1"
+     ],
+     "cnt": [
+      "cnt"
+     ],
+     "trg": [
+      "busy_b0"
+     ]
+    },
+    "out_base": [],
+    "out_node": {
+     "wf_cmp": "cmp",
+     "wf_cnt": "cnt",
+     "wf_src": "src",
+     "wf_trg": "trg",
+     "wf_z": "z"
+    }
+   },
+   "functions": [],
+   "outputs": [],
+   "version": 5
+  },
+  "functions": [
+   {
+    "enabled": true,
+    "id": "cnt",
+    "name": "People",
+    "params": {
+     "camera": "cam1",
+     "zone": "bay"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "camera": "cam1",
+     "expr": "(fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 7,
+     "message": "Held",
+     "metric": "value",
+     "op": ">",
+     "out": {
+      "hold_s": 12.0
+     },
+     "rate": "cooldown",
+     "rate_s": 7.0,
+     "severity": "warn",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "camera": "cam1",
+     "expr": "not (fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   }
+  ],
+  "outputs": [],
+  "tables": {},
+  "waits_for_detection": [
+   "cmp",
+   "cnt",
+   "src",
+   "trg"
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "cnt"
+   }
+  ],
+  "watches": [],
+  "widgets": []
+ },
+ "rate_cooldown_payloads": {
+  "catalog": [
+   {
+    "key": "fn_cnt_count",
+    "kind": "area",
+    "label": "People \u00b7 count",
+    "node": "cnt",
+    "origin": "measure",
+    "range": "24h",
+    "role": "gauge_count",
+    "source": "history",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "People"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 oid",
+    "origin": "table",
+    "query": {
+     "agg": "count",
+     "field": "oid"
+    },
+    "role": "total",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "oid"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 weight",
+    "origin": "table",
+    "query": {
+     "agg": "latest",
+     "field": "weight"
+    },
+    "role": "gauge_count",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "weight"
+   }
+  ],
+  "commands": [],
+  "errors": [],
+  "frames_free": {
+   "_plan": {
+    "base": [
+     "busy_b0",
+     "busy_b1",
+     "cnt"
+    ],
+    "fed": [
+     "cmp",
+     "cnt",
+     "src",
+     "trg"
+    ],
+    "node_fns": {
+     "cmp": [
+      "busy_b0",
+      "busy_b1"
+     ],
+     "cnt": [
+      "cnt"
+     ],
+     "trg": [
+      "busy_b0"
+     ]
+    },
+    "out_base": [],
+    "out_node": {
+     "wf_cmp": "cmp",
+     "wf_cnt": "cnt",
+     "wf_src": "src",
+     "wf_trg": "trg",
+     "wf_z": "z"
+    }
+   },
+   "functions": [],
+   "outputs": [],
+   "version": 5
+  },
+  "functions": [
+   {
+    "enabled": true,
+    "id": "cnt",
+    "name": "People",
+    "params": {
+     "camera": "cam1",
+     "zone": "bay"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "camera": "cam1",
+     "expr": "(fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 20,
+     "message": "Pulse",
+     "metric": "value",
+     "op": ">",
+     "out": {
+      "idle_type": "string",
+      "idle_value": "idle",
+      "type": "number",
+      "value": "5"
+     },
+     "rate": "cooldown",
+     "rate_s": 20.0,
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "camera": "cam1",
+     "expr": "not (fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   }
+  ],
+  "outputs": [],
+  "tables": {},
+  "waits_for_detection": [
+   "cmp",
+   "cnt",
+   "src",
+   "trg"
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "cnt"
+   }
+  ],
+  "watches": [],
+  "widgets": []
+ },
+ "timer_cooldown_alert": {
+  "catalog": [
+   {
+    "key": "fn_cnt_count",
+    "kind": "area",
+    "label": "People \u00b7 count",
+    "node": "cnt",
+    "origin": "measure",
+    "range": "24h",
+    "role": "gauge_count",
+    "source": "history",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "People"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 oid",
+    "origin": "table",
+    "query": {
+     "agg": "count",
+     "field": "oid"
+    },
+    "role": "total",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "oid"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 weight",
+    "origin": "table",
+    "query": {
+     "agg": "latest",
+     "field": "weight"
+    },
+    "role": "gauge_count",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "weight"
+   }
+  ],
+  "commands": [],
+  "errors": [],
+  "frames_free": {
+   "_plan": {
+    "base": [
+     "busy_b0",
+     "busy_b1",
+     "cnt"
+    ],
+    "fed": [
+     "cmp",
+     "cnt",
+     "src",
+     "trg"
+    ],
+    "node_fns": {
+     "cmp": [
+      "busy_b0",
+      "busy_b1"
+     ],
+     "cnt": [
+      "cnt"
+     ],
+     "trg": [
+      "busy_b0"
+     ]
+    },
+    "out_base": [],
+    "out_node": {
+     "wf_cmp": "cmp",
+     "wf_cnt": "cnt",
+     "wf_src": "src",
+     "wf_trg": "trg",
+     "wf_z": "z"
+    }
+   },
+   "functions": [],
+   "outputs": [],
+   "version": 5
+  },
+  "functions": [
+   {
+    "enabled": true,
+    "id": "cnt",
+    "name": "People",
+    "params": {
+     "camera": "cam1",
+     "zone": "bay"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "camera": "cam1",
+     "expr": "(fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 45,
+     "message": "Too many",
+     "metric": "value",
+     "op": ">",
+     "severity": "crit",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "camera": "cam1",
+     "expr": "not (fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   }
+  ],
+  "outputs": [],
+  "tables": {},
+  "waits_for_detection": [
+   "cmp",
+   "cnt",
+   "src",
+   "trg"
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "cnt"
+   }
+  ],
+  "watches": [],
+  "widgets": []
+ },
+ "timer_default_cooldown": {
+  "catalog": [
+   {
+    "key": "fn_cnt_count",
+    "kind": "area",
+    "label": "People \u00b7 count",
+    "node": "cnt",
+    "origin": "measure",
+    "range": "24h",
+    "role": "gauge_count",
+    "source": "history",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "People"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 oid",
+    "origin": "table",
+    "query": {
+     "agg": "count",
+     "field": "oid"
+    },
+    "role": "total",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "oid"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 weight",
+    "origin": "table",
+    "query": {
+     "agg": "latest",
+     "field": "weight"
+    },
+    "role": "gauge_count",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "weight"
+   }
+  ],
+  "commands": [],
+  "errors": [],
+  "frames_free": {
+   "_plan": {
+    "base": [
+     "busy_b0",
+     "busy_b1",
+     "cnt"
+    ],
+    "fed": [
+     "cmp",
+     "cnt",
+     "src",
+     "trg"
+    ],
+    "node_fns": {
+     "cmp": [
+      "busy_b0",
+      "busy_b1"
+     ],
+     "cnt": [
+      "cnt"
+     ],
+     "trg": [
+      "busy_b0"
+     ]
+    },
+    "out_base": [],
+    "out_node": {
+     "wf_cmp": "cmp",
+     "wf_cnt": "cnt",
+     "wf_src": "src",
+     "wf_trg": "trg",
+     "wf_z": "z"
+    }
+   },
+   "functions": [],
+   "outputs": [],
+   "version": 5
+  },
+  "functions": [
+   {
+    "enabled": true,
+    "id": "cnt",
+    "name": "People",
+    "params": {
+     "camera": "cam1",
+     "zone": "bay"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "camera": "cam1",
+     "expr": "(fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 30,
+     "message": "Busy",
+     "metric": "value",
+     "op": ">",
+     "severity": "warn",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "camera": "cam1",
+     "expr": "not (fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   }
+  ],
+  "outputs": [],
+  "tables": {},
+  "waits_for_detection": [
+   "cmp",
+   "cnt",
+   "src",
+   "trg"
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "cnt"
+   }
+  ],
+  "watches": [],
+  "widgets": []
+ },
+ "watchdog_new_object": {
+  "catalog": [
+   {
+    "key": "fn_cnt_count",
+    "kind": "area",
+    "label": "People \u00b7 count",
+    "node": "cnt",
+    "origin": "measure",
+    "range": "24h",
+    "role": "gauge_count",
+    "source": "history",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "People"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 oid",
+    "origin": "table",
+    "query": {
+     "agg": "count",
+     "field": "oid"
+    },
+    "role": "total",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "oid"
+   },
+   {
+    "columns": [
+     {
+      "name": "oid",
+      "type": "text"
+     },
+     {
+      "name": "weight",
+      "type": "number"
+     }
+    ],
+    "dataset": "visits",
+    "group": "Visits",
+    "key": "",
+    "kind": "tile",
+    "label": "Visits \u00b7 weight",
+    "origin": "table",
+    "query": {
+     "agg": "latest",
+     "field": "weight"
+    },
+    "role": "gauge_count",
+    "source": "dataset",
+    "surfaces": [
+     "dashboard",
+     "analytics"
+    ],
+    "title": "weight"
+   }
+  ],
+  "commands": [],
+  "errors": [],
+  "frames_free": {
+   "_plan": {
+    "base": [
+     "busy_b0",
+     "busy_b1",
+     "cnt"
+    ],
+    "fed": [
+     "cmp",
+     "cnt",
+     "src",
+     "trg"
+    ],
+    "node_fns": {
+     "cmp": [
+      "busy_b0",
+      "busy_b1"
+     ],
+     "cnt": [
+      "cnt"
+     ],
+     "trg": [
+      "busy_b0"
+     ]
+    },
+    "out_base": [],
+    "out_node": {
+     "wf_cmp": "cmp",
+     "wf_cnt": "cnt",
+     "wf_src": "src",
+     "wf_trg": "trg",
+     "wf_z": "z"
+    }
+   },
+   "functions": [],
+   "outputs": [],
+   "version": 5
+  },
+  "functions": [
+   {
+    "enabled": true,
+    "id": "cnt",
+    "name": "People",
+    "params": {
+     "camera": "cam1",
+     "zone": "bay"
+    },
+    "type": "zone_count"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b0",
+    "name": "If / Else if \u00b7 branch 1",
+    "params": {
+     "camera": "cam1",
+     "expr": "(fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 30,
+     "message": "Intruder",
+     "metric": "value",
+     "oid_source": "cnt",
+     "op": ">",
+     "repeat": "new_object",
+     "severity": "warn",
+     "value": 0.0
+    },
+    "type": "expr"
+   },
+   {
+    "enabled": true,
+    "id": "busy_b1",
+    "name": "If / Else if \u00b7 otherwise",
+    "params": {
+     "camera": "cam1",
+     "expr": "not (fn_cnt_count > 1)"
+    },
+    "trigger": {
+     "cooldown_s": 0,
+     "message": "If / Else if \u00b7 otherwise triggered",
+     "metric": "value",
+     "op": ">",
+     "severity": "info",
+     "value": 0.0
+    },
+    "type": "expr"
+   }
+  ],
+  "outputs": [],
+  "tables": {},
+  "waits_for_detection": [
+   "cmp",
+   "cnt",
+   "src",
+   "trg"
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "cnt"
+   }
+  ],
+  "watches": [],
+  "widgets": []
+ }
+}

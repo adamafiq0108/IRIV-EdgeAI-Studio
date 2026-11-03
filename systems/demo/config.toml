@@ -1,0 +1,153 @@
+# Demo system -- the detection app's own config.
+#
+# A system package owns its app config. The dashboard never reads this file;
+# the app and its adapter do. Secrets and per-device values go in a gitignored
+# config.local.toml beside it, same layering as config/ (conventions sec 6).
+
+[app]
+display_name = "Demo System"
+slug = "demo"
+# data_dir: where events.jsonl + snapshots live. LEAVE UNSET for automatic
+# storage -- the NVMe (/mnt/nvme/cytron/<slug>/data) when the drive is mounted,
+# the package's local ./data on the eMMC otherwise (app/config.py data_dir()).
+# Set an explicit path only to override that (it wins if creatable).
+# data_dir = "/mnt/nvme/cytron/demo/data"
+stream_port = 5102         # MJPEG the agent proxies; never the agent's own 5101
+# Event debouncing: events are emitted on TRANSITIONS, not per frame. A
+# condition that persists (an object parked in a keep-out zone) writes one
+# entry event, then re-announces itself every event_heartbeat_s (0 = never)
+# so downstream liveness never mistakes "still there" for silence, then one
+# clear event with the incident's duration once it has been gone for
+# event_clear_hold_s (the hold stops one missed detection frame from
+# splitting an incident in two). Per-frame emission wrote ~480k identical
+# rows a day for a single parked object.
+event_heartbeat_s = 60
+event_clear_hold_s = 2.0
+# Camera watchdog: with AI detection on, a camera that gives no frames for
+# this many seconds restarts detection by itself (camera(s) and accelerator
+# released and reacquired, as Stop then Start), retrying after 5, 10, 30,
+# then every 60 s until it is back. 0 switches it off. See app/camwatch.py.
+camera_lost_restart_s = 5
+
+[camera]
+# cv2 VideoCapture source: an index (0) for USB, or an RTSP/file URL.
+# "synthetic" generates frames with no hardware at all -- what a fresh clone
+# uses, and what CI uses.
+source = "synthetic"
+width = 640
+height = 480
+fps = 10
+# FFmpeg decoding for RTSP/HTTP/file sources only (USB, GigE and gstreamer
+# ignore both). Read once at app start, for every camera of the system; an
+# OPENCV_FFMPEG_* variable already in the environment wins. See
+# apply_ffmpeg_env in app/camera.py.
+#   ffmpeg_threads  decoder threads per camera, default 2; 0 = OpenCV's
+#                   default (one per CPU). Needs OpenCV 4.7+.
+#   ffmpeg_options  OpenCV's OPENCV_FFMPEG_CAPTURE_OPTIONS, "key;value|...",
+#                   e.g. "rtsp_transport;tcp". Default "" leaves FFmpeg alone.
+#                   Without a transport named, prefer_tcp is kept in front.
+# ffmpeg_threads = 2
+# ffmpeg_options = ""
+
+[video]
+# Who draws the live overlay (boxes, zones, links, bubbles, trails, the HUD)
+# on the picture a browser watches, over WebRTC and MJPEG alike:
+#   "server"  burned into every frame by the app (the default; the picture
+#             is exactly what it has always been)
+#   "client"  the frames go out plain and the browser draws the overlay on a
+#             canvas from the app's /overlay messages, which saves the board a
+#             full-frame paint per published frame. Snapshots, clips and the
+#             depth view stay painted by the app either way.
+# Read live: an edit takes effect at the app's next config check.
+# overlay = "server"
+# Client mode only. overlay_hz: the most overlay messages a second per camera
+# (default 10, 1..30). overlay_delay_ms: hold each message this long before
+# the browser draws it (default 0, up to 5000), to line the boxes up with a
+# picture that reaches the screen later than they do.
+# overlay_hz = 10
+# overlay_delay_ms = 0
+# Video saving, both OFF by default (Detection page, Quality, "Video saving").
+# on_demand: a camera the app paints and publishes itself stops painting,
+# encoding and publishing its live view while nobody watches it (no WebRTC
+# reader on the video gateway, no MJPEG viewer), 10 s after the last one left;
+# a plain frame every 2 s keeps the stream ready, and the first viewer brings
+# it back to full rate within about a second. Detection, the overlay
+# messages, snapshots and clips never pause. Passthrough, depth and
+# measurement cameras are never paused.
+# view_on_detect: dashboard video tiles, the hub Live Wall and the live feed
+# open the video only while the AI sees something on that camera, and close
+# it view_hold_s seconds (default 30, 2..120) after the last detection.
+# Needs overlay = "client" (the detections come from the overlay messages);
+# ignored with "server". Never applies on the Detection page.
+# on_demand = false
+# view_on_detect = false
+# view_hold_s = 30
+
+[detector]
+# Which detector class to load (see app/detector.py REGISTRY). "mock" needs no
+# model and no GPU; swap in your own without touching the app loop.
+kind = "mock"
+confidence = 0.5
+task = "detection"
+# Where on a box the object "is" when testing zones: bottom_center (feet) or
+# center. Feet is right for people standing on a floor plane.
+anchor = "bottom_center"
+
+# No default zones -- the operator draws them on the Detection page. Removing
+# all of them there means NO zones (nothing baked on the feed), not a default
+# reappearing. (A legacy [detector].zone pixel rectangle is still honoured if
+# present, but is deliberately not set here.)
+
+[detector.mock]
+# Synthetic detection cadence, for demos and tests.
+events_per_minute = 12
+violation_ratio = 0.3
+
+[detector.hailo]
+# Used when kind = "hailo". The HEF is resolved as models/<arch>/<model>.hef
+# with arch auto-detected from the plugged-in accelerator (hailo8 | hailo8l |
+# hailo10h), so the same config runs on an AI Kit, an AI HAT and an AI HAT+.
+#
+# Fetch models first (they are NOT committed -- HEFs are large binaries):
+#   python systems/demo/scripts/fetch_models.py --list
+#   python systems/demo/scripts/fetch_models.py yolov8n
+model = "yolov8n"
+models_dir = "models"
+labels = "models/coco.txt"
+confidence = 0.45
+# Empty = every COCO class. ["person"] is the usual starting point for zone
+# counting and violations.
+classes = ["person"]
+
+# GStreamer detection pipeline -- an alternative to kind = "hailo" (raw
+# HailoRT). Set [detector].kind = "gstreamer" to use it. hailonet does
+# on-chip inference and hailofilter decodes the NMS in-pipeline, so there is no
+# manual buffer parsing and no VDevice to manage. The pipeline owns the camera
+# too (it uses [camera].source), so the OpenCV capture path is bypassed.
+#
+# Self-contained: needs `import hailo`, the system GStreamer elements, and the
+# system post-process .so -- NOT the hailo_apps framework.
+[detector.gstreamer]
+so_path = "/usr/local/hailo/resources/so/libyolo_hailortpp_postprocess.so"
+function = "filter_letterbox"      # yolov8/yolov5 NMS-on-chip; see the .so's exports
+
+[storage]
+# Snapshots have no count cap (0). Set a number to keep only that many; the
+# oldest are deleted past it. Either way the oldest also go when the drive
+# has less than min_free_mb free, so it never fills (the age rule in the
+# hub's Data retention applies on top).
+keep_snapshots = 0
+# min_free_mb = 1024
+# events.jsonl stays LIVE for this many days, then rotates and the rotated
+# events are moved -- never deleted -- into per-day gzip files under
+# archive_dir (default: the archive/ folder beside the data dir, so it lands
+# on the NVMe when the data does). Rotation preserves the byte-offset cursor
+# contract: the cursor carries a generation, and a reader mid-file finishes
+# the rotated-out file before moving on (app/store.py).
+events_live_days = 7
+# archive_dir = "/mnt/nvme/cytron/<slug>/archive"   # override only if needed
+# Size BACKSTOP: a runaway writer rotates into the same archive long before
+# the week is up. Age is the normal trigger; whichever trips first wins.
+max_events_mb = 64
+# app.log is bounded the same way (current + one previous file).
+max_log_mb = 16

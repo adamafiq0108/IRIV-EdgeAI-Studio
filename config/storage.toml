@@ -1,0 +1,29 @@
+# Storage -- the master's own database and paths.
+#
+# The product owns this schema. It does not read any system's database: that is
+# the adapter's job, on the device, through the contract.
+#
+# Secrets belong in storage.local.toml (gitignored), never here.
+
+[postgres]
+host = "localhost"
+port = 5432
+dbname = "cytron_dashboard"
+user = "cytron"
+password = ""            # set in storage.local.toml
+
+[retention]
+# The platform retention policy. Admin-controlled from the hub's
+# Administration > Data Retention panel (writes storage.local.toml); the hub's
+# background sweep enforces it (core/services/retention.py). Hard maximums are
+# product policy and are clamped in code: 45 days for device data, 12 months
+# for analytics/database. Auth, credentials, the audit log, configs, templates
+# and workflows are NEVER retention-managed, structurally.
+#
+# The master stores rolled-up events, not footage. Footage stays on the device
+# that recorded it and is streamed on demand.
+events_months = 12         # master DB (Postgres events); max 12
+history_months = 12        # analytics day-files (<store>/history); max 12
+events_days = 45           # per-system event ARCHIVES (7 days live first); max 45
+snapshots_days = 45        # evidence JPEGs; max 45
+clips_days = 45            # recorded MP4s; max 45

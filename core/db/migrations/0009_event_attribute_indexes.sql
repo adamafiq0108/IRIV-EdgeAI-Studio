@@ -1,0 +1,34 @@
+-- 0009: the event-filter vocabulary must not cost two seconds to read.
+--
+-- repos/events.py attributes() answers "which cameras/zones/types has this
+-- system ever recorded", for the filter pickers on the Event Table and for
+-- the workflow payload. It is eight `SELECT DISTINCT <col> ... LIMIT 200`
+-- queries, and on a real box it measured 2148ms to produce 24 short strings:
+--
+--     type              88ms -> 3 distinct     severity   909ms -> 4 distinct
+--     camera            63ms -> 8 distinct     model      874ms -> 2 distinct
+--     zone              35ms -> 1 distinct     status      73ms -> 1 distinct
+--     detection_label   56ms -> 2 distinct     function    50ms -> 3 distinct
+--
+-- Two separate faults, and the row counts say which is which.
+--
+-- 1. severity AND model HAD NO INDEX. Every other filterable column got a
+--    (system_slug, col) index in 0003/0005; these two were added to the
+--    FILTERABLE list later and nobody came back for them. So they were
+--    sequential scans of the whole events table -- 1.9M rows on the box
+--    measured above -- and together they were 83% of the 2148ms.
+--
+-- 2. The indexed columns were not much better than they look. A plain
+--    SELECT DISTINCT cannot skip: Postgres has no loose index scan, so
+--    `camera` walked 187,274 index entries end to end to emit 8 values. The
+--    index made it 63ms instead of 900ms, which hid the shape of the problem
+--    rather than fixing it. That half is fixed in the QUERY (see
+--    repos/events.py) -- a recursive skip-scan that asks for the next
+--    distinct value instead of reading every row and discarding duplicates.
+--
+-- Both halves are needed and neither works alone: the skip-scan is only fast
+-- if there is an index to skip along, which is what these two lines provide.
+-- Cost is one btree insert per row on a table whose ingest ceiling is a few
+-- rows a second, against a read that a page polls.
+CREATE INDEX IF NOT EXISTS events_severity_idx ON events (system_slug, severity);
+CREATE INDEX IF NOT EXISTS events_model_idx    ON events (system_slug, model);

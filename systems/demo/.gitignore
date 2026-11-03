@@ -1,0 +1,4 @@
+# Runtime data written by app/: events, snapshots, state, logs.
+data/
+# Per-device config: camera source, credentials, zone tuned on site.
+config.local.toml

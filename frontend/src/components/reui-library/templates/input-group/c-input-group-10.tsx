@@ -1,0 +1,20 @@
+import { Field } from "@/components/reui-library/ui/field"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/reui-library/ui/input-group"
+
+export default function Pattern() {
+  return (
+    <Field className="w-full max-w-xs">
+      <InputGroup>
+        <InputGroupInput placeholder="Query..." />
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton>Search</InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
+    </Field>
+  )
+}

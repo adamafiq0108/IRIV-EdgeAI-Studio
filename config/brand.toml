@@ -1,0 +1,11 @@
+# Brand -- everything a deployment renames.
+#
+# Nothing here may name a customer in the committed product. A deployment ships
+# its own brand.local.toml (gitignored) or its own brand.toml, and every string
+# below flips with no code touched.
+
+product_name = "IRIV Edge AI Studio"
+brand_sub = "MASTER"               # small text under the product name
+logo = "static/img/cytron.png"     # vendor mark
+accent = "#04bade"
+accent_alt = "#0396b5"

@@ -1,0 +1,94 @@
+# Hailo model catalogue for this system package.
+#
+# HEFs are NOT committed: they are large binaries, and each architecture needs
+# its own compile. They are fetched into models/<arch>/<file> by
+# scripts/fetch_models.py, and app/hailo.py resolves them from there with the
+# architecture auto-detected at runtime.
+#
+# Every model listed is published in the Hailo Model Zoo for hailo8, hailo8l
+# AND hailo10h, so the demo behaves the same on the AI Kit / AI HAT (Hailo-8,
+# 8L) and the AI HAT+ (Hailo-10H). Only the compiled-zoo release differs per
+# architecture, which is what [zoo.vers] records.
+#
+# Drop a HEF into models/<arch>/ by hand and it works too -- the catalogue is
+# for discovery and download, not a gate.
+
+[zoo]
+base_url = "https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/{ver}/{arch}/{name}.hef"
+
+[zoo.vers]
+hailo10h = "v5.4.0"
+hailo8 = "v2.19.0"
+hailo8l = "v2.19.0"
+
+# --------------------------------------------------------------- detection
+# The demo's zone counting and violation rules need boxes, so a detection
+# model is the one you want first. yolov8n is the default: fastest, and the
+# right call on a Hailo-8L or with several cameras.
+#
+# Two detection models, no more. A third that is neither the fast one nor the
+# accurate one is a decision the operator has to research to make, and yolov6n
+# was that: the same speed class as yolov8n with no reason to prefer it.
+#
+# The catalogue stops at "small" on purpose. yolov8m compiles to a 3-context
+# HEF: part of its weights streams over PCIe for every single inference, so it
+# runs at 14.7 frames/s on a Hailo-8 where yolov8s runs at 102 -- with four
+# cameras sharing one chip that is under 10 each, and an operator reads that
+# as the product being slow, not as a model they chose. Anyone who genuinely
+# wants a heavier model can still upload the HEF by hand; it is simply not
+# offered as a one-click choice.
+
+[models.yolov8n]
+task = "detection"
+file = "yolov8n.hef"
+labels = "coco.txt"
+postprocess = "nms_on_chip"
+input = { width = 640, height = 640 }
+description = "YOLOv8-nano, 80 COCO classes. Fastest; best for Hailo-8L or 4+ streams."
+
+[models.yolov8s]
+task = "detection"
+file = "yolov8s.hef"
+labels = "coco.txt"
+postprocess = "nms_on_chip"
+input = { width = 640, height = 640 }
+description = "YOLOv8-small. Higher FPS for multi-camera setups."
+
+# ------------------------------------------------------------ segmentation
+# Raw-head decode happens on the host; app/detector.py's hailo path assumes
+# NMS-on-chip, so these need a decoding step before they light up. Listed so
+# the catalogue is honest about what the hardware can run.
+
+[models.yolov8s_seg]
+task = "segmentation"
+file = "yolov8s_seg.hef"
+labels = "coco.txt"
+postprocess = "yolov8_seg_raw"
+input = { width = 640, height = 640 }
+description = "YOLOv8-small instance segmentation. Needs host-side decode."
+
+# ------------------------------------------------------------------- depth
+# Monocular depth: one camera, no stereo rig. Output is a DENSE per-pixel map,
+# not boxes, so it is decoded by app/hailo_depth.py rather than the detector's
+# NMS path -- see the `postprocess` value, which exists to say exactly that.
+#
+# It does not replace the object detector, it runs BESIDE it on the same chip:
+# the detector says where things are, this says how far away they are. Trained
+# on NYU-Depth (indoor rooms), so treat the metres as approximate.
+
+[models.scdepthv3]
+task = "depth"
+file = "scdepthv3.hef"
+labels = ""
+postprocess = "dense_depth"
+input = { width = 320, height = 256 }
+description = "SC-Depth v3 monocular depth. Per-pixel distance in metres; pairs with a detector to measure objects. Indoor-trained, approximate."
+
+# -------------------------------------------------------------------- pose
+[models.yolov8s_pose]
+task = "pose"
+file = "yolov8s_pose.hef"
+labels = "coco.txt"
+postprocess = "yolov8_pose_raw"
+input = { width = 640, height = 640 }
+description = "YOLOv8-small pose, 17 keypoints. Needs host-side decode."

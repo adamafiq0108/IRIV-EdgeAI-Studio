@@ -1,0 +1,27 @@
+# Shell scripts run on Linux (Pi, hub, master) but get edited on Windows.
+# A CRLF in scripts/setup_pi.sh makes the kernel look for `/usr/bin/env bash\r`
+# and fail with a bare "No such file or directory" that names nothing useful.
+*.sh text eol=lf
+
+# And every other file the kernel reads a shebang from. The rule above was
+# written for shell scripts and stopped there; scripts/flip_link.py is a
+# Python one, invoked directly through sudo, and a `git archive` taken on
+# Windows gave it CRLF. The board then failed an update with
+#
+#   env: 'python3': No such file or directory
+#
+# which names the interpreter rather than the file, so it reads as a broken
+# Python install. recover.py and db-console-role.py never showed it only
+# because they are run with an explicit `python3` in front.
+*.py text eol=lf
+*.mjs text eol=lf
+*.toml text eol=lf
+
+# udev rules, which the daemon parses line by line. A CRLF turns the last
+# token on every line into one ending in a carriage return, so a RUN+= path
+# becomes a program that does not exist.
+*.rules text eol=lf
+
+# nftables rule files (scripts/nftables), loaded by `nft -f` at boot. Same
+# reason as the udev rules: a CR on a line is part of its last token.
+*.nft text eol=lf

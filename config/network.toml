@@ -1,0 +1,24 @@
+# Network -- the box's own access point.
+#
+# The name is not here: it is built from the board's serial (hostinfo.ap_name)
+# so every unit is unique, and the front panel prints it. A name saved on
+# Settings -> Network goes to config/network.local.toml [ap].ssid, and Reset
+# Wi-Fi drops it again (netconf.ap_ssid is the one reader). Nor is the password:
+# the default, iriv1234 (netconf.DEFAULT_AP_PASSWORD), is written at install
+# (scripts/install.sh) or at the hub's first boot without one
+# (netconf.ensure_ap_password) into config/network.local.toml [ap].password
+# (0600, the service account). The front panel prints it, Settings -> Network
+# changes it, and Reset Wi-Fi brings the default back. A stored key is never
+# replaced by an update, except once: a key the 2026-10-05..07 generator made
+# (and no person stored) goes back to the default at the hub's start
+# (apdefault.py, [ap].migrated_default marks it done). [ap].user_set = true
+# means a person stored a key other than the default (apconf.save_ap); Reset
+# Wi-Fi drops it.
+
+[ap]
+# What wlan0 is at boot: "ap" broadcasts the box's own access point (the
+# default -- a box out of the box has an address you can find), "wifi" joins a
+# saved network. Always exactly one of the two. The Network page changes this
+# and asks for a reboot; the switch is made here, at boot, never live under
+# the page you are on.
+mode = "ap"

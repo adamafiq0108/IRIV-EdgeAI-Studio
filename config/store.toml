@@ -1,0 +1,21 @@
+# The online template store.
+#
+# Committed on purpose: these are product facts, the same on every box. What
+# is NOT here: the license key a customer activates (store.local.toml,
+# machine-written) and the owner's signing/issuing material
+# (store_signing.pem + licenses.local.toml, owner's hub only, gitignored).
+
+[repos.free]
+owner = "adamafiq0108"
+repo = "irivai-store"
+branch = "main"
+
+[repos.pro]
+owner = "adamafiq0108"
+repo = "irivai-store-pro"
+branch = "main"
+
+[signing]
+# ed25519 public key (raw, base64). The matching private key never ships:
+# it lives with the owner and signs every template manifest and license key.
+pubkey = "SCQyioIUDVVm8Gtke2lyulpQhW+4faZr39GB6WapiGw="

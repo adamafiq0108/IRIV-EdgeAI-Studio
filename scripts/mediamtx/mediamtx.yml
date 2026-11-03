@@ -1,0 +1,142 @@
+# MediaMTX for IRIV Edge AI -- the WebRTC side of the video path.
+#
+# Detection apps PUBLISH their annotated H.264 here over RTSP on loopback;
+# browsers PLAY it over WebRTC. The app never speaks WebRTC itself and the
+# browser never speaks RTSP: this process is the only thing that does both.
+#
+# Ports, and why each is bound where it is:
+#
+#   8554 RTSP publish   127.0.0.1 only. The publishers are detection apps on
+#                       THIS box, so nothing off-box has any business
+#                       reaching it -- and a loopback-only publish port needs
+#                       no credentials to be safe.
+#   8889 WebRTC signal  127.0.0.1 only. The browser does NOT talk to this
+#                       directly: the master proxies /whep so a session
+#                       cookie/header is required first (core/routes/webrtc.py).
+#                       Binding it to the LAN would be an unauthenticated way
+#                       to watch every camera on the box.
+#   8189 WebRTC media   0.0.0.0 (UDP). This one MUST be reachable from the
+#                       browser -- it is where the video actually flows. It
+#                       is safe to expose: the media is DTLS-SRTP encrypted
+#                       and a receiver needs the ICE ufrag/pwd from an SDP
+#                       answer, which only the authenticated /whep proxy
+#                       hands out.
+#   9997 API            127.0.0.1 only. Used by the hub to list paths/health,
+#                       and by a detection app on [video] feed = "passthrough"
+#                       to add an on-demand pull of an RTSP camera's main
+#                       stream (app/passthrough.py). Those paths, camera
+#                       credentials included, live in this process's memory
+#                       only -- the API never writes this file -- and any
+#                       local process can read them back, which is why this
+#                       port must never leave loopback. No credentials are
+#                       needed from loopback: authInternalUsers below grants
+#                       `api` to 127.0.0.1/::1 and to nobody else.
+#
+# Every other listener MediaMTX has is switched off below, by name, and the
+# auth policy is loopback-only for EVERY action, including `read`. The second
+# half is the one that matters: a listener we forgot (or one a later version
+# turns on by default, as v1.20.1 did with MoQ on :8892/:8893 -- Pipi H1,
+# 2026-10-11, every camera playable from the LAN with no login) is closed by
+# policy rather than by our remembering it. Read can be loopback-only because
+# no browser ever reads from this process: the only reader is the master's
+# WHEP proxy on this box. The media port (8189) is not an auth action at all;
+# it carries a session the proxy already authorised.
+#
+# The addresses a browser is offered (ICE host candidates) come from
+# webrtcIPsFromInterfaces: every interface the box has, read at the start of
+# every session, so a DHCP move or a fixed address set from the Network page
+# needs no reinstall. webrtcAdditionalHosts stays EMPTY on a LAN install: an
+# address stamped in at install time was the one the box had that day, and
+# the customer board was still advertising it two addresses later. It is for
+# a name the box is reached by from OUTSIDE its own interfaces -- a site's
+# domain in front of a reverse proxy (core/services/remote.py) -- and only
+# that.
+
+logLevel: info
+logDestinations: [stdout]
+
+###############################################
+# Who may do what. Replaces MediaMTX's default, which lets user "any"
+# publish, read and play back every path FROM ANY ADDRESS. Every publisher
+# (the detection apps, rtspclientsink to 127.0.0.1:8554), every reader (the
+# master's WHEP proxy, core/services/streaming.py) and every API caller
+# (passthrough.py, view_gate.py, the hub's health page) is a process on this
+# box, so the one user is pinned to loopback. A request from anywhere else is
+# refused with 401 whatever listener it arrives on. Do not widen `ips` to make
+# something work: a reader off the box must go through the master's
+# authenticated proxy, never straight to the gateway (tests/smoke_mediamtxauth.py).
+authMethod: internal
+authInternalUsers:
+  - user: any
+    pass:
+    ips: ['127.0.0.1/32', '::1/128']
+    permissions:
+      - action: publish
+      - action: read
+      - action: playback
+      - action: api
+      - action: metrics
+      - action: pprof
+
+readTimeout: 10s
+writeTimeout: 10s
+writeQueueSize: 512
+# A detection app publishes a live camera: a viewer joining late wants the
+# newest frame, not a backlog replayed at it.
+udpMaxPayloadSize: 1472
+
+###############################################
+# RTSP -- how detection apps publish
+rtsp: yes
+rtspTransports: [tcp]
+rtspAddress: 127.0.0.1:8554
+rtspEncryption: "no"
+
+###############################################
+# WebRTC -- how browsers watch
+webrtc: yes
+webrtcAddress: 127.0.0.1:8889
+# A bool here, unlike rtspEncryption's three-way string. Off because this
+# listener is loopback-only: the browser reaches it through the master's
+# HTTPS-or-not origin, and TLS between two processes on one box would buy
+# nothing but a certificate to expire.
+webrtcEncryption: false
+# The plural, list form: v1.20.1 still reads the old singular key but warns
+# on every start that it is deprecated.
+webrtcAllowOrigins: ['*']
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: ''
+webrtcIPsFromInterfaces: yes
+# Empty on purpose: see the note above. Not rewritten by any installer.
+webrtcAdditionalHosts: []
+# No STUN/TURN: this is a LAN product. A board and a browser on the same
+# network reach each other on host candidates; adding a public STUN server
+# would leak the deployment's existence to a third party for nothing.
+webrtcICEServers2: []
+
+###############################################
+# Everything else off: each one would be another unauthenticated way in.
+# Nothing in the product speaks RTMP, HLS, SRT or MoQ to this process (no
+# rtmp://, srt://, :8888, :8890 or :8892 anywhere in core/, the app or the
+# frontend; camwatch's 1935 is an RTMP CAMERA being probed, not us). MoQ is
+# listed because v1.20.1 turns it ON by default, on every interface, with a
+# player page and a self-signed certificate a browser accepts without a
+# prompt; playback because it would serve recordings on :9996.
+rtmp: no
+hls: no
+srt: no
+moq: no
+playback: no
+
+###############################################
+api: yes
+apiAddress: 127.0.0.1:9997
+metrics: no
+pprof: no
+
+###############################################
+# Paths are created on demand: one per camera, named <slug>__<camera_id> by
+# core/services/streaming.py. Declaring them up front would mean rewriting
+# this file every time an operator adds a camera.
+paths:
+  all_others:

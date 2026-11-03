@@ -1,0 +1,26 @@
+# Deployment mode -- what KIND of box this is.
+#
+# This is not a permission. Whether an account may do owner things is the
+# developer flag (core/services/auth.py, granted only by running
+# scripts/dev/make_dev_account.py with shell access). This file answers a
+# different question: does this box carry the owner's tooling at all.
+#
+#   customer  the shipped appliance. Runs systems, installs templates from the
+#             store, and nothing else. scripts/install.sh does not copy
+#             core/dev/ or scripts/dev/ onto the box, and the frontend is built
+#             so the developer panels are not in the bundle -- the code is
+#             ABSENT, not hidden behind a check.
+#
+#   dev       the owner's workshop. Mounts core/dev/: authoring built-in
+#             templates, publishing to the store, issuing license keys. Still
+#             needs a developer account on top; the two locks are independent.
+#
+# Default is customer, and a missing or unreadable file reads as customer, so
+# this fails closed. Flipping it to dev takes editing a file on the box -- there
+# is deliberately no API or UI that writes it, because a route that could turn
+# on the developer routes would be the developer routes.
+#
+# Issuing license keys additionally needs config/store_signing.pem, which lives
+# only on the owner's hub -- so even a box wrongly set to dev cannot mint keys.
+
+mode = "customer"

@@ -1,0 +1,37 @@
+<h1>Custom model: prepare the folder and upload it</h1>
+<p>This is the complete procedure for running your own compiled detection model on the box. It takes two files. Nothing else is needed -- no Python script, no extra config.</p>
+<h2>1. What a model is, to this system</h2>
+<p>A model is <strong>two files with the same name</strong>:</p>
+<pre><code>my_model/
+  my_model.hef     the compiled network (from the Hailo Dataflow Compiler)
+  my_model.json    what the network detects: the class names, in order</code></pre>
+<ul><li><code>.hef</code> -- the weights, compiled for the chip in your box. The input size is read from inside this file; you do not declare it.</li><li><code>.json</code> -- the description. The runtime cannot know your class names from the weights, so this file supplies them.</li></ul>
+<p><code>infer_example.py</code> or any other script that came with your compile is <strong>not used</strong> and should not be uploaded.</p>
+<h2>2. The .json</h2>
+<p>Exactly this shape. Replace the values with your own:</p>
+<pre><code>{
+  &quot;model&quot;: &quot;my_model&quot;,
+  &quot;hef&quot;: &quot;my_model.hef&quot;,
+  &quot;num_classes&quot;: 3,
+  &quot;classes&quot;: [
+    &quot;Sliding-Door&quot;,
+    &quot;pointer&quot;,
+    &quot;pointer_2&quot;
+  ],
+  &quot;target&quot;: &quot;hailo10h&quot;
+}</code></pre>
+<table><tr><th>Key</th><th>Meaning</th><th>Rule</th></tr><tr><td><code>model</code></td><td>the model's name</td><td>same as the file names, without extension</td></tr><tr><td><code>hef</code></td><td>the weights file</td><td><code>&lt;model&gt;.hef</code></td></tr><tr><td><code>num_classes</code></td><td>how many classes</td><td>must equal the length of <code>classes</code></td></tr><tr><td><code>classes</code></td><td>the class names</td><td><strong>in the model's output order</strong> -- class 0 first. Same order as the dataset the model was trained on</td></tr><tr><td><code>target</code></td><td>the chip it was compiled for</td><td><code>hailo10h</code>, <code>hailo8</code> or <code>hailo8l</code> -- must match the chip in the box</td></tr></table>
+<p>Optional keys the system also reads if present: <code>confidence</code> (0-1, the detection threshold to start with; the default is fine), <code>description</code>.</p>
+<h2>3. Naming rules</h2>
+<ul><li>The <code>.hef</code> and the <code>.json</code> <strong>must share one name</strong>: <code>my_model.hef</code> and <code>my_model.json</code>. A pair with different names is refused.</li><li>Names: letters, digits, <code>_</code>, <code>-</code>, <code>.</code> only. No spaces.</li><li><code>target</code> must be the chip in your box. A model compiled for <code>hailo8</code> does not load on a <code>hailo10h</code> box (and the other way round). The upload checks this and tells you.</li></ul>
+<h2>4. Upload from the dashboard</h2>
+<ol><li>Open the system, then <strong>Models</strong> in the rail.</li><li>In the <strong>Custom Models</strong> card, press <strong>+ Upload a model</strong>.</li><li>Pick the folder (or pick the two files together). The dialog shows the pair it found and any problem with it.</li><li>Press <strong>Upload</strong>. The model appears in the Custom Models list.</li><li>Switch it on there, or tick it as the running model. Detection restarts on the new model; class names appear as you gave them.</li></ol>
+<p>The upload puts the files on the box's model disk as <code>/mnt/nvme/model/&lt;model&gt;/&lt;model&gt;.hef</code> and <code>.json</code>. That is the same layout you would make by hand, so a model copied over by <code>scp</code> into that folder works identically.</p>
+<h2>5. Uploading by hand instead (optional)</h2>
+<p>If you have shell access:</p>
+<pre><code>scp -r my_model/ pi@&lt;box-ip&gt;:/mnt/nvme/model/</code></pre>
+<p>then press the reload arrow at the top right of the Custom Models card. The two-file rule and the naming rules above still apply.</p>
+<h2>6. If something is refused</h2>
+<table><tr><th>Message</th><th>Fix</th></tr><tr><td>the .hef and the .json must share one name</td><td>rename one so both are <code>&lt;model&gt;.hef</code> / <code>&lt;model&gt;.json</code></td></tr><tr><td>"num_classes" says N but "classes" lists M</td><td>make them agree; <code>classes</code> is the authority</td></tr><tr><td>this model was compiled for X; this box has a Y</td><td>recompile for the box's chip, or upload to a box with that chip</td></tr><tr><td>a model called X is already in the folder</td><td>delete the old one from the Custom Models card first, or rename yours</td></tr><tr><td>the model folder is not writable</td><td>on the box: <code>sudo chown -R pi:pi /mnt/nvme/model</code> (or the user the dashboard runs as)</td></tr></table>
+<h2>7. Checklist before you upload</h2>
+<ul class="checks"><li class="check">one folder, two files, same name</li><li class="check"><code>.json</code> is valid JSON (paste it into a JSON checker if unsure)</li><li class="check"><code>classes</code> in the model's output order, <code>num_classes</code> matches</li><li class="check"><code>target</code> is the chip in the box</li><li class="check">no other files needed -- scripts, weights in other formats, READMEs stay on your PC</li></ul>

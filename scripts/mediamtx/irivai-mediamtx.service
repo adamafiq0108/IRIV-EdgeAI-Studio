@@ -1,0 +1,18 @@
+[Unit]
+Description=IRIV Edge AI Studio video gateway (MediaMTX -- RTSP in, WebRTC out)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/mediamtx /etc/mediamtx/mediamtx.yml
+Restart=always
+RestartSec=3
+User=pi
+# The gateway holds no state worth keeping across a restart: every stream is
+# re-published by its detection app within seconds.
+KillMode=mixed
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,49 @@
+# Front panel -- the IRIV board's OLED, user button and buzzer.
+#
+# OFF by default, and that is not caution for its own sake: the board ships
+# with a factory Node-RED flow that drives this same screen, the same button
+# and the same buzzer. Two owners means two programs writing opposite pixels
+# down one I2C bus. Switch this on only where that flow has been stood down
+# (`sudo systemctl disable --now nodered`, or by deleting its groups), and the
+# hub's Settings -> Front panel page will tell you if it is still running.
+#
+# Machine-written overrides live in panel.local.toml.
+
+[panel]
+enabled = false
+
+# Where the screen is. The IRIV OLED is 0x3c on i2c-1; 60 is 0x3c in decimal,
+# which is how TOML says it without hex.
+i2c_bus = 1
+address = 60
+
+# What the panel responds to. Turning the button off leaves the pages showing
+# but stops them cycling, which is what a kiosk installation usually wants.
+button = true
+buzzer = true
+
+# Hold USER for five seconds to power the box down. The dashboard can still
+# ask for a shutdown or a reboot with this off.
+hold_shutdown = true
+
+# Page 2 tells whoever is standing at the box where to point a browser. The
+# address itself is on the IP page -- this is the port and path to add.
+# Left unset here on purpose: the panel then prints iriv.local:<software
+# port>, following Settings -> Network -> Software port. Set a line here (or
+# on the Front Panel page) only to print something else.
+# dashboard_url = "iriv.local:5100"
+
+# The Wi-Fi page prints the access point's password from config/network.toml
+# [ap].password (the one Settings -> Network sets). There is deliberately no
+# copy of it here: a second copy can only disagree with the real key.
+
+# The standing line under the rule at the bottom of every page.
+hint = "Press USER to cont..."
+
+# Which pages the button walks, in order:
+#   about  -- model, accelerator, revision, OS
+#   wifi   -- the access point to join
+#   url    -- the address to open
+#   ip     -- eth0 / eth1 / wlan0
+#   status -- load, temperature, RAM, disk
+pages = ["about", "wifi", "url", "ip", "status"]

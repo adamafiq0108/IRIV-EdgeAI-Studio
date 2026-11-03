@@ -1,0 +1,18 @@
+# The eth1 port, which is a USB adapter pretending to be a soldered-on port.
+#
+# eth0 is a real Raspberry Pi port. eth1 is a Realtek RTL8153 on USB, and it
+# arrives with two rough edges that eth0 does not have:
+#
+#   * its jack LEDs stay DARK on a gigabit link, because the chip drives one
+#     LED per speed and the 1G one is not the LED the jack wired up;
+#   * its address EEPROM is blank, so the kernel invents a new MAC every boot
+#     and DHCP hands the box a new address each time.
+#
+# Both are fixed by the helper, once per appearance of the interface. It runs
+# on the NET device rather than the USB device so that the driver has already
+# bound and named the interface, and so that the address can be set while the
+# interface is still down -- which it is here, and is not a moment later.
+#
+# 815[236] covers the RTL8152 (100M), the RTL8153 (this board) and the
+# RTL8156 (2.5G), which share the register.
+ACTION=="add", SUBSYSTEM=="net", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="815[236]", RUN+="/usr/local/lib/irivai/usbnet-setup.py $env{INTERFACE}"

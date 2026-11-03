@@ -1,0 +1,34 @@
+#!/usr/sbin/nft -f
+#
+# ap-isolate.nft -- nothing on the box's hotspot is routed onto the wired LAN.
+#
+# The hotspot is NetworkManager `ipv4.method shared`, which turns on IP
+# forwarding and masquerades wlan0's 10.42.0.0/24 out of every other
+# interface. That made the setup hotspot a wireless way INTO the site's
+# wired network for anyone who had its key -- and the key used to be the
+# same on every box (Pipi's CRITICAL chain, 2026-10-04).
+#
+# This drops FORWARDED traffic from wlan0 to ANY other interface -- a wired
+# port, and equally an LTE dongle (wwan0, usb0, ppp0), a second Wi-Fi radio
+# or a VPN (tun0, wg0): a list of wired names left those routed (Pipi's
+# 1.0.14 gate, F3). Hotspot client-to-client traffic is bridged by the AP
+# itself, not forwarded, so nothing on the hotspot needs this hook.
+#
+# The box itself is untouched: the dashboard (5100), the masters (511x), the video gateway and
+# WebRTC are INPUT to the box, not forwarded through it, so a laptop on the
+# hotspot still reaches everything the box serves. What it no longer gets is
+# a route through the box to the plant LAN (or the internet behind it).
+#
+# Own table, own name: it never touches the OS's or NetworkManager's rules
+# (nm-shared-wlan0), and a drop in any base chain is final, so it holds
+# whichever order the two load in. Loaded at boot by
+# irivai-ap-isolate.service (scripts/install.sh); install with
+# --allow-ap-forwarding to leave it out. Removal: nft delete table inet
+# irivai_ap_isolate.
+
+table inet irivai_ap_isolate {
+    chain forward {
+        type filter hook forward priority filter - 10; policy accept;
+        iifname "wlan0" oifname != "wlan0" drop
+    }
+}

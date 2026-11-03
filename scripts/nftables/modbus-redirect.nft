@@ -1,0 +1,31 @@
+#!/usr/sbin/nft -f
+#
+# modbus-redirect.nft -- a PLC polling this box on 502 reaches the Modbus
+# server on 5020.
+#
+# 502 is THE Modbus TCP port and every PLC and SCADA head defaults to it, but
+# below 1024 a port needs root, and the detection app that serves the
+# registers is not root. Giving the services CAP_NET_BIND_SERVICE was
+# rejected (Pipi, 2026-10-05): masters started by the hub would not inherit
+# it, and the capability would let an app bind ANY low port (67, 53, 80) on
+# the site LAN. This fixed redirect needs no runtime root path at all.
+#
+# prerouting only: traffic arriving from the LAN, the hotspot or USB-net is
+# redirected; a client on the box itself uses 5020. `inet`, so IPv6 too.
+# Only traffic ADDRESSED TO THE BOX (`fib daddr type local`): a hotspot
+# client talking Modbus to some other address is passed on untouched, not
+# answered by this box (Pipi, 2026-10-07).
+# Unconditional on purpose -- the target is fixed, which is why 5020 is a
+# reserved port (core/services/hubport.py RESERVED) that no hub, master or
+# stream may take. Nothing answers unless a system's Modbus server is
+# switched on: the redirect opens nothing that 5020 did not already.
+#
+# Own table, own name; loaded at boot by irivai-modbus-redirect.service
+# (scripts/install.sh). Removal: nft delete table inet irivai_modbus.
+
+table inet irivai_modbus {
+    chain prerouting {
+        type nat hook prerouting priority dstnat; policy accept;
+        iifname != "lo" fib daddr type local tcp dport 502 redirect to :5020
+    }
+}

@@ -1,0 +1,558 @@
+{
+ "bar_camera_hour": {
+  "errors": [],
+  "functions": [],
+  "warnings": [
+   {
+    "message": "this card counts EVERY matching recorded event - wire a function into it to scope it",
+    "node": "ev"
+   }
+  ],
+  "widgets": [
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "color": "#ff8800",
+    "id": "wf_ev",
+    "kind": "bar",
+    "label_size": "medium",
+    "limit": 15,
+    "query": {
+     "agg": "count",
+     "bucket": "hour",
+     "group_by": "camera",
+     "range": "today"
+    },
+    "source": "query",
+    "span": 1,
+    "sub": "",
+    "template": "plain",
+    "title": "Per camera",
+    "value_size": "medium"
+   }
+  ]
+ },
+ "dataset_series_into_chart": {
+  "errors": [],
+  "functions": [
+   {
+    "enabled": true,
+    "id": "in_frame",
+    "name": "In frame",
+    "params": {},
+    "type": "frame_count"
+   }
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "fr"
+   }
+  ],
+  "widgets": [
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "id": "wf_g",
+    "kind": "line",
+    "label_size": "medium",
+    "range": "24h",
+    "series": [
+     {
+      "agg": "avg",
+      "color": "",
+      "id": "s1",
+      "key": "fn_in_frame_count",
+      "label": "In frame",
+      "source": "history"
+     },
+     {
+      "agg": "avg",
+      "color": "#00aa00",
+      "columns": [
+       {
+        "name": "weight",
+        "type": "number"
+       },
+       {
+        "name": "defect_type",
+        "type": "text"
+       },
+       {
+        "name": "line",
+        "type": "text"
+       }
+      ],
+      "dataset": "defects",
+      "field": "weight",
+      "id": "s2",
+      "label": "Alerts",
+      "source": "dataset",
+      "ts_field": ""
+     }
+    ],
+    "source": "history",
+    "span": 1,
+    "template": "plain",
+    "title": "Mixed",
+    "value_size": "medium"
+   },
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "color": "",
+    "columns": [
+     {
+      "name": "weight",
+      "type": "number"
+     },
+     {
+      "name": "defect_type",
+      "type": "text"
+     },
+     {
+      "name": "line",
+      "type": "text"
+     }
+    ],
+    "dataset": "defects",
+    "id": "wf_ev",
+    "kind": "bar",
+    "label_size": "medium",
+    "limit": 15,
+    "query": {
+     "agg": "avg",
+     "field": "weight"
+    },
+    "source": "dataset",
+    "span": 1,
+    "sub": "",
+    "template": "plain",
+    "title": "Weights",
+    "value_size": "medium"
+   }
+  ]
+ },
+ "donut_dataset": {
+  "errors": [],
+  "functions": [],
+  "warnings": [],
+  "widgets": [
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "color": "",
+    "columns": [
+     {
+      "name": "weight",
+      "type": "number"
+     },
+     {
+      "name": "defect_type",
+      "type": "text"
+     },
+     {
+      "name": "line",
+      "type": "text"
+     }
+    ],
+    "dataset": "defects",
+    "id": "wf_ev",
+    "kind": "donut",
+    "label_size": "medium",
+    "limit": 15,
+    "query": {
+     "agg": "sum",
+     "field": "weight",
+     "filters": {
+      "line": "L2"
+     },
+     "group_by": "defect_type",
+     "range": "month"
+    },
+    "source": "dataset",
+    "span": 1,
+    "sub": "",
+    "template": "plain",
+    "title": "Defect mix",
+    "value_size": "medium"
+   }
+  ]
+ },
+ "legacy_events_table": {
+  "errors": [],
+  "functions": [],
+  "warnings": [
+   {
+    "message": "this card counts EVERY matching recorded event - wire a function into it to scope it",
+    "node": "ev"
+   }
+  ],
+  "widgets": [
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "color": "",
+    "id": "wf_ev",
+    "kind": "table",
+    "label_size": "medium",
+    "limit": 15,
+    "query": {
+     "agg": "count"
+    },
+    "source": "events",
+    "span": 1,
+    "sub": "",
+    "template": "plain",
+    "title": "Event Card",
+    "value_size": "medium"
+   }
+  ]
+ },
+ "line_events_unnamed": {
+  "errors": [],
+  "functions": [],
+  "warnings": [
+   {
+    "message": "this card counts EVERY matching recorded event - wire a function into it to scope it",
+    "node": "ev"
+   }
+  ],
+  "widgets": [
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "color": "",
+    "id": "wf_ev",
+    "kind": "line",
+    "label_size": "medium",
+    "limit": 15,
+    "query": {
+     "agg": "count",
+     "bucket": "15m",
+     "filters": {
+      "type": "alert"
+     }
+    },
+    "source": "query",
+    "span": 1,
+    "sub": "",
+    "template": "plain",
+    "title": "Event Card",
+    "value_size": "medium"
+   }
+  ]
+ },
+ "line_metric": {
+  "errors": [],
+  "functions": [
+   {
+    "enabled": true,
+    "id": "in_frame",
+    "name": "In frame",
+    "params": {},
+    "type": "frame_count"
+   }
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "fr"
+   }
+  ],
+  "widgets": [
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "id": "wf_ev",
+    "key": "fn_in_frame_count",
+    "kind": "line",
+    "label_size": "medium",
+    "range": "6h",
+    "source": "history",
+    "span": 1,
+    "template": "plain",
+    "title": "In frame over time",
+    "value_size": "medium"
+   }
+  ]
+ },
+ "series_into_chart": {
+  "errors": [],
+  "functions": [
+   {
+    "enabled": true,
+    "id": "in_frame",
+    "name": "In frame",
+    "params": {},
+    "type": "frame_count"
+   }
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "fr"
+   },
+   {
+    "message": "this card counts EVERY matching recorded event - wire a function into it to scope it",
+    "node": "ev"
+   }
+  ],
+  "widgets": [
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "id": "wf_g",
+    "kind": "line",
+    "label_size": "medium",
+    "range": "24h",
+    "series": [
+     {
+      "agg": "avg",
+      "color": "",
+      "id": "s1",
+      "key": "fn_in_frame_count",
+      "label": "In frame",
+      "source": "history"
+     },
+     {
+      "agg": "count",
+      "color": "#00aa00",
+      "id": "s2",
+      "label": "Alerts",
+      "query": {
+       "agg": "count",
+       "bucket": "hour",
+       "filters": {
+        "zone": "zone_a"
+       },
+       "range": "today"
+      },
+      "source": "query"
+     }
+    ],
+    "source": "history",
+    "span": 1,
+    "template": "plain",
+    "title": "Mixed",
+    "value_size": "medium"
+   },
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "color": "",
+    "id": "wf_ev",
+    "kind": "tile",
+    "label_size": "medium",
+    "limit": 15,
+    "query": {
+     "agg": "count",
+     "bucket": "hour",
+     "filters": {
+      "zone": "zone_a"
+     },
+     "range": "today"
+    },
+    "source": "query",
+    "span": 1,
+    "sub": "",
+    "template": "plain",
+    "title": "Violations",
+    "value_size": "medium"
+   }
+  ]
+ },
+ "table_events": {
+  "errors": [],
+  "functions": [],
+  "warnings": [
+   {
+    "message": "this card counts EVERY matching recorded event - wire a function into it to scope it",
+    "node": "ev"
+   }
+  ],
+  "widgets": [
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "color": "",
+    "id": "wf_ev",
+    "kind": "table",
+    "label_size": "medium",
+    "limit": 25,
+    "query": {
+     "agg": "count"
+    },
+    "source": "events",
+    "span": 1,
+    "sub": "",
+    "template": "plain",
+    "title": "Latest",
+    "value_size": "medium"
+   }
+  ]
+ },
+ "tile_events_conditions": {
+  "errors": [],
+  "functions": [],
+  "warnings": [
+   {
+    "message": "this card counts EVERY matching recorded event - wire a function into it to scope it",
+    "node": "ev"
+   }
+  ],
+  "widgets": [
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "color": "",
+    "id": "wf_ev",
+    "kind": "tile",
+    "label_size": "medium",
+    "limit": 15,
+    "query": {
+     "agg": "count",
+     "filters": {
+      "camera": "cam2",
+      "severity": "alert",
+      "type": "violation"
+     },
+     "range": "today"
+    },
+    "source": "query",
+    "span": 1,
+    "sub": "",
+    "template": "plain",
+    "title": "Helmet alerts",
+    "value_size": "medium"
+   }
+  ]
+ },
+ "tile_events_wired": {
+  "errors": [],
+  "functions": [
+   {
+    "enabled": true,
+    "id": "in_frame",
+    "name": "In frame",
+    "params": {},
+    "type": "frame_count"
+   }
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "fr"
+   }
+  ],
+  "widgets": [
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "color": "",
+    "id": "wf_ev",
+    "kind": "tile",
+    "label_size": "medium",
+    "limit": 15,
+    "query": {
+     "agg": "unique",
+     "field": "camera",
+     "filters": {
+      "function": "in_frame"
+     },
+     "range": "week"
+    },
+    "source": "query",
+    "span": 1,
+    "sub": "",
+    "template": "plain",
+    "title": "Raised by In frame",
+    "value_size": "medium"
+   }
+  ]
+ },
+ "verdict_metric": {
+  "errors": [],
+  "functions": [
+   {
+    "enabled": true,
+    "id": "in_frame",
+    "name": "In frame",
+    "params": {},
+    "type": "frame_count"
+   }
+  ],
+  "warnings": [
+   {
+    "message": "no Class Filter upstream - every detected class counts",
+    "node": "fr"
+   }
+  ],
+  "widgets": [
+   {
+    "anim": "",
+    "anim_replay": false,
+    "bands": {},
+    "bg": "",
+    "by_day": false,
+    "id": "wf_ev",
+    "key": "fn_in_frame_active",
+    "kind": "verdict",
+    "label_size": "medium",
+    "source": "stat",
+    "span": 1,
+    "states": [
+     {
+      "label": "CLEAR",
+      "tone": "ok",
+      "value": 0
+     },
+     {
+      "label": "BUSY",
+      "tone": "alert",
+      "value": 1
+     }
+    ],
+    "template": "plain",
+    "title": "State",
+    "value_size": "medium"
+   }
+  ]
+ }
+}

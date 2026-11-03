@@ -1,0 +1,43 @@
+# Runtime dependencies. Pinned loosely: this is a product, not a lockfile --
+# deployments pin exactly in their own repo.
+
+fastapi>=0.115
+uvicorn>=0.30
+psutil>=5.9          # agent only; device telemetry (CPU/mem/disk/net) reported
+                     # to the master dashboard. Telemetry shows n/a without it.
+matplotlib>=3.8      # master only; email digest charts (+ fallback PDF report)
+pillow>=10           # master: JPEG output for matplotlib. Device: synthetic
+                     # frames + snapshot annotation in systems/*/app/camera.py
+                     # when opencv-python is not installed. Without either, a
+                     # detection app still records events but serves no stream.
+python-multipart>=0.0.9   # master only; login form parsing
+psycopg2-binary>=2.9      # master only; cytron_dashboard (folders/metadata/audit,
+                          # v2.0). Master degrades gracefully if the DB is down.
+cryptography>=42          # master only; encrypts device bearer tokens at rest
+                          # (v2.0 #21). Degrades to plaintext + warning if absent.
+paho-mqtt>=1.6       # device only; the workflow's MQTT nodes (alert publish and
+                     # the telemetry publisher). Without it those outputs log
+                     # "paho-mqtt not installed" and skip -- everything else in
+                     # the app runs unaffected.
+pymodbus>=3.6,<3.9   # device only; the Modbus SERVER (a PLC polls this box for
+                     # zone counts and rule states) and the Modbus client nodes
+                     # that read a PLC's registers into the workflow. Was an
+                     # optional import for a long time and was not installed on
+                     # any board, so every Modbus node in the palette compiled,
+                     # wired, and did nothing at runtime.
+                     #
+                     # CAPPED below 3.9 deliberately. 3.15 reworked the
+                     # datastore into the simulator model: ModbusSlaveContext
+                     # is gone, and ModbusSequentialDataBlock became a shim
+                     # with no public setValues/getValues -- the two calls a
+                     # server needs to publish live values. Modbus is a frozen
+                     # protocol; there is nothing to gain by tracking a
+                     # library that rewrites its server API, and plenty to
+                     # lose. Verified against 3.6.9 on the board.
+pyserial>=3.5        # device only; the RTU half of the above (pymodbus needs it
+                     # for a serial transport) and the serial-port probe on the
+                     # Board I/O page.
+weasyprint>=61       # master only; styled HTML->PDF email report. Optional: needs
+                     # system libs (pango, cairo); email falls back to the
+                     # matplotlib report if it is missing. Pi: apt install
+                     # libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0

@@ -1,0 +1,21 @@
+# monitoring.toml -- device health thresholds + dashboard refresh intervals.
+# Committed defaults; override per-deployment in monitoring.local.toml.
+# Health classification: a metric >= its "critical" makes the device
+# critical; >= "warning" makes it warning; missing telemetry is "unknown"
+# (never critical). See core/services/health.py.
+
+[thresholds.cpu_percent]
+warning = 80
+critical = 95
+
+[thresholds.mem_percent]
+warning = 85
+critical = 95
+
+[thresholds.disk_percent]
+warning = 85
+critical = 95
+
+[thresholds.cpu_temp_c]
+warning = 70
+critical = 80

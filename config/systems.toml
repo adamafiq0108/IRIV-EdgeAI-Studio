@@ -1,0 +1,46 @@
+# Systems -- which system packages this deployment runs, and where each one's
+# master answers.
+#
+# Every system runs its OWN master process. Two systems is two masters, each
+# owning its own slave registry and its own pages. The hub is a separate
+# process in front of them: it renders cards and links out, and never renders a
+# system's pages itself.
+#
+# `dir` points at the deployment's system packages. Each subfolder with a
+# system.py is discovered automatically; adding one never edits a server file.
+#
+# `enabled` is the switch. Omit it to take everything found in `dir`.
+
+dir = "systems"
+enabled = ["demo"]
+
+# Where the hub answers. Masters use it for their "< Systems" back link.
+#
+# Only the PORT is read. The host is replaced at render time with the host the
+# browser actually used (core/net.py), so the back link follows the operator's
+# address instead of a value that goes stale the next time DHCP moves the board.
+# That is also why loopback is fine to commit here.
+#
+# The port is a SETTING: Settings -> Network -> Software port writes
+#   [hub] port = <n>  and  url = "http://127.0.0.1:<n>"
+# into systems.local.toml, and the hub itself binds that port at start
+# (core/services/hubport.py). Change it there, not here.
+[hub]
+url = "http://127.0.0.1:5100"
+
+# One block per system, keyed by slug. The hub probes this URL for status (a
+# call made by the hub process, on this box) and links each card at its PORT
+# with the browser's own host substituted. A system with no block gets a card
+# that says so, which beats a dead link.
+#
+# Real hosts belong in systems.local.toml (gitignored), never in this committed
+# file:
+#
+#   [masters.<slug>]
+#   url = "http://192.0.2.10:5110"
+#
+# Loopback defaults so a fresh clone runs on one host; override the real
+# addresses in systems.local.toml.
+# [masters.demo]
+# url = "http://127.0.0.1:5110"
+
