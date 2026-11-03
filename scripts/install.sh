@@ -89,7 +89,7 @@ usage() {
     cat <<'EOF'
 Usage: sudo ./scripts/install.sh [options]
 
-Installs IRIV Edge AI Studio as a customer appliance: hub + one master per
+Installs IRIV EdgeAI Studio as a customer appliance: hub + one master per
 built-in system, and optionally the device agent, all on this box.
 
 Options:
@@ -1427,7 +1427,7 @@ say "systemd units"
 write_unit() { printf '%s\n' "$2" > "$1"; note "wrote $1"; }
 
 write_unit /etc/systemd/system/irivai-hub.service "[Unit]
-Description=IRIV Edge AI Studio hub
+Description=IRIV EdgeAI Studio hub
 After=network-online.target
 Wants=network-online.target
 
@@ -1457,7 +1457,7 @@ RestartSec=5
 WantedBy=multi-user.target"
 
 write_unit /etc/systemd/system/irivai-master@.service "[Unit]
-Description=IRIV Edge AI Studio master (%i)
+Description=IRIV EdgeAI Studio master (%i)
 After=network-online.target
 Wants=network-online.target
 
@@ -1573,7 +1573,7 @@ if [[ $OTA_LAYOUT -eq 1 ]]; then
 # (boards .21/.22, 2026-10-05). The hub also brings them back on its own
 # (core/services/update_revive.py); this makes the applier's revive real.
 write_unit /etc/systemd/system/irivai-apply.service "[Unit]
-Description=IRIV Edge AI Studio update
+Description=IRIV EdgeAI Studio update
 After=network-online.target
 
 [Service]
@@ -1749,7 +1749,7 @@ if b"\r\n" in data:
 PY
 done
 write_unit /etc/systemd/system/irivai-recover.service "[Unit]
-Description=IRIV Edge AI Studio interrupted-update repair
+Description=IRIV EdgeAI Studio interrupted-update repair
 Before=irivai-hub.service
 DefaultDependencies=no
 After=local-fs.target
@@ -1953,7 +1953,7 @@ if [[ -n "$ADAPTER" ]]; then
     # --unlock is deliberately absent. A device that reopens its pairing window
     # on every reboot can be seized by any host on the LAN.
     write_unit /etc/systemd/system/irivai-agent.service "[Unit]
-Description=IRIV Edge AI Studio device agent (Contract v1)
+Description=IRIV EdgeAI Studio device agent (Contract v1)
 After=network-online.target
 Wants=network-online.target
 
@@ -2235,7 +2235,7 @@ if [[ $INSTALL_SERVICE -eq 1 ]]; then
                 /usr/local/lib/irivai/ap-isolate.nft
         sed -i 's/\r$//' /usr/local/lib/irivai/ap-isolate.nft
         write_unit /etc/systemd/system/irivai-ap-isolate.service "[Unit]
-Description=IRIV Edge AI: no forwarding from the hotspot to the wired LAN
+Description=IRIV EdgeAI Studio: no forwarding from the hotspot to the wired LAN
 DefaultDependencies=no
 After=local-fs.target
 Before=network-pre.target NetworkManager.service
@@ -2274,7 +2274,7 @@ if [[ $INSTALL_SERVICE -eq 1 ]]; then
                 /usr/local/lib/irivai/modbus-redirect.nft
         sed -i 's/\r$//' /usr/local/lib/irivai/modbus-redirect.nft
         write_unit /etc/systemd/system/irivai-modbus-redirect.service "[Unit]
-Description=IRIV Edge AI: Modbus 502 -> 5020 redirect
+Description=IRIV EdgeAI Studio: Modbus 502 -> 5020 redirect
 After=network-pre.target
 Before=network-online.target
 

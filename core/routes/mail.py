@@ -122,11 +122,11 @@ def _send_test(acc, to):
     import smtplib                                           # noqa: PLC0415
     from email.message import EmailMessage                   # noqa: PLC0415
     msg = EmailMessage()
-    msg["Subject"] = "IRIV Edge AI Studio - mailbox test"
+    msg["Subject"] = "IRIV EdgeAI Studio - mailbox test"
     msg["From"] = acc["sender"]
     msg["To"] = to
     msg.set_content(
-        f"This is a test from IRIV Edge AI Studio.\n\n"
+        f"This is a test from IRIV EdgeAI Studio.\n\n"
         f"If you are reading it, the mailbox \"{acc['name']}\" "
         f"({acc['sender']}) can send.\n")
     try:

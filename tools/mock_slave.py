@@ -31,7 +31,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 API_VERSION = "1.3"
 SLUG = "mock"
 
-app = FastAPI(title="IRIV Edge AI Studio mock slave", docs_url=None, redoc_url=None)
+app = FastAPI(title="IRIV EdgeAI Studio mock slave", docs_url=None, redoc_url=None)
 
 _STARTED = time.time()
 _state = {

@@ -93,7 +93,7 @@ check("the app's own copy names the same missing piece", apphw.check()["missing"
 
 from core import about                                               # noqa: E402
 check("--about names the product, version and developer",
-      "IRIV Edge AI" in about.text() and "Developed by adamcytron" in about.text())
+      "IRIV EdgeAI Studio" in about.text() and "Developed by adamcytron" in about.text())
 check("the hub has --about", '"--about"' in src("hub_server.py"))
 
 if bad:

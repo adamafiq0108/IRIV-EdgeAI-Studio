@@ -1,4 +1,4 @@
-# IRIV Edge AI Studio
+# IRIV EdgeAI Studio
 
 A template for building a fleet dashboard over edge AI systems.
 

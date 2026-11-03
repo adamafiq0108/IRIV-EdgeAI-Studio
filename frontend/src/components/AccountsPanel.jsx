@@ -1,5 +1,5 @@
 // AccountsPanel - platform-level account management, lives in the hub
-// (IRIV Edge AI Studio → Administration). ONE place to manage every account: the
+// (IRIV EdgeAI Studio → Administration). ONE place to manage every account: the
 // credential store and session secret are already shared across the hub and
 // every master on this box, so a user created here logs into everything their
 // systems list allows. Standalone systems deliberately carry no account UI.

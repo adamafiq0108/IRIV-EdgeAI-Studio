@@ -104,7 +104,7 @@ function header(doc, { systemName, device, title, notice }) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(...INK);
-  doc.text(`IRIV Edge AI · ${systemName}`, L, 17);
+  doc.text(`IRIV EdgeAI Studio · ${systemName}`, L, 17);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...GREY);
@@ -137,7 +137,7 @@ function value(doc, text, x, y, size = 10, color = INK) {
 
 function description(view, systemName) {
   const device = view.device ? ` on ${view.device}` : "";
-  const parts = [`The violation was detected by the IRIV Edge AI monitor${device} of ${systemName}, ` +
+  const parts = [`The violation was detected by the IRIV EdgeAI Studio monitor${device} of ${systemName}, ` +
     "and the photo was taken at the same moment. The time comes from the device clock."];
   if (view.timer) {
     const t = view.timer;

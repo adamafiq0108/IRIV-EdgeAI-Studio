@@ -28,7 +28,7 @@ config/layouts/
 logs/
 .DS_Store
 
-# Frontend (React SPA). IRIV Edge AI Studio builds the bundle on the host in setup_pi.sh, so
+# Frontend (React SPA). IRIV EdgeAI Studio builds the bundle on the host in setup_pi.sh, so
 # neither the deps nor the built output is committed (unlike the edge apps, which
 # ship a pre-built dist because a Pi should never need Node).
 frontend/node_modules/

@@ -1,5 +1,5 @@
 /* =====================================================================
-   IRIV Edge AI Studio -- core styles.
+   IRIV EdgeAI Studio -- core styles.
    Ported from the storyboard mockup. Accent colours are injected per
    deployment from config/brand.toml (see frontend/src/state/app.jsx),
    so nothing customer-specific belongs in this file.

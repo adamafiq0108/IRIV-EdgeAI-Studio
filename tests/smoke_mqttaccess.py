@@ -169,9 +169,9 @@ check("the pill's words are the service's words",
           for m in broker.MODE_LABELS), pill)
 
 # -- configs saved before the field --------------------------------------------
-OLD_SECURED = ("# Written by IRIV Vision Studio\nlistener 1883\n"
+OLD_SECURED = ("# Written by IRIV EdgeAI Studio\nlistener 1883\n"
                "allow_anonymous false\npassword_file /etc/mosquitto/irivai.passwd\n")
-OLD_LOCAL = "# Written by IRIV Vision Studio\nlistener 1883 127.0.0.1\nallow_anonymous true\n"
+OLD_LOCAL = "# Written by IRIV EdgeAI Studio\nlistener 1883 127.0.0.1\nallow_anonymous true\n"
 inst = read("scripts", "install.sh")
 INSTALLER = inst[inst.index("<<'MQTTCONF'") + 12:inst.index("\nMQTTCONF\n")]
 check("an old secured conf reads as the network, secured",

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-contract_check.py -- Conformance harness for IRIV Edge AI Studio System Contract v1.
+contract_check.py -- Conformance harness for IRIV EdgeAI Studio System Contract v1.
 
 This file is the arbiter. docs/contract-v1.md explains the contract; this
 decides it. If the two disagree, the doc is the bug.
@@ -400,7 +400,7 @@ def check_stream(base, token, caps):
 
 def main():
     global _verbose
-    p = argparse.ArgumentParser(description="Check a slave against IRIV Edge AI Studio System Contract v1.")
+    p = argparse.ArgumentParser(description="Check a slave against IRIV EdgeAI Studio System Contract v1.")
     p.add_argument("base_url", help="e.g. http://192.0.2.10:5101")
     p.add_argument("--token", default="", help="bearer token issued at pairing")
     p.add_argument("--verbose", action="store_true")

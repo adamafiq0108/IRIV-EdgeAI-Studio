@@ -79,7 +79,7 @@ check("root: 10 years, EC P-256, a subject naming the box",
       (tlscert.not_after(ca) - NOW).days == tlscert.CA_DAYS
       and isinstance(ca.public_key(), ec.EllipticCurvePublicKey)
       and ca.public_key().curve.name == "secp256r1"
-      and "IRIV Edge AI local CA abcd1234" in ca.subject.rfc4514_string())
+      and "IRIV EdgeAI Studio local CA abcd1234" in ca.subject.rfc4514_string())
 for value, want in (("box.local", True), ("localhost", True), ("iriv-abcd1234", False),
                     ("google.com", False), ("evil.localx", False), ("10.1.2.3", True),
                     ("192.168.9.9", True), ("100.101.102.103", True), ("8.8.8.8", False),

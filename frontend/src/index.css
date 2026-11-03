@@ -137,7 +137,7 @@
     --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* IRIV Edge AI Studio brand overrides - map shadcn's neutral tokens onto the deployment
+/* IRIV EdgeAI Studio brand overrides - map shadcn's neutral tokens onto the deployment
    accent (config/brand.toml, default cyan #04badE) so buttons, rings and active
    nav read as brand, not black. Kept after the generated tokens so it wins;
    applyBrand() still overrides --accent at runtime for a rebranded deployment. */

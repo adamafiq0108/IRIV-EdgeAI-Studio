@@ -173,7 +173,7 @@ export function assemblePdf(jsPDF, { pages, images, title, subtitle, dateLabel,
 /**
  * Build the PDF and hand it to the browser as a download.
  *   grid      the element that holds the page's WidgetGrid
- *   title     "IRIV Edge AI · <system>"
+ *   title     "IRIV EdgeAI Studio · <system>"
  *   subtitle  under the title (the period)
  *   dateLabel the bold date at the right of the header
  *   fileName  what the download is called

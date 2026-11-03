@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# setup_pi.sh -- Install and wire one IRIV Edge AI Studio process on a Linux host.
+# setup_pi.sh -- Install and wire one IRIV EdgeAI Studio process on a Linux host.
 #
 # One host runs one role. A slave Pi runs the agent; the hub and the masters can
 # share a machine or not (docs/setup.md sec 1). The roles differ only in
@@ -325,7 +325,7 @@ if [[ $INSTALL_SERVICE -eq 1 ]]; then
             # --unlock is deliberately absent. A device that reopens its pairing
             # window on every reboot can be seized by any host on the LAN.
             write_unit "/etc/systemd/system/${UNIT}.service" "[Unit]
-Description=IRIV Edge AI Studio system agent (Contract v1)
+Description=IRIV EdgeAI Studio system agent (Contract v1)
 After=network-online.target
 Wants=network-online.target
 
@@ -344,7 +344,7 @@ WantedBy=multi-user.target"
         hub)
             UNIT="$ROLE_UNIT"
             write_unit "/etc/systemd/system/${UNIT}.service" "[Unit]
-Description=IRIV Edge AI Studio hub
+Description=IRIV EdgeAI Studio hub
 After=network-online.target
 Wants=network-online.target
 
@@ -367,7 +367,7 @@ WantedBy=multi-user.target"
             printf 'PORT=%s\n' "$PORT" > "/etc/cytron/${SYSTEM}.env"
             echo "  wrote /etc/cytron/${SYSTEM}.env (PORT=${PORT})"
             write_unit "/etc/systemd/system/cytron-master@.service" "[Unit]
-Description=IRIV Edge AI Studio master (%i)
+Description=IRIV EdgeAI Studio master (%i)
 After=network-online.target
 Wants=network-online.target
 

@@ -149,8 +149,8 @@ def make_ca(label, hostname="", now=None):
     now = now or now_utc()
     key = new_key()
     name = x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, f"IRIV Edge AI local CA {label}"[:64]),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "IRIV Edge AI (this box only)"),
+        x509.NameAttribute(NameOID.COMMON_NAME, f"IRIV EdgeAI Studio local CA {label}"[:64]),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "IRIV EdgeAI Studio (this box only)"),
     ])
     cert = (x509.CertificateBuilder()
             .subject_name(name).issuer_name(name)

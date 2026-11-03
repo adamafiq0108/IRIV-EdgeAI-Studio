@@ -115,7 +115,7 @@ ACTIONS = ("apply", "install")
 #: it local.
 ACCESS = ("local", "network")
 
-HEADER = ("# Written by IRIV Vision Studio (Settings > MQTT Broker) through\n"
+HEADER = ("# Written by IRIV EdgeAI Studio (Settings > MQTT Broker) through\n"
           "# /usr/local/lib/irivai/mqtt-apply.py. The next save replaces this\n"
           "# file: change the broker from that page, not here.\n")
 

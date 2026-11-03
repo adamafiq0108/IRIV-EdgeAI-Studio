@@ -179,7 +179,7 @@ def _write_meta(out, slug):
         system_slug TEXT, exported_at TEXT, source TEXT, note TEXT)""")
     out.execute("INSERT INTO export_meta VALUES (?, ?, ?, ?)",
                 (slug, time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-                 "IRIV Edge AI Studio - cytron_dashboard",
+                 "IRIV EdgeAI Studio - cytron_dashboard",
                  "Events and Data Table rows for this system. Snapshots and "
                  "clips are not included; event rows keep their snapshot_id."))
 

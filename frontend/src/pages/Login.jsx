@@ -96,7 +96,7 @@ export default function Login() {
       <ThemeToggle />
       <form className="login-card" onSubmit={submit}>
         <img className="login-logo" src={apiUrl("/static/img/cytron.png")} alt="" />
-        <div className="login-title">{brand.product_name || "IRIV Edge AI Studio"}</div>
+        <div className="login-title">{brand.product_name || "IRIV EdgeAI Studio"}</div>
         <div className="login-sub">{brand.brand_sub || ""}</div>
         {error && <div className="login-error" role="alert">{error}</div>}
         {/* Placeholders name the FIELD, not an example account: "admin" in

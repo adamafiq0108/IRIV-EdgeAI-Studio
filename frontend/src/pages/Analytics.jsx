@@ -119,7 +119,7 @@ export default function Analytics() {
       const name = system?.display_name || "System";
       await downloadAnalyticsPdf({
         grid: gridRef.current,
-        title: `IRIV Edge AI \u00b7 ${name}`,
+        title: `IRIV EdgeAI Studio \u00b7 ${name}`,
         subtitle: periodText(start, end, day),
         dateLabel: periodText(start, end, day),
         fileName: reportFileName(system?.slug || name, start, end, day),

@@ -1168,7 +1168,7 @@ def _send_one(doc, fill, csv=None):
         return False, ("no mailbox is set up for this box yet - "
                        "Settings → Email")
     msg = EmailMessage()
-    msg["Subject"] = fill(doc.get("subject")) or "IRIV Edge AI Studio - test"
+    msg["Subject"] = fill(doc.get("subject")) or "IRIV EdgeAI Studio - test"
     msg["From"] = doc.get("from_addr") or doc.get("smtp_user")
     msg["To"] = ", ".join(to)
     msg.set_content(fill(doc.get("body")) or "(this node has no message yet)")

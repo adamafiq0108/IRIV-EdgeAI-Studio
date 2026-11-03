@@ -37,7 +37,7 @@ PY="${HERE}/.venv/bin/python"
 
 cat > "$UNIT" <<EOF
 [Unit]
-Description=IRIV Edge AI Studio hub (systems dashboard)
+Description=IRIV EdgeAI Studio hub (systems dashboard)
 # Wants= rather than Requires=: a board with no network should still bring the
 # hub up on loopback, so a locally attached screen is not left with nothing.
 Wants=network-online.target

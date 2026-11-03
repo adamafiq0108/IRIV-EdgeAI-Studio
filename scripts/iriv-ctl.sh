@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# iriv-ctl -- stop, disable, enable or check IRIV Edge AI on this box.
+# iriv-ctl -- stop, disable, enable or check IRIV EdgeAI Studio on this box.
 #
 #   sudo iriv-ctl disable   stop everything now and keep it from starting at boot
 #   sudo iriv-ctl enable    start at boot again, and start now
@@ -32,25 +32,25 @@ case "${1:-}" in
         need_root disable
         systemctl disable --now "${fixed[@]}" 2>/dev/null
         for m in $(masters); do systemctl disable --now "$m" 2>/dev/null; done
-        echo "IRIV Edge AI is stopped and will not start at boot. Re-enable with: sudo iriv-ctl enable"
+        echo "IRIV EdgeAI Studio is stopped and will not start at boot. Re-enable with: sudo iriv-ctl enable"
         ;;
     enable)
         need_root enable
         systemctl enable --now "${fixed[@]}" 2>/dev/null
         for m in $(masters); do systemctl enable --now "$m" 2>/dev/null; done
-        echo "IRIV Edge AI is enabled and starting."
+        echo "IRIV EdgeAI Studio is enabled and starting."
         ;;
     stop)
         need_root stop
         for m in $(masters); do systemctl stop "$m" 2>/dev/null; done
         systemctl stop "${fixed[@]}" 2>/dev/null
-        echo "IRIV Edge AI is stopped (it starts again at the next boot)."
+        echo "IRIV EdgeAI Studio is stopped (it starts again at the next boot)."
         ;;
     start)
         need_root start
         systemctl start "${fixed[@]}" 2>/dev/null
         for m in $(masters); do systemctl start "$m" 2>/dev/null; done
-        echo "IRIV Edge AI is starting."
+        echo "IRIV EdgeAI Studio is starting."
         ;;
     about)
         for d in /opt/irivai-systor /opt/irivai-releases/*; do

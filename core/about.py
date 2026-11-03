@@ -3,7 +3,7 @@
 
 from core.version import VERSION
 
-PRODUCT = "IRIV Edge AI"
+PRODUCT = "IRIV EdgeAI Studio"
 DEVELOPER = "adamcytron"
 COMPANY = "Cytron Technologies"
 

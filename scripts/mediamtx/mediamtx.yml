@@ -1,4 +1,4 @@
-# MediaMTX for IRIV Edge AI -- the WebRTC side of the video path.
+# MediaMTX for IRIV EdgeAI Studio -- the WebRTC side of the video path.
 #
 # Detection apps PUBLISH their annotated H.264 here over RTSP on loopback;
 # browsers PLAY it over WebRTC. The app never speaks WebRTC itself and the

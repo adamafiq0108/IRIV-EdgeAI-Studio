@@ -769,7 +769,7 @@ def create_app(slug, config_dir=None):
     if not slug:
         raise SystemLoadError("no system given: master_server needs --system <slug>")
 
-    app = FastAPI(title="IRIV Edge AI Studio master", docs_url=None, redoc_url=None,
+    app = FastAPI(title="IRIV EdgeAI Studio master", docs_url=None, redoc_url=None,
                  lifespan=_lifespan)
 
     from core.services import secrets_at_rest
@@ -1085,7 +1085,7 @@ def stand_down(reason, exit_code=None, sleep=time.sleep):
 
 
 def main():
-    p = argparse.ArgumentParser(description="IRIV Edge AI Studio master (one system).")
+    p = argparse.ArgumentParser(description="IRIV EdgeAI Studio master (one system).")
     p.add_argument("--system", required=True, help="system slug, e.g. conveyor")
     p.add_argument("--host", default="0.0.0.0")
     p.add_argument("--port", type=int, default=5110)

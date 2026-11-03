@@ -59,7 +59,7 @@
      "optout": "/etc/irivai/ap-forwarding-allowed",
      "unit_text": [
        "[Unit]",
-       "Description=IRIV Edge AI: no forwarding from the hotspot to the wired LAN",
+       "Description=IRIV EdgeAI Studio: no forwarding from the hotspot to the wired LAN",
        "DefaultDependencies=no",
        "After=local-fs.target",
        "Before=network-pre.target NetworkManager.service",
@@ -80,7 +80,7 @@
      "marker": "/etc/irivai/modbus-502-redirect", "marker_text": "502 -> 5020\n",
      "unit_text": [
        "[Unit]",
-       "Description=IRIV Edge AI: Modbus 502 -> 5020 redirect",
+       "Description=IRIV EdgeAI Studio: Modbus 502 -> 5020 redirect",
        "After=network-pre.target",
        "Before=network-online.target",
        "",

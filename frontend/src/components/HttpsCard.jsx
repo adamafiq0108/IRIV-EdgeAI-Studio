@@ -48,11 +48,11 @@ const TRUST = [
     + "and confirm. Restart the browser. (Local Machine trusts it for every account on "
     + "that PC; choose it only if that is what you want.)"],
   ["macOS", "Open the .crt file (it goes into Keychain Access, System keychain), "
-    + "double-click the \"IRIV Edge AI local CA\" entry, Trust, \"When using this "
+    + "double-click the \"IRIV EdgeAI Studio local CA\" entry, Trust, \"When using this "
     + "certificate: Always Trust\"."],
   ["iPhone / iPad", "Download the .crt in Safari and allow the profile. Settings, "
     + "Profile Downloaded, Install. Then Settings, General, About, Certificate Trust "
-    + "Settings, and switch on full trust for the IRIV Edge AI root."],
+    + "Settings, and switch on full trust for the IRIV EdgeAI Studio root."],
   ["Android", "Download the .cer file. Settings, Security (or Encryption & "
     + "credentials), Install a certificate, CA certificate, and pick the file. Chrome "
     + "uses it; some apps do not trust user certificates."],

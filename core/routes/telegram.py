@@ -167,7 +167,7 @@ def _send_test(bot):
     import urllib.request                                    # noqa: PLC0415
     payload = json.dumps({
         "chat_id": bot["chat_id"],
-        "text": (f'IRIV Edge AI Studio test - the bot "{bot["name"]}" can post '
+        "text": (f'IRIV EdgeAI Studio test - the bot "{bot["name"]}" can post '
                  "into this chat."),
     }).encode("utf-8")
     req = urllib.request.Request(

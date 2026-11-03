@@ -89,7 +89,7 @@ _BASE = pathlib.Path(__file__).resolve().parent
 
 
 def create_app(config_dir=None):
-    app = FastAPI(title="IRIV Edge AI Studio hub", docs_url=None, redoc_url=None)
+    app = FastAPI(title="IRIV EdgeAI Studio hub", docs_url=None, redoc_url=None)
 
     # No cleartext master password and no group-readable secret file survives a
     # start (services/secrets_at_rest.py).
@@ -579,7 +579,7 @@ def create_app(config_dir=None):
 
 
 def main():
-    p = argparse.ArgumentParser(description="IRIV Edge AI Studio hub.")
+    p = argparse.ArgumentParser(description="IRIV EdgeAI Studio hub.")
     p.add_argument("--host", default="0.0.0.0")
     # No default here on purpose. The port is a SETTING (config/systems
     # .local.toml [hub].port, the Network page's Software port card), read by

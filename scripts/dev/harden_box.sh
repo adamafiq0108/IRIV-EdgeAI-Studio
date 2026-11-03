@@ -203,7 +203,7 @@ grep -nE 'NOPASSWD:[[:space:]]*ALL' /etc/sudoers /etc/sudoers.d/* 2>/dev/null \
 say "3. sshd: key-only, no root"
 DROPIN=/etc/ssh/sshd_config.d/99-irivai.conf
 cat > "$DROPIN" <<'EOF'
-# IRIV Edge AI per-box hardening: key-only login for every account, no root
+# IRIV EdgeAI Studio per-box hardening: key-only login for every account, no root
 # over ssh. The pi password is for sudo at the console only.
 PasswordAuthentication no
 KbdInteractiveAuthentication no

@@ -49,7 +49,7 @@ API_VERSION = "1.3"
 # journald is the store, uvicorn's own access log records the status codes.
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="IRIV Edge AI Studio Agent", docs_url=None, redoc_url=None)
+app = FastAPI(title="IRIV EdgeAI Studio Agent", docs_url=None, redoc_url=None)
 
 _adapter = None
 _pairing = None
@@ -379,7 +379,7 @@ def _install_hooks():
 
 
 def main():
-    p = argparse.ArgumentParser(description="IRIV Edge AI Studio system agent (Contract v1).")
+    p = argparse.ArgumentParser(description="IRIV EdgeAI Studio system agent (Contract v1).")
     p.add_argument("--adapter", required=True, help="module:ClassName")
     p.add_argument("--host", default="0.0.0.0")
     p.add_argument("--port", type=int, default=5101)

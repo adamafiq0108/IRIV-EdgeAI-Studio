@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install_v@@VER@@.sh -- install IRIV Edge AI v@@VER@@ on ONE box, by hand.
+# install_v@@VER@@.sh -- install IRIV EdgeAI Studio v@@VER@@ on ONE box, by hand.
 #
 # UNSIGNED, DEVELOPER/BOX-ONLY INSTALL. The package beside this script was
 # built on the release laptop and carries no OTA signature. It is not an

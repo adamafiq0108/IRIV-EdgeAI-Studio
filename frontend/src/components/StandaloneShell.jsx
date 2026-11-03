@@ -111,7 +111,7 @@ export default function StandaloneShell() {
         className="size-8 shrink-0 rounded-lg object-contain"
       />
       <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
-        <span className="truncate text-sm font-semibold">{brand?.product_name || "IRIV Edge AI Studio"}</span>
+        <span className="truncate text-sm font-semibold">{brand?.product_name || "IRIV EdgeAI Studio"}</span>
         <span className="truncate text-xs text-muted-foreground">
           {system?.display_name || "standalone"}
         </span>

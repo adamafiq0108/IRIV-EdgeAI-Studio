@@ -1,5 +1,5 @@
 [Unit]
-Description=IRIV Edge AI Studio video gateway (MediaMTX -- RTSP in, WebRTC out)
+Description=IRIV EdgeAI Studio video gateway (MediaMTX -- RTSP in, WebRTC out)
 After=network-online.target
 Wants=network-online.target
 
