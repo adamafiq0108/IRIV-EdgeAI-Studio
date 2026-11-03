@@ -1,6 +1,6 @@
 """The hardware this product is built for, and the check that it is there.
 
-IRIV Edge AI needs a Hailo accelerator (8, 8L or 10H) fitted. The
+IRIV EdgeAI Studio needs a Hailo accelerator (8, 8L or 10H) fitted. The
 installer checks it once (scripts/install.sh, "Hardware check"); this module
 checks it again every time the software starts, from several places, so a card
 moved to a different board, or an install that skipped the installer's check,
@@ -59,7 +59,7 @@ def enforced(config_dir=None):
 
 
 def message(result):
-    return ("This board is missing hardware IRIV Edge AI requires: %s. "
+    return ("This board is missing hardware IRIV EdgeAI Studio requires: %s. "
             "It runs only with a Hailo accelerator." % ", ".join(result["missing"]))
 
 
@@ -70,7 +70,7 @@ def _wait_s():
         return WAIT_S
 
 
-def require(config_dir=None, who="IRIV Edge AI"):
+def require(config_dir=None, who="IRIV EdgeAI Studio"):
     """Stop the calling process with a plain message when the hardware is not
     all there. Returns the result when it is (or when the check is opted out,
     after saying so)."""

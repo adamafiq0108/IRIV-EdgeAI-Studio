@@ -57,7 +57,7 @@ function BoardCard({ host }) {
 
   return (
     <Card
-      title={`IRIV Edge AI · ${host.hostname || "board"}`}
+      title={`IRIV EdgeAI Studio · ${host.hostname || "board"}`}
       sub={[
         host.cpu_count ? `${host.cpu_count} cores` : null,
         host.load1 != null ? `load ${host.load1}` : null,

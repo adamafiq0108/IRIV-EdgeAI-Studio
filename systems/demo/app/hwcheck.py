@@ -59,6 +59,6 @@ def require():
         if time.monotonic() >= deadline:
             break
         time.sleep(5.0)
-    print("[HW] ERROR: This board is missing hardware IRIV Edge AI requires: %s. "
+    print("[HW] ERROR: This board is missing hardware IRIV EdgeAI Studio requires: %s. "
           "It runs only with a Hailo accelerator." % ", ".join(result["missing"]), file=sys.stderr)
     raise SystemExit(GATE_EXIT)
