@@ -26,13 +26,13 @@ def _require_admin(request):
         raise HTTPException(status_code=403, detail="admin only")
 
 
-def _require_developer(request):
-    """Blynk is developer-only for now: the page is out of every other
-    tier's rail (nav.DEVELOPER_SECTIONS), and the API behind it says the same
+def _require_master(request):
+    """Blynk is master-only: the page is out of every other
+    tier's rail (nav.MASTER_SECTIONS), and the API behind it says the same
     thing, or the rail would be hiding a door that still opens."""
-    if not auth_service.is_developer(getattr(request.state, "user", None),
+    if not auth_service.is_admin(getattr(request.state, "user", None),
                                      request.app.state.config_dir):
-        raise HTTPException(status_code=403, detail="developer only")
+        raise HTTPException(status_code=403, detail="master only")
 
 
 def _stat_keys(request):
@@ -47,7 +47,7 @@ def _stat_keys(request):
 
 @router.get("/api/blynk", name="blynk.get")
 def get_blynk(request: Request):
-    _require_developer(request)
+    _require_master(request)
     return {"ok": True,
             "config": blynk_service.public_config(),
             "status": blynk_service.status(),
@@ -57,7 +57,7 @@ def get_blynk(request: Request):
 
 @router.put("/api/blynk", name="blynk.save")
 async def save_blynk(request: Request):
-    _require_developer(request)
+    _require_master(request)
     perm.require(request, "blynk.edit")
     body = await request.json()
     try:
@@ -71,7 +71,7 @@ async def save_blynk(request: Request):
 async def test_blynk(request: Request):
     """Check a token (the pasted one, or the stored one when blank) against
     the Blynk cloud without saving anything."""
-    _require_developer(request)
+    _require_master(request)
     perm.require(request, "blynk.edit")
     body = await request.json()
     return {"ok": True,

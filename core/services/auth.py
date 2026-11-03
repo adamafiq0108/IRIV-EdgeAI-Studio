@@ -372,7 +372,7 @@ def _refuse_taken_email(email, config_dir, except_user=""):
 
 
 def set_user_email(username, email, config_dir=None):
-    """Set or change an account's recovery address. Master and developer
+    """Set or change an account's recovery address. Master
     only -- the CALLER enforces that (routes/auth.py): the address is where a
     reset link goes, so whoever may set it may take the account over, and
     that is not a site admin's to do."""
@@ -541,7 +541,7 @@ def setup_pending(username, config_dir=None):
     (UAT-103). The login response already said so, but that only steered the
     browser: every API answered the shipped password as a finished box,
     network page and AP key included. The middleware holds the line now, and
-    this is the one predicate it asks. Operators and developers are never
+    this is the one predicate it asks. Operators are never
     gated -- they cannot change the master's password, so gating them would be
     a lock-out rather than a step to finish.
 
@@ -665,22 +665,6 @@ BUILTIN_ROLES = ("engineer", "operator", "viewer")
 #: Kept as the default vocabulary for callers that have no config_dir.
 ROLES = BUILTIN_ROLES
 
-#: The DEVELOPER tier, above admin. An admin runs a deployment: accounts,
-#: systems, retention. A developer works on the PRODUCT -- the built-in
-#: templates every system is created from, and anything else that ships with
-#: the platform rather than belonging to one site.
-#:
-#: It is a flag on the account, not a role, because roles grant nothing here by
-#: design (see BUILTIN_ROLES) and this one has to actually gate something.
-#:
-#: IT CANNOT BE GRANTED THROUGH THE WEB UI, on purpose. `update_user` refuses
-#: to touch it and no route sets it. The only way to make an account a
-#: developer is to write `developer = true` into config/users.local.toml on the
-#: box itself -- which needs shell access to the board. That keeps the tier out
-#: of reach of a stolen admin session: an attacker who takes over the admin
-#: account gets a deployment, not the product's shipped content.
-DEVELOPER_FLAG = "developer"
-
 #: The SITE ADMIN tier, between master and an ordinary account.
 #:
 #: A deployment is often run by two different people with two different jobs.
@@ -692,11 +676,10 @@ DEVELOPER_FLAG = "developer"
 #: There was no tier for the second job. Anyone who needed to add an operator
 #: had to be handed the master account, which hands them everything.
 #:
-#: A FLAG on the account, like DEVELOPER_FLAG, not a role: roles here grant
-#: nothing by design (see BUILTIN_ROLES), and this one has to actually gate
-#: things. Unlike the developer flag it IS settable over the web -- but only
-#: by master or a developer (see may_set_admin), because an admin who could
-#: promote themselves is not a tier, it is a formality.
+#: A FLAG on the account, not a role: roles here grant nothing by design (see
+#: BUILTIN_ROLES), and this one has to actually gate things. It IS settable
+#: over the web -- but only by master (see may_set_admin), because an admin
+#: who could promote themselves is not a tier, it is a formality.
 ADMIN_FLAG = "admin"
 
 #: How many systems an admin may be given, when master has capped them. Stored
@@ -708,11 +691,10 @@ MAX_SYSTEMS_FIELD = "max_systems"
 #: The tiers, STRONGEST FIRST. Everything that compares authority compares
 #: positions in this tuple, so adding a tier is one edit here and one in
 #: `tier()` rather than a new boolean threaded through every route.
-TIER_DEVELOPER = "developer"
 TIER_MASTER = "master"
 TIER_ADMIN = "admin"
 TIER_USER = "user"
-TIERS = (TIER_DEVELOPER, TIER_MASTER, TIER_ADMIN, TIER_USER)
+TIERS = (TIER_MASTER, TIER_ADMIN, TIER_USER)
 _TIER_RANK = {name: i for i, name in enumerate(TIERS)}
 
 
@@ -722,14 +704,11 @@ def tier(username, config_dir=None):
 
     A DISABLED account falls to `user` whatever flags it carries -- switching
     an account off has to switch off everything it could do, and that has to
-    include its rank. (is_developer already does this; the admin flag is read
-    the same way here for the same reason.)
+    include its rank.
     """
     name = (username or "").strip().lower()
     if not name:
         return TIER_USER
-    if is_developer(name, config_dir):
-        return TIER_DEVELOPER
     if name == admin_username(config_dir):
         return TIER_MASTER
     u = users(config_dir).get(name) or {}
@@ -747,8 +726,8 @@ def at_least(username, want, config_dir=None):
 def is_master(username, config_dir=None):
     """Owns the BOX: systems, hardware, who has an account at all.
 
-    The same answer is_admin() has always given -- the master account or a
-    developer -- under the name the product now uses for that tier. is_admin
+    The same answer is_admin() has always given -- the master account --
+    under the name the product now uses for that tier. is_admin
     is kept as the spelling every existing route was written against.
     """
     return at_least(username, TIER_MASTER, config_dir)
@@ -757,23 +736,11 @@ def is_master(username, config_dir=None):
 def is_site_admin(username, config_dir=None):
     """Runs the OPERATION: their own staff, page grants, retention, mail.
 
-    True for master and developer as well -- they outrank the tier, and a
+    True for master as well -- it outranks the tier, and a
     superior who could not do a subordinate's job would be a strange kind of
     superior.
     """
     return at_least(username, TIER_ADMIN, config_dir)
-
-
-def has_developer_flag(username, config_dir=None):
-    """The developer flag AS STORED, enabled or not. is_developer() is the
-    effective tier and goes False on a disabled row -- right for what the
-    account may DO, wrong for what may be done TO it: a disabled developer
-    row managed over the web (email set, password reset, re-enabled) is a
-    live developer account with somebody else's password. The guards that
-    keep developer accounts off the web check this one."""
-    user = (_cached_local("users", config_dir).get("users")
-            or {}).get(str(username or "").strip().lower())
-    return isinstance(user, dict) and bool(user.get(DEVELOPER_FLAG))
 
 
 def may_manage(actor, target, config_dir=None):
@@ -783,19 +750,14 @@ def may_manage(actor, target, config_dir=None):
     how one of them removes the other, and a tier whose members can demote
     each other has no ranking in it. Ordinary users manage nobody.
 
-    Developers are never managed over the web, whoever is asking -- an admin
-    who could reset the developer's password would simply log in as them (see
-    _refuse_if_developer).
     """
-    if has_developer_flag(target, config_dir):
-        return False
     a = _TIER_RANK[tier(actor, config_dir)]
     t = _TIER_RANK[tier(target, config_dir)]
     return a <= _TIER_RANK[TIER_ADMIN] and a < t
 
 
 def may_set_admin(actor, config_dir=None):
-    """May `actor` grant or revoke the admin tier? Master and developer only.
+    """May `actor` grant or revoke the admin tier? Master only.
 
     Deliberately not "may_manage plus a bit": promotion is the one operation
     where the actor's own tier is the whole question, and an admin creating
@@ -806,7 +768,7 @@ def may_set_admin(actor, config_dir=None):
 
 
 def is_admin(username, config_dir=None):
-    """May this account administer the BOX? (master tier, or a developer.)
+    """May this account administer the BOX? (master tier.)
 
     This is the ONE place that decides it. The routes used to compare the
     username to the string "admin" in 43 places; a second identity could not
@@ -816,48 +778,10 @@ def is_admin(username, config_dir=None):
     sites to prove it would risk exactly the mistake this function prevented.
     Read it as is_master(); it is literally that function.
 
-    A developer outranks master by definition -- they build the product a
-    master runs -- so every master-gated route accepts them.
     """
     return is_master(username, config_dir)
 
 
-def _refuse_if_developer(username, action, config_dir=None):
-    """Developer accounts are not managed over the web. At all.
-
-    An admin who could reset the developer's password would simply log in as
-    the developer, which hands them a tier that is supposed to require shell
-    access to the box (see DEVELOPER_FLAG). Deleting or disabling one is the
-    same hole pointed the other way: it lets a deployment's admin remove the
-    product author's access.
-
-    So every account-management entry point refuses, and the only way to make,
-    change or remove a developer is scripts/dev/make_dev_account.py on the box.
-    """
-    if has_developer_flag(username, config_dir):
-        raise ValueError(
-            f"{action} is not available for a developer account - "
-            "manage it on the box with scripts/dev/make_dev_account.py")
-
-
-def is_developer(username, config_dir=None):
-    """Is this account allowed to change what the PRODUCT ships?
-
-    False for everyone by default, including admin -- administering a
-    deployment and authoring the platform's built-ins are different jobs, and
-    the second one is not something a site's own admin should inherit.
-    """
-    if not username:
-        return False
-    user = (_cached_local("users", config_dir).get("users")
-            or {}).get(str(username).strip().lower())
-    if not isinstance(user, dict):
-        return False
-    # Disabled accounts keep the flag in the file but lose it in effect --
-    # switching an account off has to switch off everything it could do.
-    if not user.get("enabled", True) or user.get("monitor"):
-        return False
-    return bool(user.get(DEVELOPER_FLAG))
 
 MAX_CUSTOM_ROLES = 40
 
@@ -932,9 +856,9 @@ def delete_role(name, config_dir=None):
       * the LAST role cannot go -- every account carries one, so an empty
         vocabulary is a create form with nothing to pick.
 
-    `admin` and `developer` are not in this list at all and cannot be removed
-    by it: admin is an account name and developer is a flag on an account
-    (see DEVELOPER_FLAG), neither of them a role.
+    `admin` is not in this list at all and cannot be removed
+    by it: admin is an account name
+    (see ADMIN_FLAG), not a role.
     """
     name = _clean_role_name(name)
     with _WRITE_LOCK:
@@ -966,17 +890,13 @@ def users(config_dir=None):
 
 
 def public_users(config_dir=None):
-    # `role` is reported EMPTY for a developer rather than defaulted, so the
-    # accounts page shows no role for them instead of inventing one. It also
-    # keeps the role <select> from claiming they are an operator.
     return [{"username": name,
              "systems": u.get("systems", ""),
              # Where a reset link for this account goes. Empty on a row from
              # before addresses were required -- such an account cannot ask
-             # for a reset until master or developer gives it one.
+             # for a reset until master gives it one.
              "email": str(u.get("email") or ""),
-             "role": "" if u.get(DEVELOPER_FLAG) else (u.get("role") or "operator"),
-             "developer": bool(u.get(DEVELOPER_FLAG)),
+             "role": u.get("role") or "operator",
              # The tier, and the cap that only means anything on it.
              "admin": bool(u.get(ADMIN_FLAG)) and not u.get("monitor"),
              "monitor": bool(u.get("monitor")),
@@ -1013,7 +933,6 @@ def admin_account(config_dir=None):
             "systems": "*",
             "email": str(admin_email(config_dir) or ""),
             "role": role_label(admin_username(config_dir), config_dir).lower(),
-            "developer": False,
             "builtin": True,
             "enabled": True}
 
@@ -1095,8 +1014,7 @@ def update_user(username, systems=None, role=None, enabled=None, config_dir=None
 
     `admin` and `max_systems` are the tier and the cap. THE CALLER decides who
     may set them (see may_set_admin): this function is the storage, and every
-    route reaching it has already been through the routes' own guard. The
-    developer flag stays unreachable from here, as it always has been.
+    route reaching it has already been through the routes' own guard.
     """
     from core.services import nav as nav_service
     with _WRITE_LOCK:
@@ -1107,7 +1025,6 @@ def update_user(username, systems=None, role=None, enabled=None, config_dir=None
         if u.get("monitor"):
             raise ValueError("the Monitor account is managed in System settings")
         if systems is not None:
-            _refuse_if_developer(username, "changing the systems list", config_dir)
             if not str(systems).strip():
                 raise ValueError("choose at least one system")
             # The cap master set on this account, checked where the systems
@@ -1170,19 +1087,11 @@ def update_user(username, systems=None, role=None, enabled=None, config_dir=None
             else:
                 u.pop("sections", None)
         if role is not None:
-            # A developer has no role by definition (see role_label), so this
-            # refuses rather than quietly filing the product's author under
-            # one of its audience's labels.
-            if u.get(DEVELOPER_FLAG):
-                raise ValueError("a developer account has no role")
             available = roles(config_dir)
             if role not in available:
                 raise ValueError(f"role must be one of {', '.join(available)}")
             u["role"] = role
         if enabled is not None:
-            # Disabling a developer from the web would let a deployment's
-            # admin lock the product author out of their own build.
-            _refuse_if_developer(username, "enabling/disabling", config_dir)
             u["enabled"] = bool(enabled)
         if pages is not None:
             valid = set(nav_service.ALL_PAGES)
@@ -1242,10 +1151,6 @@ def update_user(username, systems=None, role=None, enabled=None, config_dir=None
             else:
                 u.pop("caps", None)
         if admin is not None:
-            # Promoting a developer is meaningless (they already outrank
-            # everyone) and demoting one over the web is the escalation path
-            # _refuse_if_developer exists to close.
-            _refuse_if_developer(username, "changing the tier", config_dir)
             if admin:
                 u[ADMIN_FLAG] = True
             else:
@@ -1258,7 +1163,6 @@ def update_user(username, systems=None, role=None, enabled=None, config_dir=None
                 u.pop(MAX_SYSTEMS_FIELD, None)
                 u.pop("caps", None)
         if max_systems is not None:
-            _refuse_if_developer(username, "capping the systems list", config_dir)
             try:
                 cap = int(max_systems)
             except (TypeError, ValueError):
@@ -1269,9 +1173,6 @@ def update_user(username, systems=None, role=None, enabled=None, config_dir=None
                 u[MAX_SYSTEMS_FIELD] = cap
             else:
                 u.pop(MAX_SYSTEMS_FIELD, None)   # 0 means no cap
-        # `developer` is deliberately NOT settable here: this function is what
-        # the admin API edits accounts through, and the developer tier must
-        # not be reachable from a web session (see DEVELOPER_FLAG).
         _save_local("users", local, config_dir)
     return {"username": username, "systems": u.get("systems", ""),
             "role": u.get("role") or "operator",
@@ -1286,13 +1187,12 @@ def update_user(username, systems=None, role=None, enabled=None, config_dir=None
 def section_grants(username, slug, config_dir=None):
     """Which nav categories `username` may see on system `slug`.
 
-    None means ALL of them -- the admin, a developer, and any account with no
+    None means ALL of them -- the admin, and any account with no
     stored restriction. Otherwise a set of nav.SECTION_KEYS. Unknown keys in
     the stored value are dropped rather than honoured: a key retired from the
     product must not keep a category alive that nothing can render."""
     from core.services import nav as nav_service
-    if not username or is_admin(username, config_dir) \
-            or is_developer(username, config_dir):
+    if not username or is_admin(username, config_dir):
         return None
     u = users(config_dir).get(username) or {}
     raw = (u.get("sections") or {}).get(slug)
@@ -1308,7 +1208,7 @@ def page_grants(username, slug, config_dir=None):
 
     None means all of them. This is MASTER's grant: an admin hands out
     categories to their own staff, and this decides which pages exist for
-    them to hand out at all. Master and developer are never restricted --
+    them to hand out at all. Master is never restricted --
     somebody has to be able to fix a grant that locked everyone out.
     """
     from core.services import nav as nav_service
@@ -1350,7 +1250,7 @@ def visible_pages(username, slug, config_dir=None):
 def cap_grants(username, slug, config_dir=None):
     """What `username` may CHANGE on system `slug`, as a set of caps ids.
 
-    None means unrestricted -- master and developer, who are never held by a
+    None means unrestricted -- master, which is never held by a
     grant somebody below them could have written. Everyone else gets a set:
     what master ticked, or the tier's defaults where master has ticked nothing
     yet (caps.DEFAULT_ADMIN_CAPS), or nothing at all for an ordinary account --
@@ -1387,58 +1287,22 @@ def may(username, slug, cap, config_dir=None):
 #: or the Front Panel -- those decide what the HARDWARE does, which is the
 #: box owner's call and not something a client's operations lead should be
 #: able to change.
-#:
-#: A DEVELOPER gets everything, including the template and licence tools that
-#: ship with the product rather than belonging to a site.
 SETTINGS_TABS = {
     # "mqtt" (the box's broker) sits with "network" at every tier: both
     # decide what this box exposes on the plant network.
     TIER_ADMIN: ("accounts", "retention", "mail", "telegram", "network", "mqtt"),
     # "system" is the BOX's own switches -- what this appliance may do at
-    # all. Master and developer only: every switch on it opens or closes a
+    # all. Master only: every switch on it opens or closes a
     # recovery path for every account at once.
     TIER_MASTER: ("accounts", "system", "retention", "board", "mail",
                   "telegram", "network", "mqtt", "panel"),
-    TIER_DEVELOPER: ("accounts", "system", "retention", "board", "mail",
-                     "telegram", "network", "mqtt", "panel", "templates",
-                     "licenses"),
 }
 
 
-#: The tabs that exist only where the owner's tooling is mounted. A developer
-#: account on a box without core/dev has the tier and nothing behind these.
-DEV_TABS = ("templates", "licenses")
-
-
-def dev_tools_of(app_state, config_dir=None):
-    """Does the server answering carry the owner's tooling?
-
-    The hub records what core/deploy.py mounted (hub_server.py sets
-    app.state.dev_tools). A master never mounts it and records nothing, so
-    there the answer is the box's declaration in deploy.toml -- the same
-    fact the hub's mount was decided on, one step earlier. Both shells read
-    one truth this way, rather than a master telling a developer their tabs
-    are gone the moment they open a system."""
-    mounted = getattr(app_state, "dev_tools", None)
-    if mounted is None:
-        return bool(config.is_dev_box(config_dir))
-    return bool(mounted)
-
-
-def settings_tabs(username, config_dir=None, dev_tools=None):
+def settings_tabs(username, config_dir=None):
     """The Settings tabs this account may open. Empty for an ordinary user --
-    Settings is not their page at all.
-
-    `dev_tools` is whether THIS BOX carries the owner's tooling -- the hub
-    passes what core/deploy.py actually mounted. None reads deploy.toml, the
-    same fact one step earlier. Without the tooling the developer tabs are
-    not offered: a tab whose every button answers 404 is not a tab."""
-    tabs = list(SETTINGS_TABS.get(tier(username, config_dir), ()))
-    if dev_tools is None:
-        dev_tools = config.is_dev_box(config_dir)
-    if not dev_tools:
-        tabs = [t for t in tabs if t not in DEV_TABS]
-    return tabs
+    Settings is not their page at all."""
+    return list(SETTINGS_TABS.get(tier(username, config_dir), ()))
 
 
 def grant_system(username, slug, config_dir=None):
@@ -1461,9 +1325,6 @@ def grant_system(username, slug, config_dir=None):
 def set_user_password(username, password, config_dir=None):
     """Admin resets an operator's password -- operators have no registered
     email, so their recovery path is the admin, by design."""
-    # THE escalation path, if it were allowed: reset the developer's password,
-    # then log in as them.
-    _refuse_if_developer(username, "resetting the password", config_dir)
     if not password or len(password) < 8:
         raise ValueError("password must be at least 8 characters")
     with _WRITE_LOCK:
@@ -1482,7 +1343,6 @@ def set_user_password(username, password, config_dir=None):
 
 
 def delete_user(username, config_dir=None):
-    _refuse_if_developer(username, "deleting", config_dir)
     with _WRITE_LOCK:
         local = config.load_local("users", config_dir)
         if username not in (local.get("users") or {}):
@@ -1498,17 +1358,9 @@ def delete_user(username, config_dir=None):
 def role_label(username, config_dir=None):
     """The badge the shell shows next to the account name.
 
-    A DEVELOPER has no role and is not given one. Roles describe the people who
-    use a deployment -- engineer, operator, viewer -- and the developer is the
-    person who built the thing they are using. Borrowing one of their labels
-    would file the author under their own audience, and would put a role on an
-    account whose access does not come from a role at all.
-
     Admin keeps the first [roles] label from auth.toml (deployment branding,
     e.g. MASTER); everyone else shows their own stored role.
     """
-    if is_developer(username, config_dir):
-        return "DEVELOPER"
     if username == admin_username(config_dir):
         labels = list(config.auth(config_dir).get("roles", {}).values())
         return labels[0] if labels else "ADMIN"
@@ -1852,9 +1704,9 @@ def session_sid(token):
 # thief a slot in the cap AFTER they have typed the right password.
 #
 # The cap is PER ACCOUNT, so one account's pile of old phones cannot lock a
-# different account out. The master and developer tiers are not capped (the
-# box owner must always be able to sign in; a developer is the vendor), and
-# master can remove any account's devices except a developer's.
+# different account out. The master tier is not capped (the
+# box owner must always be able to sign in), and
+# master can remove any account's devices.
 #
 # Records live in the sessions file, under [devices.<ref>]: one atomic write
 # covers "remove the device AND revoke its sessions", and the last-activity
@@ -1871,7 +1723,7 @@ DEVICE_COOKIE = "cytron_device"
 #: the session cookie's (core/services/masters.py for_master).
 DEVICE_COOKIE_SECURE = "__Secure-" + DEVICE_COOKIE
 
-#: How many devices one account may register. Master and developer: no cap.
+#: How many devices one account may register. Master: no cap.
 MAX_DEVICES = 10
 #: A device unused for this long is removed (and its sessions revoked).
 DEVICE_EXPIRY_S = 30 * 24 * 3600

@@ -69,12 +69,9 @@ def start_keepalive(app, repo_dir, config_dir=None):
     """The hub's background loop. `app.state.masters` is read fresh each round
     (systems come and go)."""
     def loop():
-        from core.services import update as update_service      # noqa: PLC0415
         while True:
             time.sleep(POLL_S)
             try:
-                if update_service.maintenance():
-                    continue
                 got = ensure_online(getattr(app.state, "masters", {}) or {},
                                     repo_dir, config_dir)
                 if got:

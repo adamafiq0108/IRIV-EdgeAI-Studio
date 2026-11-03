@@ -33,7 +33,6 @@ import {
   RadioTower, RefreshCw, RotateCcw, SlidersHorizontal, TriangleAlert, Wifi,
 } from "lucide-react";
 import { CardHeader, StateSwitch, pillClass } from "./ui/CardHeader.jsx";
-import { useIsDeveloper } from "../state/app.jsx";
 import { PasswordInput } from "./ui/input.jsx";
 import SoftwarePortCard from "./SoftwarePortCard.jsx";
 import HostnameCard from "./HostnameCard.jsx";
@@ -74,7 +73,6 @@ export function apPasswordProblem(password) {
 }
 
 export default function NetworkPanel() {
-  const isDev = useIsDeveloper();
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState("");
   const [listOpen, setListOpen] = useState(true);
@@ -784,34 +782,6 @@ export default function NetworkPanel() {
             </button>
           </div>
 
-          {isDev && (
-            <div className="dev-extras" data-ap-dev-extras="1">
-              <div className="dev-extras-label">Developer account only</div>
-              <p className="muted small" style={{ margin: 0 }}>
-                Use this device as a Wi-Fi hotspot so a computer or phone can
-                connect to it directly. Hotspot mode and Wi-Fi client mode cannot
-                be active at the same time on this device. Switching happens
-                straight away. The hotspot never turns on by itself, not even
-                when the Wi-Fi cannot be joined. A new device starts with its
-                hotspot on.
-              </p>
-              <p className="muted small" style={{ marginTop: 4 }} data-ap-save-note="1">
-                {apOn
-                  ? "Changes to the hotspot name or password take effect immediately: "
-                    + "the hotspot restarts, and connected devices must reconnect using "
-                    + "the updated details. The device's screen shows the new values at once."
-                  : "Saved changes are used the next time the hotspot is turned on. "
-                    + "The device's screen shows the new values at once."}
-              </p>
-              <p className="muted small" style={{ marginTop: 4 }} data-ap-reset-help="1">
-                Reset Settings restores the default hotspot configuration: every
-                saved Wi-Fi network is forgotten and the device broadcasts its setup
-                hotspot "{data.ap_name_factory || data.ap_name}" again, with the
-                default password shown on the device's screen. Connected devices
-                need to reconnect. Ethernet is not affected.
-              </p>
-            </div>
-          )}
         </div>
       )}
 
@@ -825,7 +795,7 @@ export default function NetworkPanel() {
                        rebootPending={(data.ipv4_reboot || []).includes(d.device)} />
       ))}
 
-      {/* The Hostname card: master or developer. */}
+      {/* The Hostname card: master. */}
       <HostnameCard />
       {/* ---- the software's own port ---- */}
       {/* Set once, if ever. Draws itself only for master or a
@@ -1077,7 +1047,6 @@ function Req({ children }) {
 
 function InterfaceCard({ device, busy, act, via, embedded = false, rebootPending = false,
                          uplinkElsewhere = [] }) {
-  const isDev = useIsDeveloper();
   const confirm = useConfirm();
   const toast = useToast();
   const [dhcp, setDhcp] = useState(device.dhcp !== false);
@@ -1505,13 +1474,6 @@ function InterfaceCard({ device, busy, act, via, embedded = false, rebootPending
                        style={{ marginTop: 4, color: "var(--alert-text)" }}>
                     {gwProblem}
                   </div>
-                ) : isDev ? (
-                  <div className="muted small" data-gateway-rule="1" style={{ marginTop: 4 }}>
-                    The gateway used to reach other networks or the internet. Leave
-                    this blank for an isolated, machine-only network (PLC, Modbus,
-                    cameras). With a gateway, the device uses this connection for
-                    the internet only if the internet answers through it.
-                  </div>
                 ) : null}
               </label>
 
@@ -1535,11 +1497,6 @@ function InterfaceCard({ device, busy, act, via, embedded = false, rebootPending
                   <div className="small" data-dns-problem="1"
                        style={{ marginTop: 4, color: "var(--alert-text)" }}>
                     {dnsBad}
-                  </div>
-                ) : isDev ? (
-                  <div className="muted small" style={{ marginTop: 4 }}>
-                    The DNS servers used to look up network names. Optional: leave
-                    both blank to use the network-provided DNS settings.
                   </div>
                 ) : null}
               </div>
@@ -1582,45 +1539,6 @@ function InterfaceCard({ device, busy, act, via, embedded = false, rebootPending
         </>
       )}
 
-      {isDev && (
-        <div className="dev-extras" data-net-dev-extras="">
-          <div className="dev-extras-label">Developer account only</div>
-          <div className="muted small">
-            {device.connection
-              || (device.profile ? `${device.profile} (saved)` : "No connection profile")}
-            {" "}- {connected ? "connected" : device.state}
-            {" "}- {device.dhcp === false ? "STATIC" : "DHCP"}
-            {/* Which port the box's internet actually leaves by NOW: the
-                kernel's best default route (routeheal.annotate), not what any
-                form says it should be. */}
-            {device.default_route && (
-              <span className="ui-badge ui-badge-ok" data-internet-route="1"
-                    style={{ marginLeft: 8, verticalAlign: 1 }}
-                    title="The device's internet traffic goes out this connection now">
-                Internet
-              </span>
-            )}
-          </div>
-          {preset && device.dhcp === false && device.static_ip && (
-            <div className="muted small">
-              Saved: <b>{device.static_ip}/{device.static_prefix || "24"}</b>
-              {device.static_gateway ? <> via <b>{device.static_gateway}</b></> : null}
-              {" "}- will apply when a cable is connected
-            </div>
-          )}
-          {device.ip && (
-            <div className="muted small">
-              Current lease: <b>{device.ip}{device.prefix ? `/${device.prefix}` : ""}</b>
-              {device.gateway ? <> via <b>{device.gateway}</b></> : null}
-            </div>
-          )}
-          {(device.dns || []).length > 0 && (
-            <div className="muted small" data-dns-in-use="1">
-              DNS in use: <b>{device.dns.join(", ")}</b>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

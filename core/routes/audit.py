@@ -35,21 +35,8 @@ def audit_query(request: Request, action: str = "", username: str = "",
     cfg = request.app.state.config_dir
     limit = max(1, min(1000, int(limit)))
     offset = max(0, int(offset))
-    # A developer account is invisible to a deployment's admin everywhere else
-    # (it is filtered out of /api/users), and its log entries are the same
-    # account by another name -- an unfiltered log would list the developer
-    # signing in, under a heading claiming to be this deployment's accounts.
-    # Filtered in the QUERY, not in the page: hiding rows in the browser hides
-    # the rows, not the payload they arrived in, and it would also make the
-    # page counts lie.
-    hidden = []
-    me = getattr(request.state, "user", None) or ""
-    if not auth_service.is_developer(me, cfg):
-        hidden = [name for name in auth_service.users(cfg)
-                  if auth_service.is_developer(name, cfg)]
     entries, has_more = audit_service.page(limit=limit, action=action,
-                                           username=username, offset=offset,
-                                           exclude_usernames=hidden)
+                                           username=username, offset=offset)
     return {"ok": True,
             "actions": list(audit_service.ACTIONS),
             "entries": entries,

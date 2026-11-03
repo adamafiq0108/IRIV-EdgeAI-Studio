@@ -60,9 +60,9 @@ def _save(local, rows, config_dir, now):
 #: something a person clicks, and the producers are spread across routes and
 #: services, so "nobody would post a bad one" is not a check. An unknown name
 #: is dropped and the notice still arrives, without a link.
-PAGES = ("systems", "control", "health", "wall", "store", "vision", "settings")
+PAGES = ("systems", "control", "health", "wall", "vision", "settings")
 TABS = ("accounts", "system", "retention", "board", "mail", "telegram",
-        "network", "mqtt", "panel", "templates", "licenses")
+        "network", "mqtt", "panel")
 
 
 def _where(page, tab):
@@ -77,10 +77,7 @@ def _where(page, tab):
     return page, tab
 
 
-#: How long a notice's body may run. A notice is a line or two; the one
-#: exception is the list of what an update changed, which is the release
-#: notes themselves (thirty lines for v1.0.7) and is worth the room -- the
-#: bounded file and the trim above still hold.
+#: How long a notice's body may run. A notice is a line or two.
 BODY_MAX = 600
 BODY_MAX_LONG = 4000
 

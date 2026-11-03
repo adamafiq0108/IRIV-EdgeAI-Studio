@@ -52,9 +52,8 @@ STATE_FILE = "/etc/irivai/web-redirect.nft"
 
 
 def needs_helper():
-    """Why the helper cannot run here, and the one fix for THIS box: the
-    next update, or the one-time maintenance step (core/services/
-    roothelp.py, which knows whether the box has the root step)."""
+    """Why the helper cannot run here, and the one fix for THIS box
+    (core/services/roothelp.py)."""
     from core.services import roothelp                       # noqa: PLC0415
     return roothelp.missing(HELPER, "irivai-web", "the box cannot answer on port 80")
 
@@ -137,7 +136,7 @@ def check(config_dir=None):
          else hubport.NOT_OWN_SERVICE},
         {"key": "nft", "ok": nft,
          "detail": "nftables is installed" if nft
-         else "nftables is not installed on this box (scripts/upgrade_steps.sh "
+         else "nftables is not installed on this box (scripts/install.sh "
               "installs it)"},
         {"key": "helper", "ok": helper,
          "detail": "the port 80 helper is installed" if helper

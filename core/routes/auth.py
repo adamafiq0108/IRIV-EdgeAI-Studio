@@ -280,10 +280,8 @@ PROTECTED_PREFIXES = ("/video_feed", "/footage")
 #: honest way off the shipped password (and refuses it as the new one).
 SETUP_OPEN = ("/api/auth/account-setup", "/api/auth/password", "/api/auth/me",
               "/api/auth/keepalive", "/api/bootstrap")
-#: ...and what it may READ: the update state and job status, so the System
-#: tab can say what version the box runs. GET only -- check, token, apply and
-#: rollback change the box or reach GitHub, and stay gated.
-SETUP_OPEN_READ = ("/api/hub/update",)
+#: ...and what it may READ (GET only). Nothing at present.
+SETUP_OPEN_READ = ()
 
 
 #: Paths open as THEMSELVES only, never as a prefix (Pipi L1, 2026-10-07).
@@ -549,23 +547,16 @@ def whoami(request: Request):
     if not user:
         raise HTTPException(status_code=401, detail="login required")
     cfg = request.app.state.config_dir
-    dev_tools = auth_service.dev_tools_of(request.app.state, cfg)
     return {"ok": True,
             "user": {"name": user,
                      # `is_admin` keeps meaning MASTER, as it always has --
                      # every page written against it means "owns the box".
                      "is_admin": auth_service.is_admin(user, cfg),
-                     "is_developer": auth_service.is_developer(user, cfg),
-                     # Whether this box carries the owner's tooling; the
-                     # developer panels need both this and the account
-                     # (core/routes/hub.py bootstrap says why).
-                     "dev_tools": dev_tools,
                      # ...and the tier, for the pages that now distinguish a
                      # site admin from the master above them.
                      "tier": auth_service.tier(user, cfg),
                      "is_site_admin": auth_service.is_site_admin(user, cfg),
-                     "settings_tabs": auth_service.settings_tabs(
-                         user, cfg, dev_tools=dev_tools)}}
+                     "settings_tabs": auth_service.settings_tabs(user, cfg)}}
 
 
 @router.post("/api/auth/login", name="auth.login_json")
@@ -723,16 +714,12 @@ def _send_reset_link(request, cfg, username):
 
 
 def _admin_addresses(cfg):
-    """Where "a request is waiting" goes: the master's address, and every
-    developer account's. Best effort -- the Inbox is the channel that must
+    """Where "a request is waiting" goes: the master's address. Best effort -- the Inbox is the channel that must
     work; the mail is the nudge."""
     out = []
     master_to = auth_service.admin_email(cfg)
     if master_to:
         out.append(master_to)
-    for name, u in auth_service.users(cfg).items():
-        if u.get(auth_service.DEVELOPER_FLAG) and u.get("email"):
-            out.append(str(u["email"]))
     return out
 
 
@@ -756,16 +743,6 @@ def _forgot_side_effects(request, cfg, username, email, ip):
     the admins' inbox, which is where the people who can fix them look.
     """
     try:
-        if auth_service.is_developer(username, cfg):
-            # Developer accounts are not managed over the web, resets
-            # included (_refuse_if_developer): the password is changed on the
-            # box. Said in the developer's own Inbox, not to the caller.
-            inbox_service.post(username, "reset_request",
-                               "Password reset requested for your developer account",
-                               f"Somebody at {ip} asked for a reset. Developer passwords "
-                               "are changed on the box (scripts/dev/make_dev_account.py), "
-                               "never by an emailed link.", cfg)
-            return
         if auth_service.is_master(username, cfg):
             ok, msg = _send_reset_link(request, cfg, username)
             audit_service.record("password_reset_link", username, source_ip=ip,
@@ -811,8 +788,6 @@ async def forgot_json(request: Request):
 
       * master: the link is mailed now. There is nobody above master to
         ask, and an owner locked out of their own box is the worse outcome.
-      * a developer: nothing is mailed; developer passwords are changed on
-        the box, and the developer's own Inbox says a reset was asked for.
       * anyone else: a reset REQUEST is recorded. Master and the developer
         see it in the bell's Inbox and get a mail saying it is waiting;
         Approve is what sends the link. A reset link is a takeover of the
@@ -1468,15 +1443,12 @@ async def first_run(request: Request):
 
 def _may_handle_owner(me, owner, cfg):
     """May `me` see and end `owner`'s sessions and devices? Their own, always;
-    anyone's for master (and a developer). Never a developer's rows for a
-    customer: the vendor's account is not managed from the box's web pages
-    (auth_service._refuse_if_developer), and that includes its sign-ins."""
+    anyone's for master."""
     if owner == me:
         return True
     if not auth_service.is_admin(me, cfg):
         return False
-    return (auth_service.is_developer(me, cfg)
-            or not auth_service.has_developer_flag(owner, cfg))
+    return True
 
 
 def _current_device(request, me, cfg):
@@ -1573,7 +1545,7 @@ def system_settings(request: Request):
     cfg = request.app.state.config_dir
     me = getattr(request.state, "user", None) or ""
     if not auth_service.is_admin(me, cfg):
-        raise HTTPException(status_code=403, detail="master or developer only")
+        raise HTTPException(status_code=403, detail="master only")
     return {"ok": True,
             **sysconfig_service.settings(cfg),
             "auto_logout": auth_service.auto_logout(cfg),
@@ -1583,7 +1555,7 @@ def system_settings(request: Request):
 
 @router.post("/api/system/settings", name="system.settings_save")
 async def system_settings_save(request: Request):
-    """Turn a box-wide switch on or off. Master or developer.
+    """Turn a box-wide switch on or off. Master.
 
     Only the switches NAMED in the body are touched, so a page that knows
     about two settings cannot reset a third somebody adds later -- the same
@@ -1593,7 +1565,7 @@ async def system_settings_save(request: Request):
     cfg = request.app.state.config_dir
     me = getattr(request.state, "user", None) or ""
     if not auth_service.is_admin(me, cfg):
-        raise HTTPException(status_code=403, detail="master or developer only")
+        raise HTTPException(status_code=403, detail="master only")
     body = await _json(request)
     if "email" in body:
         on = sysconfig_service.set_email_enabled(bool(body.get("email")), cfg)
@@ -1626,7 +1598,7 @@ async def system_settings_save(request: Request):
 
 @router.post("/api/auth/sessions/policy", name="auth.session_policy")
 async def session_policy(request: Request):
-    """Auto logout on or off, for the whole box. Master or developer.
+    """Auto logout on or off, for the whole box. Master.
 
     Off is not "never": the window becomes thirty days (auth.NO_AUTO_LOGOUT_
     MINUTES), and applies to sign-ins from now on -- the sessions already
@@ -1635,7 +1607,7 @@ async def session_policy(request: Request):
     me = getattr(request.state, "user", None) or ""
     cfg = request.app.state.config_dir
     if not auth_service.is_admin(me, cfg):
-        raise HTTPException(status_code=403, detail="master or developer only")
+        raise HTTPException(status_code=403, detail="master only")
     body = await _json(request)
     if "auto_logout" not in body:
         raise HTTPException(status_code=400, detail="auto_logout is required")
@@ -1743,14 +1715,14 @@ async def _json(request):
 # -- user management (admin only) ---------------------------------------------
 
 def _require_admin(request):
-    """Master or developer. The name is historical -- see auth.is_admin."""
+    """Master. The name is historical -- see auth.is_admin."""
     if not auth_service.is_admin(getattr(request.state, "user", None),
                                  request.app.state.config_dir):
         raise HTTPException(status_code=403, detail="admin only")
 
 
 def _require_account_admin(request):
-    """Master, developer, OR a site admin: the tiers that manage accounts.
+    """Master OR a site admin: the tiers that manage accounts.
 
     A site admin manages their own staff and nobody else's -- which is not
     something a route-level guard can decide, because it depends on WHICH
@@ -1775,7 +1747,7 @@ def _require_over(request, username):
 
 
 def _require_tier_grant(request, body):
-    """Only master and developer may make (or unmake) a site admin, or cap how
+    """Only master may make (or unmake) a site admin, or cap how
     many systems one may hold. An admin promoting another admin -- who could
     then delete them -- is the flat hierarchy the tier exists to avoid."""
     if body.get("admin") is None and body.get("max_systems") is None:
@@ -1853,11 +1825,8 @@ def list_users(request: Request):
     cfg = request.app.state.config_dir
     masters = config.systems(cfg).get("masters", {})
     # Scoped by the SAME rule as every other hub surface (hub.visible_to): an
-    # admin runs a deployment and a developer builds the product, and the
-    # systems on either side of that line are not each other's business. This
-    # page was the last one still listing all of them, so an admin granting
-    # access saw the developer's template systems mixed in with their own --
-    # and could hand somebody a grant on one.
+    # admin runs a deployment. This page was the last one still listing all
+    # of them, so an admin granting access saw every system.
     me_now = getattr(request.state, "user", None) or ""
     from core.services import hub as hub_service
     masters = {slug: entry for slug, entry in masters.items()
@@ -1872,17 +1841,8 @@ def list_users(request: Request):
         slug = getattr(system, "slug", None)
         if slug:
             names[slug] = getattr(system, "display_name", "") or slug
-    # The DEVELOPER account is invisible to everyone but a developer. It is
-    # the product author's account, not part of the deployment an admin
-    # runs -- and every control on it is refused anyway (no password reset,
-    # no disable, no delete: see AccountsPanel), so listing it to an admin
-    # only ever showed a row they could look at and not touch. Filtered here,
-    # server-side, because hiding a row in the page hides the row, not the
-    # payload it came in.
     me = getattr(request.state, "user", None) or ""
     everyone = auth_service.public_users(cfg)
-    if not auth_service.is_developer(me, cfg):
-        everyone = [u for u in everyone if not u.get("developer")]
     # A SITE ADMIN sees their own staff and themselves, and nobody above or
     # beside them. The point of the tier is that a client's operations lead
     # runs their own people -- being shown the other admins' accounts would be

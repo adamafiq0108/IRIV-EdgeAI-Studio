@@ -195,33 +195,20 @@ Install an `authorized_keys` you can log in with **before** the second command, 
 locked out.
 
 Takes 10-20 minutes on a cold board: it installs the system packages, builds the frontend with
-the developer panels left out, makes the virtualenv, writes the systemd units, installs MediaMTX
-for WebRTC, prepares the store, stamps the board's identity from its CM5 serial and its secure
-element, and writes the sudoers rules the platform needs. Everything it does is checked before it
+makes the virtualenv, writes the systemd units, installs MediaMTX
+for WebRTC, prepares the store, and writes the sudoers rules the platform needs. Everything it does is checked before it
 writes, so it can be run again.
 
-Add `--config-json config.json` if the board should come up already holding the update token.
-That file is never in the repo - keep it on the bench machine and pass it in.
-
-**Two things to have ready before a board ships.** An NVMe, because without one the store falls
+**One thing to have ready before a board ships.** An NVMe, because without one the store falls
 back to the system disk and a recorder filling the disk it boots from is how a box bricks itself.
-And a provisioned secure element, if the board is to take a hardware-bound licence -- the chip
-ships blank and `scripts/dev/provision_atecc.py` gives it a key, once, permanently.
 
 **What it leaves behind, and what it does not.** The board gets the product: the hub, the
-masters, the built frontend, the update applier and the recovery service. It does **not** get
-`install.sh` or the other scripts that build a board - those stay on your bench checkout. A
-board in the field is updated over the air or sent back here; it is never rebuilt where it
-stands, and a customer holding the installer is a customer who can stand this software up on
-hardware we did not sell them. That is a locked door, not the lock: what actually stops a copy
-running is the licence bound to the board's secure element.
+masters and the built frontend. It does **not** get `install.sh` or the other scripts that
+build a board - those stay on your bench checkout.
 
 **Re-installing a board.** Run the same command again. Local settings (`config/*.local.toml` -
-accounts, licence, update token, device identity), each system's recordings and models, and the
-store on the NVMe all survive, because the installer never copies over them. One caveat worth
-knowing: the install lives in a directory named after `VERSION`, so re-installing a *different*
-version makes a new directory and the local settings are not carried into it. Only an
-over-the-air update migrates them. Re-install the same version, or update from the dashboard.
+accounts, device identity), each system's recordings and models, and the
+store on the NVMe all survive, because the installer never copies over them.
 
 ## Turning the software off, and on again
 
@@ -247,10 +234,6 @@ sudo systemctl enable --now irivai-hub.service irivai-master@demo.service irivai
 
 The hub brings up every system flagged Autostart by itself, so enabling the hub alone is usually
 enough; the master unit is listed so it also comes back after a reboot.
-
-`irivai-recover` is deliberately left alone by both commands. It is a boot-time repair that does
-nothing at all unless an update was interrupted, and switching off the thing that puts a
-half-updated board back together is not part of switching off the software.
 
 ## The two Ethernet ports
 
@@ -279,11 +262,11 @@ udevadm test --action=add /sys/class/net/eth1 2>&1 | grep usbnet-setup
 
 ### A board installed before this shipped
 
-An over-the-air update will NOT fix it. The helper and the rule live outside
-every release directory, in `/usr/local/lib/irivai` and `/etc/udev/rules.d`,
-which is deliberate: the account that applies updates can write a release tree,
-so anything it could drop into a root-run helper would be a way to become root.
-Those files change only when somebody runs the installer.
+The helper and the rule live outside the install directory, in
+`/usr/local/lib/irivai` and `/etc/udev/rules.d`, which is deliberate: the service
+account can write the install tree, so anything it could drop into a root-run
+helper would be a way to become root. Those files change only when somebody runs
+the installer.
 
 So either re-run `install.sh`, or copy the two files across by hand from a
 checkout:

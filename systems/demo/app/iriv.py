@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-iriv.py -- board support for the IRIV Edge AI (CM5) industrial controller.
+iriv.py -- board support for the IRIV Edge AI industrial controller.
 
 What the board gives a detection app beyond a Pi:
 
@@ -8,7 +8,6 @@ What the board gives a detection app beyond a Pi:
                         e-stop loop, a machine's "cycle running" signal
     isolated DO x2      up to 50V -- a tower light, a relay, a horn
     isolated RS485      Modbus RTU to a PLC or a sensor string, 500 kbps max
-    ATECC608B           tamper-resistant identity (see device-identity-stamping)
     RTC                 real timestamps after a boot with no network, which is
                         what makes the contract's offset-aware stamps true
     SSD1315 OLED        0.96" status display: IP, app state, last event
@@ -318,23 +317,10 @@ def primary_ip():
 
 # -- identity ----------------------------------------------------------------
 
-def atecc_serial(bus=1, addr=0x60):
-    """The ATECC608B 9-byte serial as hex, or None.
-
-    Read-only, and deliberately the *serial* rather than any key material: the
-    serial is enough to bind a licence or a device identity to this board, and
-    reading it needs no provisioning. Signing operations belong in a dedicated
-    tool, not in a detection app.
-    """
-    data = buses.i2c_read(bus, addr, 0x00, 9)
-    return data.hex() if data else None
-
-
 def cpu_serial():
-    """CM5 serial from the devicetree, else /proc/cpuinfo.
+    """Board serial from the devicetree, else /proc/cpuinfo.
 
-    Clonable with the disk image -- fleet identity, not proof of hardware. Pair
-    it with the ATECC serial when that distinction matters.
+    Clonable with the disk image -- fleet identity, not proof of hardware.
     """
     for path in ("/sys/firmware/devicetree/base/serial-number", "/proc/cpuinfo"):
         try:
@@ -358,7 +344,6 @@ def inventory(config=None):
         "board": "iriv-edge-ai-cm5",
         "configured": bool(cfg.get("enabled")),
         "cpu_serial": cpu_serial(),
-        "atecc_serial": atecc_serial(int(cfg.get("atecc_bus", 1))),
         "ip": primary_ip(),
         "inputs": read_inputs(config),
         "buses": buses.inventory(config),

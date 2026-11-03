@@ -29,7 +29,7 @@ async def box_restart(request: Request):
     cfg = request.app.state.config_dir
     if not auth_service.is_admin(getattr(request.state, "user", None), cfg):
         raise HTTPException(status_code=403,
-                            detail="only master or a developer may restart the box "
+                            detail="only master may restart the box "
                                    "for a port or hostname change")
     st = await asyncio.to_thread(boxpending.status, request, cfg)
     if not st["any"]:

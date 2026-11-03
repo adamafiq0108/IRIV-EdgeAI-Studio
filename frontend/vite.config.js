@@ -19,23 +19,9 @@ import path from "node:path";
 // paths to a locally running master (default :5110) so the React app talks to
 // real endpoints with hot reload.
 //
-// Two BUILDS, not two apps:
-//
-//   npm run build            owner's build -- includes the developer panels
-//   npm run build:customer   the shipped appliance -- excludes them
-//
-// `__DEV_TOOLS__` is substituted as a literal true/false at build time, so
-// `__DEV_TOOLS__ ? lazy(() => import("./TemplatesPanel.jsx")) : null` collapses
-// to `null` in a customer build and Rollup never emits the chunk. The panels
-// are ABSENT from the bundle, not hidden by a check a curious user can flip in
-// devtools -- matching the backend, where the same build has no core/dev/ and
-// the routes those panels call do not exist (core/deploy.py).
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   plugins: [react(), tailwindcss()],
   base: "./",
-  define: {
-    __DEV_TOOLS__: JSON.stringify(mode !== "customer"),
-  },
   resolve: {
     alias: { "@": path.resolve(import.meta.dirname, "./src") },
   },

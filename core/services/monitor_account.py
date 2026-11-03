@@ -19,7 +19,7 @@ accident:
   * what it may DO is fixed here, never ticked: start and stop detection, and
     download footage (caps.MONITOR_CAPS). Everything else a page can change is
     master-only or a site-admin grant, exactly as for any ordinary account.
-  * never an admin tier, never a developer: auth.tier() ignores those flags
+  * never an admin tier: auth.tier() ignores those flags
     on a monitor row, and update_user / delete_user refuse the row, so no
     account-management route can promote or remove it. It is switched on and
     off here, from System settings.
@@ -51,10 +51,10 @@ DEFAULT_USERNAME = "monitor"
 DEFAULT_PAGES = ("main", "analytics", "footage")
 
 #: The pages the admin may add. Everything the product has except the
-#: developer-only ones -- the account can still only READ them (it holds no
+#: master-only ones -- the account can still only READ them (it holds no
 #: capability beyond MONITOR_CAPS).
 GRANTABLE_PAGES = tuple(p for p in nav_service.ALL_PAGES
-                        if p not in nav_service.DEVELOPER_PAGES)
+                        if p not in nav_service.MASTER_PAGES)
 
 TOKEN_PREFIX = "mon_"
 TOKEN_FIELD = "tokens"
@@ -250,7 +250,6 @@ def enable(name=None, password=None, config_dir=None):
         # chose are kept; an empty value means all of them.
         stored["systems"] = str(stored.get("systems") or "*")
         stored.pop(auth_service.ADMIN_FLAG, None)
-        stored.pop(auth_service.DEVELOPER_FLAG, None)
         auth_service._save_local("users", local, config_dir)
     if new != current:
         auth_service.revoke_sessions_of(current, config_dir=config_dir)
@@ -277,7 +276,7 @@ def disable(config_dir=None):
 
 def set_pages(chosen, config_dir=None):
     """Which pages the account may open. Never empty, never a page the
-    product does not have, never a developer page."""
+    product does not have, never a master-only page."""
     current, row = _row(config_dir)
     if row is None:
         raise ValueError("turn the Monitor account on first")

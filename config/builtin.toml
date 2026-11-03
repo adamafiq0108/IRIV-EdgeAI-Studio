@@ -1,22 +1,13 @@
 # Built-in content -- what ships ON the appliance, free, ready to use.
 #
-# Three tiers of template, and only the first one is a file on the box:
-#
-#   built-in   bundled by scripts/install.sh. Usable the moment the box boots:
-#              pick it, or start from a blank canvas. No install step, no key.
-#   free       downloaded from the public store repo on demand.
-#   pro        downloaded from the private store repo; needs a license key.
-#
-# Free and pro are deliberately NOT bundled. They are fetched, verified against
-# their ed25519 signature and installed by core/services/store.py when the
-# customer asks for them -- so an appliance carries what it uses and nothing
-# else, and a template can be updated without reinstalling the product.
+# Templates are built-in: bundled by scripts/install.sh and usable the moment
+# the box boots -- pick one, or start from a blank canvas. No install step.
 #
 # `systems` lists the system PACKAGES that get copied into the install. The
 # installer copies exactly these, rather than everything found under systems/:
-# a developer's checkout accumulates workbench systems and half-built packages,
-# and none of them should reach a customer box just for having been in the
-# folder at install time.
+# a working checkout can accumulate half-built packages, and none of them
+# should reach a customer box just for having been in the folder at install
+# time.
 #
 # Slugs must match the folder name under systems/. A slug listed here but
 # missing from the checkout is an error the installer reports rather than a

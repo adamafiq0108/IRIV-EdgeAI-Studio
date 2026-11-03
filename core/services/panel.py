@@ -9,7 +9,7 @@ forty wired nodes:
   * holding it for five seconds shuts the box down (the dashboard can ask for
     the same thing, and for a reboot);
   * the pages themselves -- identity, how to reach the dashboard, the IP
-    addresses, the live CM5 status -- redraw from `hostinfo`.
+    addresses, the live board status -- redraw from `hostinfo`.
 
 WHY IT IS PART OF THE HUB, not a service of its own: everything on the panel
 is something the hub already knows or already computes, the panel must not
@@ -58,7 +58,7 @@ DEFAULT_TEXT = {
     "ip_eth0": "eth0: {ip_eth0}",
     "ip_eth1": "eth1: {ip_eth1}",
     "ip_wlan0": "wlan0: {ip_wlan0}",
-    "status_title": "CM5 STATUS:",
+    "status_title": "STATUS:",
     "status_load": "Load: {cpu_load} T:{cpu_temp}",
     "status_ram": "RAM:  {ram}",
     "status_disk": "Disk: {disk}",

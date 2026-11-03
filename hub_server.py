@@ -34,7 +34,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from core import config, deploy
+from core import config
 from core.middleware import install_access_log
 from core.routes.audit import router as audit_router
 from core.routes.auth import require as auth_require
@@ -59,15 +59,11 @@ from core.routes.network_wifitest import router as network_wifitest_router
 from core.routes.panel import router as panel_router
 from core.routes.logs import install_error_handlers
 from core.routes.logs import router as logs_router
-from core.routes.store import router as store_router
 from core.routes.storage import router as storage_router
 from core.routes.storage_setup import router as storage_setup_router
-from core.routes.update import router as update_router
-from core.routes.update_local import router as update_local_router
 from core.services import log_collect
 from core.services import logs as logs_service
 from core.services import provision as provision_service
-from core.services import template_updates
 from core.services import workflow as workflow_service
 from core.services.registry import Registry
 
@@ -131,16 +127,6 @@ def create_app(config_dir=None):
     refreshed = provision_service.repair_store_apps(systems_dir)
     if refreshed:
         logger.info("[HUB] refreshed app code for: %s", ", ".join(refreshed))
-    # Templates a "Check for template updates" installed live in formats.toml,
-    # which an update replaces with the new release's; put them back unless
-    # the release itself has since changed them (template_updates.restore).
-    try:
-        restored = template_updates.restore(config_dir)
-    except Exception:                                       # noqa: BLE001
-        restored = []
-        logger.exception("[HUB] restoring installed templates failed")
-    if restored:
-        logger.info("[HUB] restored installed templates: %s", ", ".join(restored))
     # [python].enabled is a kill switch, so it has to kill something. Writing
     # is already refused while it is off, but code written while it was ON
     # kept running until someone happened to save that workflow -- so turning
@@ -275,22 +261,7 @@ def create_app(config_dir=None):
     # Autostart: flagged systems get their master spawned and their detection
     # app started at hub boot -- the board comes up detecting on power-on.
     # Same helper the Autostart toggle uses, so boot and toggle cannot drift.
-    # ...unless an update is mid-flight. The applier restarts this process as
-    # part of the swap, and a hub that comes back up during the gate window
-    # must not start spawning systems against a tree that is still being
-    # replaced -- the applier decides when systems come back, and it does that
-    # after the health gate says the new code is actually serving.
-    # ...and what the applier revives dies with its oneshot unit (its
-    # cgroup), so the systems it took down come back from HERE once the job
-    # is over: update_revive.start below, in this process's own cgroup. That
-    # is also where a skipped autostart is picked up, instead of never.
-    from core.services import update as update_service
-    from core.services import update_revive
-    if update_service.maintenance():
-        logger.info("[HUB] update in progress - autostart waits for it to "
-                    "finish, then the running systems come back")
-    for slug, entry in (() if update_service.maintenance()
-                        else app.state.masters.items()):
+    for slug, entry in app.state.masters.items():
         if not (entry or {}).get("autostart"):
             continue
         result = provision_service.autostart_system(systems_dir, slug, entry,
@@ -304,30 +275,10 @@ def create_app(config_dir=None):
     # Systems the Monitor account may open stay online: bring their masters up
     # now, and keep looking (services/monitor_online.py).
     from core.services import monitor_online
-    if not update_service.maintenance():
-        got = monitor_online.ensure_online(app.state.masters, str(_BASE), config_dir)
-        if got:
-            logger.info("[HUB] Monitor systems brought online: %s", ", ".join(got))
+    got = monitor_online.ensure_online(app.state.masters, str(_BASE), config_dir)
+    if got:
+        logger.info("[HUB] Monitor systems brought online: %s", ", ".join(got))
     monitor_online.start_keepalive(app, str(_BASE), config_dir)
-    if update_revive.start(app.state.masters, str(systems_dir), str(_BASE),
-                           config_dir):
-        logger.info("[HUB] an update is finishing or just finished - the "
-                    "systems it stopped are brought back from here")
-
-    # Look for a new release of the platform in the background. Starts only on
-    # a box that has a release token, so a developer checkout never phones
-    # home and the owner's own workflow is untouched.
-    if update_service.start_checker(config_dir):
-        from core.version import VERSION as _running
-        logger.info("[HUB] update checks enabled (current %s)", _running)
-    # The first start after an update leaves the admins a notice saying so,
-    # with what changed. Never fatal: a box that cannot write its inbox must
-    # still come up, and the notice is news, not a step of the update.
-    try:
-        if update_service.announce_installed(config_dir):
-            logger.info("[HUB] told the admins what this version changed")
-    except Exception as exc:                               # noqa: BLE001
-        logger.warning("[HUB] could not post the update notice: %s", exc)
 
     # The front panel: OLED pages, the USER button, the buzzer. Off unless
     # config/panel.toml says otherwise, because the board's factory Node-RED
@@ -424,11 +375,8 @@ def create_app(config_dir=None):
     app.include_router(template_media_router)  # template preview pictures/video
     app.include_router(audit_router)  # /api/audit - the Administration panel's log
     app.include_router(monitor_router)  # /api/hub/monitor - the Monitor account
-    app.include_router(store_router)  # /api/hub/store - the online template store
     app.include_router(storage_router)  # /api/hub/retention/nvme/forget - drop the NVMe memory
     app.include_router(storage_setup_router)  # /api/hub/storage/* - New storage detected
-    app.include_router(update_router)  # /api/hub/update - platform updates (OTA)
-    app.include_router(update_local_router)  # auto-check switch, offline update file
     app.include_router(logs_router)   # /api/logs     - this process's log ring
     # /api/capacity - systems + running apps, for the header meters. Mounted
     # here AND on every master so the meters do not vanish when an operator
@@ -485,14 +433,6 @@ def create_app(config_dir=None):
     # /api/hub/restart - "Restart now" for those two: a reboot, after which
     # main() applies them (core/services/boxpending.py).
     app.include_router(boxrestart_router)
-    # The owner's tooling: authoring built-in formats, publishing to the store,
-    # issuing license keys. Mounts only on a box declared mode = "dev", and a
-    # customer install has no core/dev/ to mount (core/deploy.py). Absent code
-    # cannot be called, which is the point -- the per-route developer check
-    # stays as the inner lock for boxes that DO carry it. Whether it mounted
-    # is remembered for the shell: the developer panels are drawn only where
-    # the routes behind them exist (core/routes/hub.py bootstrap).
-    app.state.dev_tools = deploy.mount_dev(app, config_dir)
     # Last of the routers: an unhandled error anywhere above becomes one
     # recorded line and one {"ok": false, ...} body carrying the request id,
     # instead of a bare 500 (conventions sec 8).
@@ -600,7 +540,7 @@ def main():
         print(about.text())
         raise SystemExit(0)
 
-    # CM5 + ATECC608 + Hailo: stops here with a plain message if one is absent.
+    # Hailo: stops here with a plain message if one is absent.
     from core.services import hwcheck
     hwcheck.require(args.config_dir, "hub")
 

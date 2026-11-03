@@ -29,7 +29,7 @@ def _require_owner(request):
     if not auth_service.is_admin(getattr(request.state, "user", None),
                                  request.app.state.config_dir):
         raise HTTPException(status_code=403,
-                            detail="only master or a developer may change the hostname")
+                            detail="only master may change the hostname")
 
 
 def _status(request):

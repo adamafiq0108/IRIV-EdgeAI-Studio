@@ -6,24 +6,14 @@
 #   sudo ./scripts/install.sh --adapter systems.demo.adapter:DemoAdapter
 #
 # This is NOT scripts/setup_pi.sh with defaults. setup_pi.sh installs one role
-# from the checkout it runs in, and installs whatever that checkout contains --
-# right for a developer box, wrong for an appliance, because a developer's
-# checkout contains the owner's tooling.
+# from the checkout it runs in; here the install is a COPY, and what does not
+# get copied is the point:
 #
-# Here the install is a COPY, and what does not get copied is the point:
-#
-#   core/dev/       authoring built-in formats, publishing, issuing licenses
-#   scripts/dev/    make_dev_account.py, publish_template.py
 #   frontend/       source; only the built bundle is kept
-#
-# and the frontend is built with `--mode customer`, which drops the developer
-# panels from the bundle rather than hiding them behind a flag. Absent code
-# cannot be called, cannot be re-enabled by editing a config, and cannot leak an
-# endpoint name to someone reading the JavaScript.
+#   the bench scripts that build a box (see BENCH_ONLY below)
 #
 # What ships is the product plus the built-in systems named in
-# config/builtin.toml. Free and pro templates are downloaded from the store on
-# demand, verified against their signature, and never bundled.
+# config/builtin.toml.
 #
 # Re-running is safe: every step checks before it writes.
 
@@ -45,7 +35,6 @@ SKIP_HARDENING=0
 INSTALL_SERVICE=1
 SKIP_HARDWARE_CHECK=0
 SKIP_NODE_UPDATE=0
-OTA_LAYOUT=1
 #: The row store. A board that cannot reach Postgres still runs -- tables can
 #: be designed, nothing is stored -- which is right for a deployment pointing
 #: several boards at one server, and wrong as the default for an appliance
@@ -72,9 +61,6 @@ AP_FORWARD=0
 KEEP_VNC=0
 KEEP_RPCBIND=0
 KEEP_SERIAL_CONSOLE=0
-RELEASES_DIR=""
-UPDATE_TOKEN=""
-CONFIG_JSON=""
 REAL_TARGET=""
 
 VENV=""      # set once TARGET is final
@@ -102,20 +88,8 @@ Options:
                      later); a box that already has one keeps it.
   --master-port <n>  first master's port, default 5110 (each system gets +1)
   --agent-port <n>   default 5101
-  --update-token <t> store a read-only release token so this box can fetch
-                     over-the-air updates. Can also be pasted later in
-                     Administration -> Platform Update.
-  --config-json <p>  a provisioning file holding {"update_token": "..."} (and
-                     room for other setup-time values later). Default: look
-                     for config.json next to this script (in the checkout
-                     being installed FROM); wins only where --update-token
-                     was not also given. Never copied into the install --
-                     it is a secret, same handling as the store signing key.
   --no-mqtt          do not install the MQTT broker (Mosquitto). The MQTT
                      nodes then need a broker elsewhere, named by address.
-  --no-ota           install as a plain directory instead of the release
-                     layout. Over-the-air updates need the layout; use this
-                     only for a box that will be updated by hand.
   --keep-node-modules
                      leave frontend/node_modules in the SOURCE checkout after
                      the build (default: pruned -- it is hundreds of MB that
@@ -146,18 +120,13 @@ Options:
                      latest LTS and Node-RED (if the board has it) to its
                      latest release; Node-RED stays on or off as it was.
   --skip-hardware-check
-                     install even when the CM5 / ATECC608 / Hailo check below
-                     cannot confirm all three. A bench or dev box only -- the
-                     product's licensing (Settings -> Store) still refuses
-                     anything that needs the secure element.
+                     install even when the Hailo accelerator check below
+                     cannot find one. A bench or dev box only.
   --no-service       build and copy, but write no systemd unit and start
                      nothing. Use to rehearse an install, or to check on a
                      running box what WOULD ship, without touching it.
   -h, --help
 
-The owner's tooling (core/dev/, scripts/dev/) is never copied. To build one of
-these boxes into a developer workstation, use scripts/setup_pi.sh on a full
-checkout instead -- there is no flag here that turns it back on.
 EOF
 }
 
@@ -169,8 +138,6 @@ while [[ $# -gt 0 ]]; do
         --hub-port)     HUB_PORT="${2:-}"; shift 2 ;;
         --master-port)  MASTER_PORT="${2:-}"; shift 2 ;;
         --agent-port)   AGENT_PORT="${2:-}"; shift 2 ;;
-        --update-token) UPDATE_TOKEN="${2:-}"; shift 2 ;;
-        --config-json)  CONFIG_JSON="${2:-}"; shift 2 ;;
         --db-host)      DB_HOST="${2:-}"; shift 2 ;;
         --no-database)  INSTALL_DB=0; shift ;;
         --no-mqtt)      INSTALL_MQTT=0; shift ;;
@@ -180,7 +147,6 @@ while [[ $# -gt 0 ]]; do
         --keep-vnc)     KEEP_VNC=1; shift ;;
         --keep-rpcbind) KEEP_RPCBIND=1; shift ;;
         --keep-serial-console) KEEP_SERIAL_CONSOLE=1; shift ;;
-        --no-ota)       OTA_LAYOUT=0; shift ;;
         --keep-node-modules) KEEP_NODE_MODULES=1; shift ;;
         --skip-hardening)    SKIP_HARDENING=1; shift ;;
         --skip-hardware-check) SKIP_HARDWARE_CHECK=1; shift ;;
@@ -202,8 +168,6 @@ fi
 
 VENV="${TARGET}/.venv"
 PY="${VENV}/bin/python"
-# Releases live beside the install: /opt/irivai-systor -> /opt/irivai-releases/vX
-[[ -n "$RELEASES_DIR" ]] || RELEASES_DIR="$(dirname "$TARGET")/irivai-releases"
 
 # ---------------------------------------------------------------------------
 # 1. Prerequisites
@@ -227,54 +191,34 @@ fi
 command -v rsync >/dev/null || die "rsync not found -- apt-get install rsync"
 
 # ---------------------------------------------------------------------------
-# 1a. Hardware gate -- CM5 + ATECC608 + Hailo accelerator
+# 1a. Hardware gate -- Hailo accelerator
 # ---------------------------------------------------------------------------
 #
-# This product installs on one board: a Raspberry Pi Compute Module 5 with
-# the ATECC608 secure element and a Hailo accelerator (8, 8L or 10H) fitted.
-# Checked HERE, before anything is downloaded or written, so a board missing
-# one of the three gets a plain answer instead of a half-finished install
-# that then fails somewhere inside the detection loop.
+# This product needs a Hailo accelerator (8, 8L or 10H) fitted. Checked HERE,
+# before anything is downloaded or written, so a board without one gets a
+# plain answer instead of a half-finished install that then fails somewhere
+# inside the detection loop. Nothing is sent anywhere -- it reads the board in
+# front of it. Any host that has the accelerator qualifies (no particular
+# compute module, no secure element).
 #
-# No serial is sent anywhere and no key is needed for this check -- it reads
-# the board in front of it and nothing else. (A LICENSE for the template
-# store is a separate, later step: core/services/store.py, Settings ->
-# Store.) What is checked:
-#
-#   CM5     the devicetree model string says "Compute Module 5"
-#   ATECC608  core/services/atecc.py can talk to the chip over I2C
-#   Hailo   lspci (or hailortcli, if already installed) sees the accelerator
-#
-# --skip-hardware-check installs anyway, for a bench or dev box; the
-# licensing gate further down is unaffected by it.
+# --skip-hardware-check installs anyway, for a bench or dev box.
 say "Hardware check"
 HW_RC=0
 python3 - "${SRC_DIR}" <<'PY' || HW_RC=$?
 import sys
 
 sys.path.insert(0, sys.argv[1])
-from core.services import atecc, builtin_models                 # noqa: E402
+from core.services import builtin_models                        # noqa: E402
 
-
-def have_cm5():
-    try:
-        with open("/proc/device-tree/model", encoding="utf-8", errors="ignore") as f:
-            return "Compute Module 5" in f.read()
-    except OSError:
-        return False
-
-
-cm5, chip, hailo = have_cm5(), atecc.present(), bool(builtin_models.detect_arch_uncached())
-print("   Compute Module 5  : %s" % ("found" if cm5 else "NOT FOUND"))
-print("   ATECC608 secure el.: %s" % ("found" if chip else "NOT FOUND"))
+hailo = bool(builtin_models.detect_arch_uncached())
 print("   Hailo accelerator : %s" % ("found" if hailo else "NOT FOUND"))
-sys.exit(0 if (cm5 and chip and hailo) else 1)
+sys.exit(0 if hailo else 1)
 PY
 if [[ $HW_RC -ne 0 ]]; then
     if [[ $SKIP_HARDWARE_CHECK -eq 1 ]]; then
-        warn "hardware check failed -- continuing because --skip-hardware-check was given. This box cannot use the template store or receive a license."
+        warn "hardware check failed -- continuing because --skip-hardware-check was given."
     else
-        die "this board is missing required IRIV Edge AI hardware (see above). Pass --skip-hardware-check to install anyway on a bench/dev box."
+        die "no Hailo accelerator was found (see above). Pass --skip-hardware-check to install anyway on a bench/dev box."
     fi
 fi
 
@@ -344,8 +288,7 @@ APT_PACKAGES=(
     lsof
     # arping -D: the Network page's address conflict test and the OLED's
     # IP CONFLICT line (core/services/ipconflict.py, panel_ipcheck.py); the
-    # iputils one, whose flags the code uses. Updates add it too
-    # (scripts/root_items.json "upgrade").
+    # iputils one, whose flags the code uses.
     iputils-arping
     # The rest of what the code runs, named rather than assumed from the OS
     # image (tests/smoke_deps.py reads the code for them):
@@ -355,8 +298,8 @@ APT_PACKAGES=(
     #                 problem is diagnosed over ssh
     #   gpiod         gpioinfo/gpioget -- the board's terminals (board_io.py)
     #   pciutils      lspci -- which Hailo chip, when hailortcli cannot say
-    #   openssl       the root step's signature check when the system has no
-    #                 python3-cryptography (scripts/root_steps.py)
+    #   openssl       a certificate fallback when the system has no
+    #                 python3-cryptography
     #   fdisk         sfdisk -- the New storage popup's format (storage_setup.py);
     #                 its own package since Debian 12
     iputils-ping iw gpiod pciutils openssl fdisk
@@ -469,7 +412,7 @@ if [[ $INSTALL_SERVICE -eq 1 ]]; then
     #   video    /dev/video* -- USB cameras
     #   render   the GPU nodes
     #   gpio     the board's terminals, the USER button, the buzzer
-    #   i2c      the OLED front panel and the ATECC secure element
+    #   i2c      the OLED front panel
     #   spi      the board's SPI header
     #   dialout  serial ports (Modbus RTU)
     #   plugdev  hot-plugged devices
@@ -543,24 +486,16 @@ fi
 
 ( cd "${SRC_DIR}/frontend" \
     && { [[ -d node_modules ]] && npm ci >/dev/null 2>&1 || npm install; } \
-    && npm run build:customer ) \
-  || die "customer frontend build failed -- see the npm output above"
+    && npm run build ) \
+  || die "frontend build failed -- see the npm output above"
 
 [[ -f "${SRC_DIR}/core/static/app/index.html" ]] \
     || die "the build produced no core/static/app/index.html"
 
-# The proof, not the promise: if a developer chunk is in the bundle, the build
-# mode did not take, and shipping it would put owner tooling on a customer box.
-if ls "${SRC_DIR}"/core/static/app/assets/ 2>/dev/null \
-     | grep -qE '(TemplatesPanel|LicensesPanel)'; then
-    die "the customer bundle still contains developer panels -- refusing to
-       install. Check that npm run build:customer ran (frontend/vite.config.js
-       defines __DEV_TOOLS__ from the build mode)."
-fi
-note "built core/static/app, developer panels absent"
+note "built core/static/app"
 
 # ---------------------------------------------------------------------------
-# 5. Copy the product -- minus the owner's tooling
+# 5. Copy the product
 # ---------------------------------------------------------------------------
 
 say "Installing into ${TARGET}"
@@ -572,77 +507,8 @@ say "Installing into ${TARGET}"
 FRESH_INSTALL=0
 [[ ! -e "$TARGET" && ! -L "$TARGET" ]] && FRESH_INSTALL=1
 
-# ---- release layout -------------------------------------------------------
-# ${TARGET} is a SYMLINK into a directory of releases:
-#
-#     /opt/irivai-releases/v2.1.0/     this version, complete, with its venv
-#     /opt/irivai-systor -> …/v2.1.0   what every unit and every path uses
-#
-# That indirection is what makes an over-the-air update safe. Going live
-# becomes one atomic rename of the link, so there is no moment in which the
-# running tree is half one version and half the next -- and the version that
-# was running is still on disk, complete, to go back to. Copying new files
-# over a live install can offer neither.
-#
-# The units, the venv path and every config path stay ${TARGET}: nothing in
-# the product knows a release directory exists.
-if [[ $OTA_LAYOUT -eq 1 ]]; then
-    RELEASE_VERSION="$(tr -d ' \t\r\n' < "${SRC_DIR}/VERSION" 2>/dev/null || true)"
-    [[ -n "$RELEASE_VERSION" ]] || die "no VERSION file in ${SRC_DIR}"
-    REAL_TARGET="${RELEASES_DIR}/v${RELEASE_VERSION}"
-    install -d -m 755 "$RELEASES_DIR"
-
-    if [[ -d "$TARGET" && ! -L "$TARGET" ]]; then
-        # An appliance installed before this layout existed: move what is
-        # there into a release directory of its own and put the link in its
-        # place. Done with mv, so the box is never without its files for
-        # longer than a rename.
-        say "Converting ${TARGET} to the release layout"
-        [[ -e "$REAL_TARGET" ]] && die "${REAL_TARGET} already exists -- move it aside first"
-        mv "$TARGET" "$REAL_TARGET"
-        ln -sfn "$REAL_TARGET" "${TARGET}.new" && mv -Tf "${TARGET}.new" "$TARGET"
-        note "existing install is now ${REAL_TARGET}"
-    fi
-    # WHAT THE BOARD ALREADY KNEW ABOUT ITSELF, carried into the new release.
-    #
-    # A release directory is named after VERSION, so installing a NEW version
-    # lands in a NEW empty directory -- and config/*.local.toml is excluded
-    # from the copy below, correctly, because that is what stops an install
-    # overwriting a board's own settings. Together those two right decisions
-    # made a wrong one: installing 1.0.5 over a board running 1.0.4 produced a
-    # box with no accounts, no database password, no device identity and no
-    # update token. It came up serving a login page nobody could pass.
-    #
-    # The over-the-air updater has always done this (scripts/apply_update.py,
-    # CARRY_CONFIG); the installer never did, and that asymmetry was invisible
-    # until somebody re-installed at a different version.
-    #
-    # Only into a release that does not have them: a second run of the same
-    # version must not copy yesterday's settings over today's.
-    PREVIOUS_RELEASE=""
-    [[ -L "$TARGET" ]] && PREVIOUS_RELEASE="$(readlink -f "$TARGET" || true)"
-    install -d -m 755 "$REAL_TARGET"
-    if [[ -n "$PREVIOUS_RELEASE" && "$PREVIOUS_RELEASE" != "$REAL_TARGET" \
-          && -d "${PREVIOUS_RELEASE}/config" ]]; then
-        install -d -m 755 "${REAL_TARGET}/config"
-        carried=0
-        for f in "${PREVIOUS_RELEASE}/config"/*.local.toml \
-                 "${PREVIOUS_RELEASE}/config/deploy.toml"; do
-            [[ -f "$f" ]] || continue
-            [[ -e "${REAL_TARGET}/config/$(basename "$f")" ]] && continue
-            cp -p "$f" "${REAL_TARGET}/config/" && carried=$((carried + 1))
-        done
-        [[ $carried -gt 0 ]] \
-            && note "carried ${carried} local config file(s) from $(basename "$PREVIOUS_RELEASE")"
-    fi
-    # -T so an existing link is REPLACED, never followed into its own target.
-    ln -sfn "$REAL_TARGET" "${TARGET}.new"
-    mv -Tf "${TARGET}.new" "$TARGET"
-    note "${TARGET} -> ${REAL_TARGET}"
-else
-    REAL_TARGET="$TARGET"
-    install -d -m 755 "$TARGET"
-fi
+REAL_TARGET="$TARGET"
+install -d -m 755 "$TARGET"
 
 # The scripts that BUILD a box, as against the ones that RUN on it.
 #
@@ -653,11 +519,10 @@ fi
 # door. The checkout this script runs from keeps its copies -- that is the
 # point, the next board is built from the same checkout.
 #
-# What stays, and why each one has to: apply_update.py, because
-# core/services/update.py copies it out of this tree to run an OTA; recover.py
-# and db_console_role.py, installed to /usr/local/lib/irivai and run by
-# systemd; and the udev, modprobe and mediamtx CONFIG the running box reads.
-# Removing any of those breaks a box that is already in service.
+# What stays, and why each one has to: db_console_role.py and the other root
+# helpers, installed to /usr/local/lib/irivai and run through sudo; and the
+# udev, modprobe and mediamtx CONFIG the running box reads. Removing any of
+# those breaks a box that is already in service.
 BENCH_ONLY=(
     scripts/install.sh
     scripts/setup_pi.sh
@@ -744,12 +609,6 @@ done
 note "core/dev, scripts/dev, frontend source, config.json: absent"
 note "installer and bench scripts: absent (${#BENCH_ONLY[@]} of them)"
 
-# This box is a customer box, and says so. core/deploy.py refuses to mount the
-# developer routes on anything that does not say mode = "dev", so even a later
-# copy of core/dev/ onto this box stays inert until someone edits this file.
-printf 'mode = "customer"\n' > "${TARGET}/config/deploy.toml"
-note "config/deploy.toml: mode = customer"
-
 # ---------------------------------------------------------------------------
 # 6. Virtualenv
 # ---------------------------------------------------------------------------
@@ -778,21 +637,6 @@ fi
 "${VENV}/bin/pip" install --quiet --no-cache-dir -r "${TARGET}/requirements.txt"
 note "dependencies installed"
 
-# Where an update does its work: under the product's own store root, which is
-# deliberately outside the code tree (NVMe when the box has one), so staging
-# files and the record of what an update was doing survive the swap they are
-# describing. Asked of the product rather than guessed -- the store root moves
-# with the hardware, and a second copy of that rule here would drift.
-# Asked AS THE SERVICE USER. The store root's fallbacks run through the home
-# directory of whoever asks, so root's answer (/root/.local/share/...) would
-# name a directory the hub can neither read nor write -- and the updater would
-# then look for its job in a place nothing ever writes one.
-# The LAST line only. Resolving the store root can print a warning of its own
-# first -- a box with content under more than one candidate root says so -- and
-# a plain capture takes that banner as part of the path. It really happened:
-# /etc/irivai/update.conf ended up with a multi-line UPDATE_DIR beginning
-# "[STORE] WARNING:", which is what the boot-time recovery script then read as
-# the directory holding the update it might have to undo.
 # The store's preferred home is /mnt/nvme/cytron/store (core/config.py
 # STORE_CANDIDATES), and "first writable candidate wins" on a fresh box. A
 # freshly set-up NVMe is mounted root-owned, so the service account could
@@ -810,41 +654,11 @@ elif [[ $INSTALL_SERVICE -eq 1 ]] && grep -qsE '^[^#]\S*\s+/mnt/nvme\s' /etc/fst
     # the store line below would otherwise call the NVMe "empty".
     warn "/mnt/nvme is listed in /etc/fstab but NOT mounted -- the store falls back to the home directory on the system disk. Check the UUID (blkid) against the fstab line and run: sudo mount -a"
 fi
+# Resolve the store root once now, as the service user, so the first resolution
+# (and its directories) happens with the right ownership.
 if [[ $INSTALL_SERVICE -eq 1 ]]; then
-    UPDATE_WORK="$(cd "$TARGET" && sudo -u "$SERVICE_USER" "$PY" -c 'from core import config; print(config.store_dir())' 2>/dev/null | tail -n 1 || true)"
-else
-    UPDATE_WORK="$(cd "$TARGET" && "$PY" -c 'from core import config; print(config.store_dir())' 2>/dev/null | tail -n 1 || true)"
-fi
-if [[ -z "$UPDATE_WORK" ]]; then
-    UPDATE_WORK="${TARGET}/var/update"
-    warn "could not resolve the store root -- update workspace falls back to ${UPDATE_WORK}"
-else
-    UPDATE_WORK="${UPDATE_WORK}/update"
-fi
-note "update workspace: ${UPDATE_WORK}"
-
-# A provisioning file can carry the token instead of a flag someone has to
-# remember to pass -- default location is beside this script, in the SOURCE
-# checkout, never the install target: it must not be there for --config-json
-# to find it and then ALSO be a file the copy step could ship onto the box.
-[[ -z "$CONFIG_JSON" && -f "${SRC_DIR}/config.json" ]] && CONFIG_JSON="${SRC_DIR}/config.json"
-if [[ -z "$UPDATE_TOKEN" && -n "$CONFIG_JSON" ]]; then
-    [[ -f "$CONFIG_JSON" ]] || die "--config-json ${CONFIG_JSON} does not exist"
-    FROM_JSON="$(python3 - "$CONFIG_JSON" <<'PY'
-import json, sys
-try:
-    with open(sys.argv[1], encoding="utf-8") as f:
-        data = json.load(f)
-except (OSError, ValueError) as exc:
-    sys.exit(f"could not read {sys.argv[1]}: {exc}")
-tok = str((data or {}).get("update_token") or "").strip()
-print(tok)
-PY
-    )" || die "$FROM_JSON"
-    if [[ -n "$FROM_JSON" ]]; then
-        UPDATE_TOKEN="$FROM_JSON"
-        note "update token read from $(basename "$CONFIG_JSON")"
-    fi
+    STORE_ROOT="$(cd "$TARGET" && sudo -u "$SERVICE_USER" "$PY" -c 'from core import config; print(config.store_dir())' 2>/dev/null | tail -n 1 || true)"
+    [[ -n "$STORE_ROOT" ]] && note "store root: ${STORE_ROOT}"
 fi
 
 # No demo card. systems/demo is the reference app copied into every system the
@@ -859,18 +673,6 @@ if [[ $FRESH_INSTALL -eq 1 && ! -e "${TARGET}/config/systems.local.toml" ]]; the
     printf '# First install: the reference "demo" system is not listed on the hub.\nenabled = []\n' \
         > "${TARGET}/config/systems.local.toml"
     note "no demo card on the hub (config/systems.local.toml: enabled = [])"
-fi
-
-# The release token, if one was passed. Written the same way the product
-# writes its own secrets: owned by the service account, readable by nobody
-# else, and never echoed back by any page.
-if [[ -n "$UPDATE_TOKEN" ]]; then
-    umask 077
-    printf 'token = "%s"\n' "$UPDATE_TOKEN" > "${TARGET}/config/update.local.toml"
-    umask 022
-    chmod 600 "${TARGET}/config/update.local.toml"
-    [[ $INSTALL_SERVICE -eq 1 ]] && chown "${SERVICE_USER}:${SERVICE_USER}" "${TARGET}/config/update.local.toml"
-    note "update token stored (config/update.local.toml, 600)"
 fi
 
 if [[ $KEEP_NODE_MODULES -eq 0 && -d "${SRC_DIR}/frontend/node_modules" ]]; then
@@ -890,7 +692,6 @@ if [[ $INSTALL_SERVICE -eq 1 ]]; then
     # ownership and nothing underneath it.
     chown -h "${SERVICE_USER}:${SERVICE_USER}" "$TARGET" 2>/dev/null || true
     chown -R "${SERVICE_USER}:${SERVICE_USER}" "$REAL_TARGET"
-    [[ $OTA_LAYOUT -eq 1 ]] && chown "${SERVICE_USER}:${SERVICE_USER}" "$RELEASES_DIR"
 fi
 # config/ must be WRITABLE, not just readable: pairing a device and the first
 # login both create *.local.toml through config.save_local().
@@ -901,13 +702,6 @@ for f in "${TARGET}"/config/*.local.toml; do
     [[ $INSTALL_SERVICE -eq 1 ]] && chown "${SERVICE_USER}:${SERVICE_USER}" "$f"
 done
 shopt -u nullglob
-
-# The signing key is the owner's, and its presence is what lets a box issue
-# license keys. It has no business on an appliance even by accident.
-if [[ -f "${TARGET}/config/store_signing.pem" ]]; then
-    rm -f "${TARGET}/config/store_signing.pem"
-    warn "removed a store signing key that had been copied into the install"
-fi
 
 # Camera slot pinning. The kernel numbers /dev/video* by ENUMERATION ORDER, so
 # which camera is "video0" changes with plug order and with every
@@ -996,57 +790,8 @@ if [[ $INSTALL_SERVICE -eq 1 && -f "${SRC_DIR}/scripts/mediamtx/install.sh" ]]; 
 fi
 
 # ---------------------------------------------------------------------------
-# 7b. Which board this is
+# 7b. (removed -- the board-identity record needed the ATECC secure element)
 # ---------------------------------------------------------------------------
-#
-# Two serials, written once at install and read for the life of the box.
-#
-#   cpu_serial    the CM5's, from the devicetree. Always readable, and always
-#                 a CLAIM: the operating system reports it, and a copied card
-#                 on another module reports that module's.
-#   atecc_serial  the secure element's, read over I2C. Present only where the
-#                 chip is fitted. Still only an identifier -- what makes the
-#                 chip worth anything is that it can SIGN a challenge with a
-#                 key nobody can read out, which needs provisioning (see
-#                 scripts/dev/provision_atecc.py). The serial is recorded now
-#                 so a licence issued for this box can name the chip it will
-#                 later be asked to prove.
-#
-# Written to config/device.local.toml -- .local, so an over-the-air update
-# never overwrites it, and so it is ignored by git like every other local
-# file. Not fatal: a board with no chip, or an I2C bus that is busy during
-# the install, is a board that installs fine and records what it could read.
-if [[ $INSTALL_SERVICE -eq 1 ]]; then
-    say "Board identity"
-    if "${TARGET}/.venv/bin/python" - "$TARGET" <<'PY'
-import sys
-sys.path.insert(0, sys.argv[1])
-from core.services import atecc
-
-fp = atecc.fingerprint()
-lines = ["# Written by scripts/install.sh at install time. Read-only facts",
-         "# about the hardware: which module, and which secure element on it.",
-         "[device]",
-         'cpu_serial = "%s"' % fp["cpu_serial"],
-         'atecc_serial = "%s"' % fp["atecc_serial"],
-         "atecc_present = %s" % ("true" if fp["atecc_present"] else "false"),
-         "atecc_provisioned = %s" % ("true" if fp["atecc_provisioned"] else "false"),
-         ""]
-with open(sys.argv[1] + "/config/device.local.toml", "w", encoding="utf-8") as f:
-    f.write("\n".join(lines))
-print("   CM5 %s / ATECC %s%s"
-      % (fp["cpu_serial"] or "unreadable",
-         fp["atecc_serial"] or "none fitted",
-         "" if fp["atecc_provisioned"] else " (not provisioned)"))
-PY
-    then
-        chmod 644 "${TARGET}/config/device.local.toml"
-        chown "${SERVICE_USER}:${SERVICE_USER}" "${TARGET}/config/device.local.toml"
-        note "identity recorded (config/device.local.toml)"
-    else
-        warn "the board identity could not be read -- a licence bound to this box will have to name its serials by hand"
-    fi
-fi
 
 # ---------------------------------------------------------------------------
 # 7c. The sign-in a board arrives with
@@ -1445,10 +1190,7 @@ ExecStart=${PY} hub_server.py
 # Without this, systemd's default (control-group) kill takes every master
 # and app the hub ever spawned down along with it -- meaning a hub crash,
 # or an admin bouncing the service for any reason at all, stops every
-# camera on the box. KillMode=process kills only the hub's own PID; the
-# OTA updater (scripts/apply_update.py running_masters/revive_masters)
-# brings a surviving master back up on the new code deliberately, rather
-# than relying on this kill to reach it as a side effect.
+# camera on the box. KillMode=process kills only the hub's own PID.
 KillMode=process
 Restart=always
 RestartSec=5
@@ -1554,45 +1296,7 @@ fi
 HUB_PORT="$(cd "$TARGET" && sudo -u "$SERVICE_USER" "$PY" -c 'from core.services import hubport; print(hubport.port())' 2>/dev/null | tail -n 1 || echo "$HUB_PORT")"
 [[ "$HUB_PORT" =~ ^[0-9]+$ ]] || HUB_PORT=5100
 
-# ---- over-the-air updates -------------------------------------------------
-if [[ $OTA_LAYOUT -eq 1 ]]; then
-
-# The updater runs as a unit of its own, NOT as a child of the hub. Everything
-# the hub starts shares the hub's cgroup, so an updater started that way would
-# be killed by the very restart it performs -- mid-swap, with nothing left
-# alive to finish the job or undo it.
-#
-# Type=oneshot with RemainAfterExit=no: `systemctl start` returns as soon as
-# the job is under way, and the hub does not sit waiting for an update that
-# will restart it.
-#
-# KillMode=process, like the hub's unit: the applier re-spawns each running
-# system's master at the end of an update, and a child keeps its parent's
-# cgroup however it detaches, so with the default control-group kill every
-# master it had just started was stopped the moment the oneshot exited
-# (boards .21/.22, 2026-10-05). The hub also brings them back on its own
-# (core/services/update_revive.py); this makes the applier's revive real.
-write_unit /etc/systemd/system/irivai-apply.service "[Unit]
-Description=IRIV EdgeAI Studio update
-After=network-online.target
-
-[Service]
-Type=oneshot
-User=${SERVICE_USER}
-KillMode=process
-Environment=IRIVAI_UPDATE_DIR=${UPDATE_WORK}
-ExecStart=${PY} ${UPDATE_WORK}/apply_update.py
-TimeoutStartSec=3600
-StandardOutput=append:${UPDATE_WORK}/update.log
-StandardError=append:${UPDATE_WORK}/update.log"
-
-# Boot-time repair. Runs before the hub, does nothing at all unless the last
-# update was interrupted -- a power cut during the swap, say -- in which case
-# it puts the previous release back before anything tries to run the half-
-# installed one. It lives OUTSIDE every release directory, because a repair
-# tool inside the thing being repaired is not a repair tool.
 install -d -m 755 /usr/local/lib/irivai
-install -m 755 "${SRC_DIR}/scripts/recover.py" /usr/local/lib/irivai/recover.py
 # `sudo iriv-ctl disable|enable|stop|start|status`: switch the software off or on.
 install -m 755 "${SRC_DIR}/scripts/iriv-ctl.sh" /usr/local/bin/iriv-ctl
 # The query console's one-shot privilege helper. Root-owned and outside every
@@ -1600,17 +1304,6 @@ install -m 755 "${SRC_DIR}/scripts/iriv-ctl.sh" /usr/local/bin/iriv-ctl
 # must not be able to change what it does.
 install -m 755 "${SRC_DIR}/scripts/db_console_role.py" /usr/local/lib/irivai/db-console-role.py
 chown root:root /usr/local/lib/irivai/db-console-role.py
-
-# The update's one privileged step, on the same terms. Pointing the live path
-# at a new release means creating a temporary link INSIDE the directory that
-# holds it -- /opt by default, which is root:root 755 and stays that way. The
-# alternative was making /opt group-writable by the service account, which
-# would let it replace anything else installed there for ever, to fix one
-# symlink. This grants nothing new instead: the account already owns the
-# releases directory, so it already decides what a release contains; this only
-# lets it say which one is live, by name, validated against that directory.
-install -m 755 "${SRC_DIR}/scripts/flip_link.py" /usr/local/lib/irivai/flip-link.py
-chown root:root /usr/local/lib/irivai/flip-link.py
 
 # The MQTT broker's settings (Settings > MQTT Broker), on the same terms: the
 # page may ASK for a port, a WebSocket port and a login, and this root-owned
@@ -1647,14 +1340,6 @@ chown root:root /usr/local/lib/irivai/set-hostname.py
 # no arguments in sudoers.
 install -m 755 "${SRC_DIR}/scripts/storage_setup.py" /usr/local/lib/irivai/storage-setup.py
 chown root:root /usr/local/lib/irivai/storage-setup.py
-
-# The root step itself (scripts/root_steps.py, list in scripts/root_items.json):
-# every over-the-air update runs it as root to bring the helpers above, their
-# sudoers rules and the nftables units up to the new release, installing only
-# bytes the release's signed manifest pins. Request on stdin; no arguments in
-# sudoers. scripts/upgrade_steps.sh puts it on a box installed before it.
-install -m 755 "${SRC_DIR}/scripts/root_steps.py" /usr/local/lib/irivai/root-steps.py
-chown root:root /usr/local/lib/irivai/root-steps.py
 
 # Port 80 for the reverse-proxy access mode (Settings -> Network -> Access),
 # on the same terms: the hub may ASK for "80 -> my port" or "no redirect",
@@ -1717,19 +1402,14 @@ fi
 #
 #   env: 'python3\r': No such file or directory
 #
-# which reads as a broken Python install on the board. It happened for real
-# on 2026-09-19: flip-link.py arrived with CRLF, and the next over-the-air
-# update failed at the flip with exactly that message.
+# which reads as a broken Python install on the board.
 #
 # .gitattributes now pins *.py to LF, which fixes `git archive`. This is the
 # belt to that brace: a tree can reach a board by scp from a Windows machine,
 # by unzipping a download, or through a share that rewrites endings, and none
 # of those consult .gitattributes. Cheap, and it only touches files we
 # install ourselves.
-for helper in /usr/local/lib/irivai/flip-link.py \
-              /usr/local/lib/irivai/root-steps.py \
-              /usr/local/lib/irivai/recover.py \
-              /usr/local/lib/irivai/db-console-role.py \
+for helper in /usr/local/lib/irivai/db-console-role.py \
               /usr/local/lib/irivai/mqtt-apply.py \
               /usr/local/lib/irivai/wifi-profile.py \
               /usr/local/lib/irivai/set-hostname.py \
@@ -1748,27 +1428,22 @@ if b"\r\n" in data:
     print("   normalised line endings in " + path)
 PY
 done
-write_unit /etc/systemd/system/irivai-recover.service "[Unit]
-Description=IRIV EdgeAI Studio interrupted-update repair
-Before=irivai-hub.service
-DefaultDependencies=no
-After=local-fs.target
-Wants=local-fs.target
+# Leftovers of the removed over-the-air updater, on a box installed by an
+# earlier version of this script: its units, helpers and sudoers rules would
+# otherwise stay behind pointing at scripts that no longer exist.
+systemctl disable irivai-recover.service >/dev/null 2>&1 || true
+rm -f /etc/systemd/system/irivai-recover.service \
+      /etc/systemd/system/irivai-apply.service \
+      /usr/local/lib/irivai/recover.py /usr/local/lib/irivai/flip-link.py \
+      /usr/local/lib/irivai/root-steps.py \
+      /etc/sudoers.d/irivai-update /etc/sudoers.d/irivai-rootsteps \
+      /etc/irivai/update.conf
 
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=/usr/bin/python3 /usr/local/lib/irivai/recover.py
-
-[Install]
-WantedBy=multi-user.target"
-
-# The privileges this feature takes: restarting units, and pointing the live
-# path at a release. Exact commands, no shell, no wildcards -- and the units
-# themselves run as ${SERVICE_USER}, so restarting one grants nothing that
-# account did not already have. flip-link.py takes a version rather than a
-# path and checks it against the releases directory the account already
-# owns, so it grants nothing new either.
+# Restarting the platform's own units: the hub restarts itself and each
+# system's master (a port or hostname change, a system's Restart button).
+# Exact commands, no shell, no wildcards -- and the units themselves run as
+# ${SERVICE_USER}, so restarting one grants nothing that account did not
+# already have.
 #
 # The master instance is a sudo REGEX (1.9.10+), not `irivai-master@*`: a
 # sudoers `*` also matches spaces, so the wildcard let the account restart
@@ -1785,18 +1460,18 @@ if [[ "$(printf '%s\n' 1.9.10 "${SUDO_VER:-0}" | sort -V | head -1)" != "1.9.10"
         [[ -f "$env_file" && "$slug" =~ ^[a-z0-9_-]+$ ]] || continue
         MASTER_RESTART+="/usr/bin/systemctl restart irivai-master@${slug}.service, "
     done
-    warn "sudo ${SUDO_VER:-?} is older than 1.9.10: the update rule names each installed system's unit; re-run this installer after adding one"
+    warn "sudo ${SUDO_VER:-?} is older than 1.9.10: the restart rule names each installed system's unit; re-run this installer after adding one"
 fi
-cat > /etc/sudoers.d/irivai-update.tmp <<SUDOERS
-${SERVICE_USER} ALL=(root) NOPASSWD: /usr/bin/systemctl start --no-block irivai-apply.service, /usr/bin/systemctl restart irivai-hub.service, ${MASTER_RESTART}/usr/local/lib/irivai/flip-link.py
+cat > /etc/sudoers.d/irivai-restart.tmp <<SUDOERS
+${SERVICE_USER} ALL=(root) NOPASSWD: /usr/bin/systemctl restart irivai-hub.service${MASTER_RESTART:+, ${MASTER_RESTART%, }}
 SUDOERS
-chmod 440 /etc/sudoers.d/irivai-update.tmp
-if visudo -cf /etc/sudoers.d/irivai-update.tmp >/dev/null; then
-    mv /etc/sudoers.d/irivai-update.tmp /etc/sudoers.d/irivai-update
+chmod 440 /etc/sudoers.d/irivai-restart.tmp
+if visudo -cf /etc/sudoers.d/irivai-restart.tmp >/dev/null; then
+    mv /etc/sudoers.d/irivai-restart.tmp /etc/sudoers.d/irivai-restart
     note "sudoers: ${SERVICE_USER} may restart the platform's own units"
 else
-    rm -f /etc/sudoers.d/irivai-update.tmp
-    warn "the update sudoers rule did not validate -- over-the-air updates will not be able to restart the platform"
+    rm -f /etc/sudoers.d/irivai-restart.tmp
+    warn "the restart sudoers rule did not validate -- the platform will not be able to restart its own units"
 fi
 
 # The box's own hardware and network, for the front panel and the Network
@@ -1897,20 +1572,6 @@ else
     warn "the storage sudoers rule did not validate -- a new drive must be set up by hand (scripts/setup_nvme.sh)"
 fi
 
-# The root step, on the same terms: one exact command, no arguments, the
-# request (release name, signed manifest, signature) on stdin.
-cat > /etc/sudoers.d/irivai-rootsteps.tmp <<SUDOERS
-${SERVICE_USER} ALL=(root) NOPASSWD: /usr/bin/python3 -I /usr/local/lib/irivai/root-steps.py
-SUDOERS
-chmod 440 /etc/sudoers.d/irivai-rootsteps.tmp
-if visudo -cf /etc/sudoers.d/irivai-rootsteps.tmp >/dev/null; then
-    mv /etc/sudoers.d/irivai-rootsteps.tmp /etc/sudoers.d/irivai-rootsteps
-    note "sudoers: updates may install this box's root helpers from signed releases"
-else
-    rm -f /etc/sudoers.d/irivai-rootsteps.tmp
-    warn "the root-step sudoers rule did not validate -- updates will not refresh the root helpers"
-fi
-
 # The port 80 helper, on the same terms: one exact command, no arguments,
 # the request on stdin.
 cat > /etc/sudoers.d/irivai-web.tmp <<SUDOERS
@@ -1931,22 +1592,6 @@ umask 022
 # install -- the console asks again the first time it is used.
 if /usr/bin/python3 -I /usr/local/lib/irivai/db-console-role.py >/dev/null 2>&1; then
     note "database: the query console's read-only roles can be created"
-fi
-
-install -d -m 755 -o "$SERVICE_USER" -g "$SERVICE_USER" "$UPDATE_WORK"
-
-# Where the repair script looks. Written down rather than re-derived: the
-# store root is resolved partly from the asking user's home directory, and
-# recover.py runs as root at boot, before the hub, and would otherwise search
-# root's home and find nothing.
-install -d -m 755 /etc/irivai
-cat > /etc/irivai/update.conf <<CONF
-UPDATE_DIR=${UPDATE_WORK}
-LIVE_LINK=${TARGET}
-RELEASES_DIR=${RELEASES_DIR}
-CONF
-chmod 644 /etc/irivai/update.conf
-note "recovery config: /etc/irivai/update.conf"
 fi
 
 if [[ -n "$ADAPTER" ]]; then
@@ -1970,9 +1615,6 @@ WantedBy=multi-user.target"
 fi
 
 systemctl daemon-reload
-# Enabled, never started here: its whole job is to run at boot, before the
-# hub, and running it now would only repair an update that is not happening.
-[[ $OTA_LAYOUT -eq 1 ]] && systemctl enable irivai-recover.service >/dev/null
 systemctl enable irivai-hub.service >/dev/null
 # restart, not `enable --now`: --now only starts a STOPPED unit, so a re-install
 # with a different port would leave the old one serving where nobody probes.
@@ -2217,8 +1859,8 @@ fi
 # wants the hotspot as a door into its plant network.
 AP_ISOLATED=0
 if [[ $INSTALL_SERVICE -eq 1 ]]; then
-    # Remembered for the updates (scripts/root_steps.py): with this file
-    # they leave the isolation off, without it they keep it loaded.
+    # Remembered across re-installs: with this file the isolation stays off,
+    # without it it is kept loaded.
     rm -f /etc/irivai/ap-forwarding-allowed
     if [[ $AP_FORWARD -eq 1 ]]; then
         install -d -m 755 /etc/irivai && touch /etc/irivai/ap-forwarding-allowed
@@ -2302,23 +1944,6 @@ WantedBy=multi-user.target"
         rm -f /etc/irivai/modbus-502-redirect
         warn "nft not found (package nftables) -- PLCs must poll the Modbus server on 5020, not 502"
     fi
-fi
-
-# THE SAME ROOT STEP EVERY UPDATE RUNS, once, on this checkout (as
-# upgrade_steps.sh does by hand): it checks every helper, sudoers rule and
-# nftables unit above against scripts/root_items.json, does the one-time
-# upgrade steps this install has not (normally none), and records this
-# version and those steps as done, so the first update does not do them
-# again. Never fatal: everything it reports is re-runnable.
-if [[ $INSTALL_SERVICE -eq 1 && $OTA_LAYOUT -eq 1 ]]; then
-    say "Root step (scripts/root_steps.py --tree)"
-    while IFS= read -r line; do
-        case "$line" in
-            "refused: "*) warn "${line#refused: }" ;;
-            "")           ;;
-            *)            note "$line" ;;
-        esac
-    done < <(python3 -I "${SRC_DIR}/scripts/root_steps.py" --tree "$SRC_DIR" 2>&1 || true)
 fi
 
 # ---------------------------------------------------------------------------
@@ -2628,7 +2253,6 @@ cat <<EOF
   Installed at   : ${TARGET}
   Runs as        : ${SERVICE_USER}
   Built-in       : ${BUILTIN_SLUGS}
-  Owner tooling  : not installed (core/dev, scripts/dev excluded)
 
 $(if [[ $INSTALL_SERVICE -eq 1 ]]; then
 echo "  Units:"
@@ -2644,8 +2268,5 @@ fi)
   system's master has its own at /logs. Every request is one line with its
   status code and a request id; an error carries the same id, so a report of
   "it failed" is one search.
-
-  More templates: Template Store in the hub. Free ones install as they are;
-  pro ones need the license key issued for THIS box's serial.
 
 EOF

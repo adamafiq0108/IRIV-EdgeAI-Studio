@@ -32,13 +32,12 @@ SECTION_PAGES = {
     "diagnostics":  ("events", "logs"),
 }
 SECTION_KEYS = tuple(SECTION_PAGES)
-#: Categories only the DEVELOPER tier sees, whatever the grants say. Blynk
-#: and the Modbus server wire the box to somebody else's controller: product
-#: integration surface the owner is still shaping, not a control a site's
-#: master or admin should find in their rail. Hidden here rather than by a
-#: grant, because a grant is something master can widen back.
-DEVELOPER_SECTIONS = ("integration",)
-DEVELOPER_PAGES = tuple(p for key in DEVELOPER_SECTIONS for p in SECTION_PAGES[key])
+#: Categories only MASTER sees, whatever the grants say. Blynk and the Modbus
+#: server wire the box to somebody else's controller: a control for the box
+#: owner, not for a site's admin. Hidden here rather than by a grant, because
+#: a grant is something master can widen back.
+MASTER_SECTIONS = ("integration",)
+MASTER_PAGES = tuple(p for key in MASTER_SECTIONS for p in SECTION_PAGES[key])
 SECTION_LABELS = {
     "overview": "Overview", "ai_config": "AI Configuration", "data": "Data",
     "ai_train": "AI Preparation", "integration": "Integration",
@@ -103,12 +102,12 @@ ALL_PAGES = tuple(p for p, _l, _c in PAGES) + tuple(p for p, _l, _c in ADMIN_PAG
 
 
 def build(system, capabilities, active="", is_admin=False, deploy_role="standalone",
-          sections=None, pages=None, is_developer=False):
+          sections=None, pages=None):
     """Return [{page, label, active}] for a system's top nav. `deploy_role` is
     accepted for callers' sake; every remaining page suits both roles.
 
     `sections` is this viewer's category grant for THIS system: None means
-    everything (master, developer, and any account with no stored grant), a
+    everything (master, and any account with no stored grant), a
     set of SECTION_KEYS means only pages in those categories. A page no
     category claims stays visible -- an unmapped page must appear, not vanish.
 
@@ -120,9 +119,9 @@ def build(system, capabilities, active="", is_admin=False, deploy_role="standalo
     no category claims is visible to a category grant and NOT visible to a
     page grant that omits it, and collapsing them would lose that."""
     def visible(page):
-        # Developer-only pages first: no grant reaches them. See
-        # DEVELOPER_SECTIONS.
-        if page in DEVELOPER_PAGES and not is_developer:
+        # Master-only pages first: no grant reaches them. See
+        # MASTER_SECTIONS.
+        if page in MASTER_PAGES and not is_admin:
             return False
         if pages is not None and page not in pages:
             return False

@@ -1091,7 +1091,7 @@ def main():
     p.add_argument("--port", type=int, default=5110)
     p.add_argument("--config-dir", default=None)
     args = p.parse_args()
-    # CM5 + ATECC608 + Hailo: stops here with a plain message if one is absent.
+    # Hailo: stops here with a plain message if one is absent.
     from core.services import hwcheck
     hwcheck.require(args.config_dir, "master " + args.system)
     # Name this process before anything else logs. create_app() sets it too,

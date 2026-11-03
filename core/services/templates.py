@@ -888,7 +888,7 @@ def validate_export(doc):
 
 
 def import_system(systems_dir, config_dir, doc, name=None, owner="",
-                  unlimited=False, db_path=None):
+                  db_path=None):
     """Create a system from an export. Returns (created, warnings), where
     `created` is create_vision_system's dict (slug, name, url, port, ...).
 
@@ -917,7 +917,7 @@ def import_system(systems_dir, config_dir, doc, name=None, owner="",
         want_tpl = provision_service.default_template(config_dir)
     created = provision_service.create_vision_system(
         systems_dir, wanted, config_dir, slug=_free_slug(systems_dir, wanted, config_dir),
-        template=want_tpl, owner=owner, unlimited=unlimited)
+        template=want_tpl, owner=owner)
     slug = created["slug"]
     root = _root_for(systems_dir, slug, config_dir)
     warnings = []

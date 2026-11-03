@@ -38,7 +38,7 @@ def _require_owner(request):
     if not auth_service.is_admin(getattr(request.state, "user", None),
                                  request.app.state.config_dir):
         raise HTTPException(status_code=403,
-                            detail="only master or a developer may change HTTPS")
+                            detail="only master may change HTTPS")
 
 
 async def _body(request):

@@ -1731,7 +1731,7 @@ REGISTRY = {
         "category": "analytics", "group": "Mathematics", "rank": 3, "label": "Python Function",
         "badge": "PY",
         "deprecated": True,
-        "description": "Compute a value with your own Python. Developer only, "
+        "description": "Compute a value with your own Python. Master only, "
                        "and only on a box that has opted in.",
         "fn_type": "custom", "zone_kind": None, "metrics": ["value"],
         "data": {"fnId": "", "name": "Python", "code": PYTHON_NODE_TEMPLATE},

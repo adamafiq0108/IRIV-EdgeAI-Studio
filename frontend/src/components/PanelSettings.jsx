@@ -45,7 +45,7 @@ const PAGE_LABEL = {
   wifi: "Wi-Fi access point",
   url: "Dashboard address",
   ip: "IP addresses",
-  status: "CM5 status",
+  status: "Status",
 };
 
 /** The framebuffer, painted at 3x so the pixels read as pixels. */

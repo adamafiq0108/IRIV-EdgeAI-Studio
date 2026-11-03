@@ -1,7 +1,6 @@
 """The hardware this product is built for, and the check that it is there.
 
-IRIV Edge AI runs on one board: a Raspberry Pi Compute Module 5 with the
-ATECC608 secure element and a Hailo accelerator (8, 8L or 10H) fitted. The
+IRIV Edge AI needs a Hailo accelerator (8, 8L or 10H) fitted. The
 installer checks it once (scripts/install.sh, "Hardware check"); this module
 checks it again every time the software starts, from several places, so a card
 moved to a different board, or an install that skipped the installer's check,
@@ -26,9 +25,7 @@ import sys
 import time
 
 from core import config
-from core.services import atecc, builtin_models
-
-_MODEL = "/proc/device-tree/model"
+from core.services import builtin_models
 
 #: The exit status of a process the gate stopped. NOT 78: a master's unit lists
 #: 78 in RestartPreventExitStatus (a removed system), and a board that was only
@@ -41,34 +38,12 @@ GATE_EXIT = 79
 WAIT_S = 60.0
 
 #: What a missing piece is called in the error.
-_NAMES = (("cm5", "Raspberry Pi Compute Module 5"),
-          ("atecc", "ATECC608 secure element"),
-          ("hailo", "Hailo accelerator"))
-
-
-def _has_cm5():
-    try:
-        with open(_MODEL, encoding="utf-8", errors="ignore") as f:
-            return "Compute Module 5" in f.read()
-    except OSError:
-        return False
-
-
-def _has_atecc(config_dir=None):
-    # The chip can be busy for a moment (another process mid-command), so a
-    # miss is asked again before it is believed.
-    for _ in range(3):
-        if atecc.present(config_dir):
-            return True
-        atecc.info(config_dir, refresh=True)
-    return False
+_NAMES = (("hailo", "Hailo accelerator"),)
 
 
 def check(config_dir=None):
-    """{"cm5": bool, "atecc": bool, "hailo": bool, "ok": bool, "missing": [..]}."""
-    found = {"cm5": _has_cm5(),
-             "atecc": _has_atecc(config_dir),
-             "hailo": bool(builtin_models.detect_arch_uncached())}
+    """{"hailo": bool, "ok": bool, "missing": [..]}."""
+    found = {"hailo": bool(builtin_models.detect_arch_uncached())}
     missing = [label for key, label in _NAMES if not found[key]]
     return {**found, "ok": not missing, "missing": missing}
 
@@ -85,8 +60,7 @@ def enforced(config_dir=None):
 
 def message(result):
     return ("This board is missing hardware IRIV Edge AI requires: %s. "
-            "It runs only on a Compute Module 5 with the ATECC608 secure "
-            "element and a Hailo accelerator." % ", ".join(result["missing"]))
+            "It runs only with a Hailo accelerator." % ", ".join(result["missing"]))
 
 
 def _wait_s():

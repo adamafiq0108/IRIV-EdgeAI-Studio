@@ -68,7 +68,7 @@ const STATUS = {
   resetting: { dot: "bg-amber-500 animate-pulse", pill: "text-amber-700 bg-amber-500/10 dark:text-amber-400", label: "resetting" },
 };
 
-export default function Hub({ onCreate, onBrowseStore }) {
+export default function Hub({ onCreate }) {
   const { user } = useApp();
   const toast = useToast();
   const confirm = useConfirm();
@@ -90,19 +90,6 @@ export default function Hub({ onCreate, onBrowseStore }) {
   const maxSystems = data?.max_systems || 0;
   const systemCount = data?.system_count ?? cards.length;
   const atLimit = maxSystems > 0 && systemCount >= maxSystems;
-  // Folders exist for developers only: they organise a workshop's template
-  // catalogue, and a deployment box's three systems do not need filing. The
-  // server sends an empty list to everyone else, so the whole feature simply
-  // is not there rather than being there and inert.
-  const folders = data?.groups || [];
-  const [moveFor, setMoveFor] = useState(null);
-  const [foldersOpen, setFoldersOpen] = useState(false);
-  // The folder LIST: what exists, what each holds, rename and delete. The
-  // heading hover controls only reachable a folder at a time, and only for a
-  // folder that currently has cards under it -- an empty folder had no
-  // heading, so it could be neither seen nor deleted.
-  const [folderListOpen, setFolderListOpen] = useState(false);
-  const [folderEdit, setFolderEdit] = useState(null);
   // Slugs whose start/stop request is in flight - their button is disabled so
   // a double-click cannot fire two spawns at the same port.
   const [powerBusy, setPowerBusy] = useState(() => new Set());
@@ -111,63 +98,8 @@ export default function Hub({ onCreate, onBrowseStore }) {
     const q = query.trim().toLowerCase();
     const matching = !q ? cards : cards.filter((c) =>
       (c.name || "").toLowerCase().includes(q) || (c.slug || "").toLowerCase().includes(q));
-    if (!folders.length) return matching;
-    // Headings ride in the SAME list as the cards, spanning the grid, rather
-    // than each folder getting its own grid. One grid keeps every card the
-    // same width however many folders are open or empty.
-    const known = new Set(folders.map((f) => f.id));
-    const out = [];
-    for (const folder of folders) {
-      const mine = matching.filter((c) => c.group === folder.id);
-      if (!mine.length) continue;
-      out.push({ __heading: folder.name, __id: folder.id, __count: mine.length });
-      out.push(...mine);
-      // "New system" INSIDE a folder's own row -- built from here, it lands
-      // in this folder directly, rather than in Undefined and then moved by
-      // hand afterwards. Not shown while searching/selecting, same as the
-      // one global create tile.
-      if (user?.is_admin && !selecting && !query.trim() && !atLimit) {
-        out.push({ __newInFolder: folder.id, __folderName: folder.name });
-      }
-    }
-    // A system filed under a folder that has since been deleted lands here
-    // rather than disappearing -- deleting a heading must never hide a system.
-    const rest = matching.filter((c) => !c.group || !known.has(c.group));
-    if (rest.length) {
-      if (out.length) out.push({ __heading: "Undefined", __id: "", __count: rest.length });
-      out.push(...rest);
-      // Undefined gets its own create tile for the same reason the folders do:
-      // built from this row it lands unfiled, which is what "not in any
-      // folder" means.
-      //
-      // ONLY when the section exists. Pushing it unconditionally put a
-      // second tile straight after the last folder's own -- two identical
-      // "New system" boxes side by side that filed into different places,
-      // with no heading between them to say which was which. Every row that
-      // holds systems ends in its own tile either way, which is why the
-      // trailing global one is suppressed below.
-      if (user?.is_admin && !selecting && !query.trim() && !atLimit) {
-        out.push({ __newInFolder: "", __folderName: "Undefined" });
-      }
-    }
-    return out;
-  }, [cards, query, folders, user, selecting, atLimit]);
-
-  async function moveTo(slug, group) {
-    try {
-      await api.post(`/api/hub/systems/${encodeURIComponent(slug)}/group`, { group });
-      setMoveFor(null);
-      reload();
-    } catch (e) { toast.error("Could not move", e.message); }
-  }
-
-  async function saveFolders(next) {
-    try {
-      await api.post("/api/hub/groups", { groups: next });
-      reload();
-      return true;
-    } catch (e) { toast.error("Could not save folders", e.message); return false; }
-  }
+    return matching;
+  }, [cards, query]);
 
   // Hooks must all run before any early return (React #310), so these refs
   // live here even though they are only used deep in the grid below.
@@ -205,8 +137,7 @@ export default function Hub({ onCreate, onBrowseStore }) {
   // The template cards: admin only (the gallery draws nothing for anyone
   // else), shown in every mode -- see the banner.
   const gallery = user?.is_admin ? (
-    <TemplateGallery onUse={(key) => onCreate(undefined, key)}
-                     onBrowseStore={onBrowseStore} limitNote={limitNote} />
+    <TemplateGallery onUse={(key) => onCreate(key)} limitNote={limitNote} />
   ) : null;
   // The empty places in the grid: the box's cap, or for an uncapped
   // (developer) account at least 4 with one always free.
@@ -442,19 +373,6 @@ export default function Hub({ onCreate, onBrowseStore }) {
               operators each adding "just one" is how a four-camera board ends
               up oversubscribed. The API has always refused non-admins here --
               this stops offering them a button that 403s. */}
-          {/* Folders are a developer's filing for a workshop's catalogue; the
-              server sends none to anyone else, so the button is simply not
-              there rather than there and refused. */}
-          {folders.length > 0 && !selecting && (
-            <>
-              <Button variant="outline" onClick={() => setFolderListOpen(true)}>
-                <Folders className="size-4" /> Folders ({folders.length})
-              </Button>
-              <Button variant="outline" onClick={() => setFoldersOpen(true)}>
-                <FolderPlus className="size-4" /> New folder
-              </Button>
-            </>
-          )}
           {selecting && (
             <>
               <Button variant="outline" onClick={exitSelect} disabled={busy}>Cancel</Button>
@@ -472,56 +390,6 @@ export default function Hub({ onCreate, onBrowseStore }) {
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
         {shown.map((card) => {
-          // A folder heading, spanning the whole grid row.
-          if (card.__heading) {
-            const folder = folders.find((f) => f.id === card.__id);
-            return (
-              <div key={`h-${card.__id || "unfiled"}`}
-                   className="group/h col-span-full mt-2 flex items-baseline gap-2 border-b pb-1">
-                <span className="text-sm font-semibold">{card.__heading}</span>
-                <span className="text-xs text-muted-foreground">{card.__count}</span>
-                {folder && (
-                  <span className="flex gap-1 opacity-0 transition-opacity group-hover/h:opacity-100">
-                    <button type="button" title="Rename this folder"
-                            className="text-xs text-muted-foreground hover:text-primary"
-                            onClick={() => setFolderEdit(folder)}>rename</button>
-                    <button type="button" title="Delete this folder"
-                            className="text-xs text-muted-foreground hover:text-destructive"
-                            onClick={async () => {
-                              // The systems in it are NOT touched -- they fall
-                              // back to Undefined. Deleting a heading must never
-                              // quietly delete what sat under it.
-                              if (!await confirm({
-                                title: `Delete the folder "${folder.name}"?`,
-                                description: `The ${card.__count} system(s) in `
-                                  + "it are not changed - they move to "
-                                  + "Undefined.",
-                                destructive: true })) return;
-                              saveFolders(folders.filter((f) => f.id !== folder.id));
-                            }}>delete</button>
-                  </span>
-                )}
-              </div>
-            );
-          }
-          // "New system", built from inside this folder's own row -- lands
-          // here directly, same styling as the global create tile just
-          // smaller, since one per folder plus the global one is enough
-          // accent-bordered boxes on one screen.
-          if (card.__newInFolder !== undefined) {
-            return (
-              <button
-                key={`new-${card.__newInFolder}`}
-                type="button"
-                onClick={() => onCreate(card.__newInFolder)}
-                title={`New system in ${card.__folderName}`}
-                className="flex min-h-[11.5rem] flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-primary/40 p-6 text-center text-muted-foreground transition-all hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Plus className="size-5" />
-                <span className="text-xs font-medium">New system</span>
-              </button>
-            );
-          }
           // A reset in flight outranks whatever the probe just saw: the
           // master is deliberately down for a second, and "offline" would
           // read as a fault someone needs to fix.
@@ -569,16 +437,6 @@ export default function Hub({ onCreate, onBrowseStore }) {
                     >
                       <Pencil className="size-3.5" />
                     </button>
-                    {folders.length > 0 && (
-                      <button
-                        type="button"
-                        title="Move to a folder"
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMoveFor(card); }}
-                        className="flex size-7 items-center justify-center rounded-full border bg-background/80 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
-                      >
-                        <FolderInput className="size-3.5" />
-                      </button>
-                    )}
                     <button
                       type="button"
                       title="Export this system to a file"
@@ -745,14 +603,8 @@ export default function Hub({ onCreate, onBrowseStore }) {
             Hidden while selecting: that mode is about removal, not creation;
             at the system cap; and for non-admins, who may open the systems
             shared with them but not add to the box's count. */}
-        {/* Only when the grid is NOT grouped into folders: a grouped grid
-            already ends every row with its own create tile, and a trailing
-            global one landed beside the last folder's -- two identical tiles
-            side by side that filed into different places.
-            One tile per free SLOT (see the banner): a system created takes
-            the place of one. */}
-        {!shown.some((r) => r.__newInFolder !== undefined)
-          && user?.is_admin && !selecting && !query.trim() && !atLimit
+        {/* One tile per free SLOT (see the banner). */}
+        {user?.is_admin && !selecting && !query.trim() && !atLimit
           && Array.from({ length: freeSlots }, (_, i) => (
           <button
             key={`slot-${i}`}
@@ -766,117 +618,6 @@ export default function Hub({ onCreate, onBrowseStore }) {
           </button>
         ))}
       </div>
-
-      {/* Move a system into a folder. */}
-      <FormDialog
-        open={!!moveFor}
-        onOpenChange={(o) => { if (!o) setMoveFor(null); }}
-        title={moveFor ? `Move ${moveFor.name}` : "Move"}
-        description="Filing changes nothing but where the card appears - same system, same id, same link."
-        fields={[{
-          name: "group",
-          label: "Folder",
-          defaultValue: moveFor?.group || "",
-          options: [...folders.map((f) => ({ value: f.id, label: f.name })),
-                    { value: "", label: "Unfiled" }],
-        }]}
-        submitLabel="Move"
-        onSubmit={(v) => moveTo(moveFor.slug, v.group || "")}
-      />
-
-      {/* Every folder in one place: what it holds, rename, delete. Deleting
-          NEVER touches the systems in it -- they fall back to Undefined,
-          which the row says before the click, not after. */}
-      <Dialog open={folderListOpen} title="Folders"
-              onClose={() => setFolderListOpen(false)}
-              footer={
-                <>
-                  <Button variant="outline"
-                          onClick={() => { setFolderListOpen(false);
-                                           setFoldersOpen(true); }}>
-                    <FolderPlus className="size-4" /> New folder
-                  </Button>
-                  <Button onClick={() => setFolderListOpen(false)}>Done</Button>
-                </>
-              }>
-        <div style={{ display: "grid", gap: 6 }}>
-          {folders.map((f) => {
-            const held = cards.filter((c) => c.group === f.id).length;
-            return (
-              <div key={f.id} className="filter-bar"
-                   style={{ gap: 8, alignItems: "center",
-                            border: "1px solid var(--line, rgba(128,128,128,.25))",
-                            borderRadius: 8, padding: "7px 10px" }}>
-                <FolderPlus className="size-4" style={{ opacity: .6 }} />
-                <span style={{ flex: 1, minWidth: 0, overflow: "hidden",
-                               textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {f.name}
-                </span>
-                <span className="muted small" style={{ whiteSpace: "nowrap" }}>
-                  {held} system{held === 1 ? "" : "s"}
-                </span>
-                <button type="button" className="btn btn-sm"
-                        onClick={() => { setFolderListOpen(false);
-                                         setFolderEdit(f); }}>
-                  Rename
-                </button>
-                <button type="button" className="btn btn-sm"
-                        style={{ color: "var(--alert, #dc2626)" }}
-                        onClick={async () => {
-                          if (!await confirm({
-                            title: `Delete the folder "${f.name}"?`,
-                            description: `The ${held} system(s) in it are not `
-                              + "changed - they move to Undefined.",
-                            destructive: true })) return;
-                          saveFolders(folders.filter((x) => x.id !== f.id));
-                        }}>
-                  Delete
-                </button>
-              </div>
-            );
-          })}
-          {!folders.length && (
-            <p className="muted small" style={{ margin: 0 }}>
-              No folders yet.
-            </p>
-          )}
-        </div>
-      </Dialog>
-
-      {/* Create a folder. Renaming and deleting also happen on the heading
-          itself, where you are already looking at the thing you want to
-          change -- the list above is for folders with no cards under them,
-          which therefore have no heading to hover. */}
-      <FormDialog
-        open={foldersOpen}
-        onOpenChange={setFoldersOpen}
-        title="New folder"
-        description="A folder only groups cards on this page. Nothing about the systems in it changes."
-        fields={[{ name: "name", label: "Name", required: true,
-                   placeholder: "Pro templates" }]}
-        submitLabel="Create"
-        onSubmit={async (v) => {
-          if (await saveFolders([...folders, { name: v.name }])) {
-            setFoldersOpen(false);
-          }
-        }}
-      />
-
-      <FormDialog
-        open={!!folderEdit}
-        onOpenChange={(o) => { if (!o) setFolderEdit(null); }}
-        title="Rename folder"
-        fields={[{ name: "name", label: "Name", required: true,
-                   defaultValue: folderEdit?.name || "" }]}
-        submitLabel="Save"
-        onSubmit={async (v) => {
-          const next = folders.map((f) => (f.id === folderEdit.id
-            // The id stays: it is what each filed system points at, so
-            // renaming a folder must not empty it.
-            ? { ...f, name: v.name } : f));
-          if (await saveFolders(next)) setFolderEdit(null);
-        }}
-      />
 
       <EditSystemDialog
         card={renameFor}

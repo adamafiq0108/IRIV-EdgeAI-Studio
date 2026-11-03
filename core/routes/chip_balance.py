@@ -27,6 +27,6 @@ def system_chip_balance(request: Request):
     cfg = request.app.state.config_dir
     me = getattr(request.state, "user", None) or ""
     if not auth_service.is_admin(me, cfg):
-        raise HTTPException(status_code=403, detail="master or developer only")
+        raise HTTPException(status_code=403, detail="master only")
     return {"ok": True, "on": sysconfig_service.chip_balance(cfg),
             **chip_balance.snapshot()}

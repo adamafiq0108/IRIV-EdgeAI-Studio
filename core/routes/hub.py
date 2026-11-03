@@ -8,14 +8,8 @@ edit to this file. Route parses and returns; probing and card shaping are the
 services' job (docs/conventions.md sec 2).
 
 What a DEPLOYMENT does with systems lives here: list them, create, import,
-export, rename, delete, start, stop. Authoring the PRODUCT's own content --
-built-in formats, the saved-template library -- moved to core/dev/, which a
-customer install does not have on disk at all (core/deploy.py). Reading stayed:
-the create wizard needs the format list, so GET /api/hub/formats and
-GET /api/hub/templates are still here and still admin-readable.
-
-The two `_require_*` helpers below are imported by core/dev/, so this module
-keeps them even though only `_require_admin` is used in this file.
+export, rename, delete, start, stop. The create wizard needs the format list,
+so GET /api/hub/formats and GET /api/hub/templates are here and admin-readable.
 """
 
 import asyncio
@@ -39,9 +33,7 @@ from core.services import masters as masters_service
 from core.services import monitor_account
 from core.services import power_state
 from core.services import provision as provision_service
-from core.services import system_groups as groups_service
 from core.services import template_preview
-from core.services import template_updates
 from core.services import templates as templates_service
 from core.services.registry import Registry
 from core.version import VERSION
@@ -62,7 +54,6 @@ def bootstrap(request: Request):
     username = getattr(request.state, "user", None) or ""
     is_admin = auth_service.is_admin(username, cfg)
     role_label = auth_service.role_label(username, cfg) if username else ""
-    dev_tools = auth_service.dev_tools_of(request.app.state, cfg)
     return {
         "ok": True,
         "mode": "hub",
@@ -70,31 +61,19 @@ def bootstrap(request: Request):
         "user": {"name": username or "guest",
                  "role_label": role_label if username else "",
                  "is_admin": is_admin,
-                 # The shell hides developer-only sections on this. It is a
-                 # convenience for the UI, never the control: every
-                 # developer-only endpoint checks the flag itself.
-                 "is_developer": auth_service.is_developer(username, cfg),
-                 # Whether this BOX carries the owner's tooling (core/dev
-                 # mounted -- core/deploy.py). The developer panels need
-                 # both this and the account: a dev frontend build on a box
-                 # in customer mode has the panels and none of the routes
-                 # behind them, and used to draw every button so it could
-                 # fail with a 404.
-                 "dev_tools": dev_tools,
-                 # ...and the same for the site-admin tier: which Settings
+                 # The site-admin tier                 # ...and the same for the site-admin tier: which Settings
                  # tabs to draw, decided once on the server so the page and
                  # the endpoints behind it cannot disagree.
                  "tier": auth_service.tier(username, cfg),
                  "is_site_admin": auth_service.is_site_admin(username, cfg),
-                 "settings_tabs": auth_service.settings_tabs(
-                     username, cfg, dev_tools=dev_tools)},
+                 "settings_tabs": auth_service.settings_tabs(username, cfg)},
         # The master is still on the shipped password: every other API call
         # answers 409 until setup is done (routes/auth.py SETUP_OPEN), so the
         # shell goes straight to /account-setup instead of drawing a grid
         # that cannot load (UAT-103).
         "needs_account_setup": auth_service.setup_pending(username, cfg),
         # What this box runs, from the one call the setup gate always answers:
-        # the System tab printed a bare "v" when /api/hub/update was refused.
+        # the System tab would otherwise print a bare "v".
         "version": VERSION,
         "system": None,
         "nav": [],
@@ -120,7 +99,7 @@ def _rebuild_registry(st):
 
 
 def _require_admin(request, action):
-    """MASTER or developer -- the box owner. See auth.is_admin for why the
+    """MASTER -- the box owner. See auth.is_admin for why the
     name did not change when the site-admin tier arrived below it."""
     if not auth_service.is_admin(getattr(request.state, "user", None),
                                   request.app.state.config_dir):
@@ -128,7 +107,7 @@ def _require_admin(request, action):
 
 
 def _require_site_admin(request, action):
-    """Master, developer, OR a site admin. For the settings that belong to
+    """Master OR a site admin. For the settings that belong to
     running the OPERATION rather than to owning the hardware: retention, how
     long footage is kept, how the box sends mail."""
     if not auth_service.is_site_admin(getattr(request.state, "user", None),
@@ -160,16 +139,6 @@ def _require_operator(request, slug, action):
                             detail=f"{action} needs access to this system")
 
 
-def _require_developer(request, action):
-    """Gate the PRODUCT's own content (built-in formats) behind the developer
-    tier. Enforced here, not only in the UI: hiding a page hides the button,
-    not the endpoint, and the endpoint is what an attacker calls."""
-    username = getattr(request.state, "user", None) or ""
-    if not auth_service.is_developer(username, request.app.state.config_dir):
-        raise HTTPException(status_code=403,
-                            detail=f"{action} is a developer action")
-
-
 @router.get("/api/hub/templates", name="hub.templates")
 def templates(request: Request):
     """What the create panel may start a system from.
@@ -181,52 +150,7 @@ def templates(request: Request):
     return _template_listing(request)
 
 
-@router.post("/api/hub/templates/update", name="hub.update_templates")
-def update_templates(request: Request):
-    """Fetch the templates the developer published and install the new and
-    changed ones here. The create wizard's "Check for template updates".
-
-    Admin, not developer: this is a deployment taking what the product owner
-    released, the same act as installing an update. It writes formats.toml
-    only -- systems already created are not touched -- and it reads GitHub,
-    never writes it (core/services/template_updates.py). The answer carries
-    the refreshed listing so the picker redraws from one round trip.
-    """
-    _require_admin(request, "checking for template updates")
-    st = request.app.state
-    try:
-        result = template_updates.check(st.config_dir, st.systems_dir)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    template_updates.note_checked(result)
-    return {**result, **_template_listing(request)}
-
-
-@router.post("/api/hub/templates/refresh", name="hub.refresh_templates")
-def refresh_templates(request: Request):
-    """The wizard's automatic "bring the templates up to date" on opening
-    (Tok Aba, 2026-10-14). The same verified fetch and merge as the button
-    above, but bounded (a few seconds), rate limited (one real attempt per
-    ten minutes per box), single-flight, and it never fails: offline, no
-    token or a download that does not verify all answer 200 with a state,
-    and the wizard carries on with the templates on the device.
-
-    Gated like create itself (MASTER or developer): the one who may create
-    is the one the wizard opens for. Answers {state, count_changed, changed,
-    checked_at, cached} -- no token, no failure text."""
-    _require_admin(request, "refreshing the templates")
-    st = request.app.state
-    return {"ok": True,
-            **template_updates.auto_refresh(st.config_dir, st.systems_dir)}
-
-
 def _template_listing(request):
-    # From the merged view, so a developer's authored/overridden templates
-    # show up in the picker exactly like the shipped ones -- that is the point
-    # of authoring one. DRAFTS are the developer's half-built work: they show
-    # only to the developer, never to admins choosing what to create from.
-    is_dev = auth_service.is_developer(getattr(request.state, "user", None),
-                                       request.app.state.config_dir)
     formats = provision_service.builtin_formats(request.app.state.config_dir)
     builtin = [{"key": key, "label": f["label"], "hint": f["hint"],
                 "category": f.get("category") or "built-in", "builtin": True,
@@ -242,68 +166,28 @@ def _template_listing(request):
                 "preview": template_preview.summary(f),
                 **template_preview.copy_of(key, request.app.state.config_dir)}
                for key, f in formats.items()
-               if is_dev or not f.get("draft")]
-    try:
-        saved = templates_service.list_templates()
-    except (OSError, ValueError):
-        saved = {"categories": [], "templates": []}
-    # SAVED templates are the developer's working library, not something a
-    # deployment browses: an admin meets templates as the built-in list in
-    # this picker and as the Template Store, both of which are curated. So
-    # non-developers get the built-ins only. Filtered here, at the one place
-    # every picker reads, rather than in each page that renders a list.
-    username = getattr(request.state, "user", None) or ""
-    if not is_dev:
-        saved = {"categories": [], "templates": []}
-    else:
-        # Among developers, a saved template still belongs to whoever saved
-        # it (ownerless = legacy, visible to all).
-        cfg = request.app.state.config_dir
-        saved["templates"] = [t for t in saved["templates"]
-                              if not t.get("owner") or t["owner"] == username
-                              or auth_service.is_developer(t["owner"], cfg)]
+               if not f.get("draft")]
     return {"ok": True,
             "default": provision_service.default_template(request.app.state.config_dir),
             "format_categories": provision_service.format_categories(
                 request.app.state.config_dir),
             "templates": builtin,
-            "categories": saved["categories"],
-            "saved": saved["templates"],
-            # When this box last checked for published templates, and what
-            # it found -- shown beside the wizard's button.
-            "updates": template_updates.status(request.app.state.config_dir)}
+            "categories": [],
+            "saved": []}
 
 
 @router.get("/api/hub/formats", name="hub.formats")
 def list_formats(request: Request):
-    """The built-in formats in full, for the developer editor.
-
-    Readable by any admin (the create wizard needs the list); only a developer
-    may WRITE, which is what the two routes below enforce.
-    """
+    """The built-in formats in full. Readable by any admin (the create
+    wizard needs the list); there is no write route."""
     return {"ok": True,
-            "editable": auth_service.is_developer(
-                getattr(request.state, "user", None),
-                request.app.state.config_dir),
+            "editable": False,
             "zone_modes": list(provision_service.ZONE_MODES),
             "default": provision_service.default_template(request.app.state.config_dir),
             "categories": provision_service.format_categories(
                 request.app.state.config_dir),
-            # Which formats have an editing WORKBENCH on this box, and whether
-            # that system still exists (it may have been deleted normally).
-            "workbench": _workbench_map(request.app.state),
             "formats": provision_service.builtin_formats(
                 request.app.state.config_dir)}
-
-
-def _workbench_map(st):
-    live = {x.slug for x in st.registry}
-    out = {}
-    for key, slug in provision_service.format_workbench(st.config_dir).items():
-        out[key] = {"slug": slug, "exists": slug in live,
-                    "url": (st.masters.get(slug) or {}).get("url") or ""}
-    return out
-
 
 
 @router.post("/api/hub/systems", name="hub.create_system")
@@ -313,7 +197,7 @@ async def create_system(request: Request):
     template's layout, enable it, assign the next master port, start that
     master, and refresh the in-memory registry so the card shows on the
     Systems grid without a restart."""
-    # MASTER (or a developer), never a site admin. Which systems exist is a
+    # MASTER, never a site admin. Which systems exist is a
     # decision about the box -- its cameras, its share of the accelerator, its
     # disk -- and the admin tier runs an operation ON the box rather than
     # deciding what the box is. Master hands them systems; how many is capped
@@ -331,57 +215,7 @@ async def create_system(request: Request):
 
     st = request.app.state
     creator = getattr(request.state, "user", None) or ""
-    # The wizard's automatic template refresh may still be writing
-    # formats.toml (a Create pressed straight after opening): let it land,
-    # bounded, so the system starts from the refreshed template and never
-    # from a file halfway through being rewritten. No refresh -> no wait.
-    await asyncio.to_thread(template_updates.wait_auto)
-    # A saved template is applied AFTER the system exists: it is documents
-    # (workflow, layouts, class filter) written onto a scaffolded package, not
-    # a different way of scaffolding one.
-    saved_template = None
-    if body.get("saved_template"):
-        ref = body["saved_template"]
-        try:
-            saved_template = templates_service.load_template(
-                ref.get("category"), ref.get("slug"))
-        except (ValueError, OSError) as e:
-            raise HTTPException(status_code=400, detail=str(e))
-
     warnings = []
-    # THE TEMPLATE FOLLOWS ITS WORKBENCH. A format published from a workbench
-    # system is a snapshot taken the moment it was dropped into the Built-in
-    # templates folder -- so editing the workbench afterwards kept creating
-    # systems from the OLD snapshot until the developer remembered the
-    # drag-out/drag-in republish dance. Re-snapshot the linked workbench HERE,
-    # at create time, so what the wizard builds is what the workbench contains
-    # now. Before create_vision_system on purpose: the scaffold reads the
-    # format for its starting model too. Best effort -- a missing workbench or
-    # a failed snapshot falls back to the last published version, with a
-    # warning, rather than blocking the create.
-    fmt_key = str(body.get("template") or "")
-    if fmt_key and saved_template is None:
-        wb = provision_service.format_workbench(st.config_dir).get(fmt_key)
-        wb_system = next((x for x in st.registry if x.slug == wb), None) \
-            if wb else None
-        if wb_system is not None:
-            old = provision_service.builtin_formats(st.config_dir) \
-                .get(fmt_key) or {}
-            try:
-                doc = templates_service.snapshot_system(
-                    st.systems_dir, st.config_dir, wb,
-                    name=old.get("label") or wb_system.display_name or fmt_key,
-                    description=old.get("hint") or "",
-                    category=templates_service.UNCATEGORIZED)
-                provision_service.promote_template(
-                    fmt_key, doc, st.config_dir,
-                    category=old.get("category"), label=old.get("label"),
-                    hint=old.get("hint"), zone=old.get("zone"),
-                    model=_workbench_model(st, wb))
-            except (ValueError, OSError) as exc:
-                warnings.append(
-                    "the template could not be refreshed from its workbench "
-                    f"({exc}) - created from the last published version")
     # No "pick a saved template" gate any more: a built-in format now IS a
     # whole build (the Built-in templates folder publishes the workbench's
     # snapshot -- workflow, dashboard, classes), so picking one is picking a
@@ -397,11 +231,7 @@ async def create_system(request: Request):
             port=body.get("port") or None,
             role=body.get("role") or None,
             master_slug=body.get("master") or None,
-            owner=creator,
-            # The 5-system cap protects a customer box; the developer
-            # authoring templates is not who it protects. Enforced server-side
-            # here, mirrored by max_systems=0 in GET /api/hub for the UI.
-            unlimited=auth_service.is_developer(creator, st.config_dir))
+            owner=creator)
     except (ValueError, TypeError) as e:
         raise HTTPException(status_code=400, detail=str(e))
     # The creator must be able to open what they just made (no-op for admin).
@@ -425,17 +255,7 @@ async def create_system(request: Request):
     # letting the operator open the system and wonder why it detects nothing.
     if created.get("model_note"):
         warnings.append(created["model_note"])
-    if saved_template is not None:
-        warnings += templates_service.apply_template(
-            st.systems_dir, st.config_dir, created["slug"], saved_template)
-    elif body.get("template"):
-        # A format published from a workbench carries a whole workflow; a new
-        # system built on that format starts with it (shipped formats carry
-        # none, so this is a no-op for them).
-        #
-        # From core/services, not core/dev: a customer install has no dev
-        # package, and a published format's workflow has to arrive there too
-        # -- starting from a format is what every admin does.
+    if body.get("template"):
         fmt = provision_service.builtin_formats(st.config_dir).get(
             str(body["template"]))
         warnings += templates_service.apply_format_workflow(
@@ -566,7 +386,6 @@ async def import_system(request: Request, file: UploadFile = File(...),
     try:
         created, warnings = templates_service.import_system(
             st.systems_dir, st.config_dir, doc, name=name or None, owner=creator,
-            unlimited=auth_service.is_developer(creator, st.config_dir),
             db_path=db_path)
     except (ValueError, TypeError, OSError) as e:
         detail = str(e)
@@ -626,15 +445,6 @@ async def rename_system(slug: str, request: Request):
     _rebuild_registry(st)
     system = st.registry.get(slug)
     shown = name or (system.display_name if system else slug)
-    # A system filed under "Built-in templates" IS a template, and the card
-    # in the create wizard reads the same name as the card in the folder --
-    # one template, one name. Best effort: a rename must not fail because
-    # the formats file could not be written.
-    if groups_service.assignments(st.config_dir).get(slug) == groups_service.BUILTIN_GROUP:
-        try:
-            provision_service.set_format_label(_format_key(slug), shown, st.config_dir)
-        except (OSError, ValueError):
-            pass
     return {"ok": True, "slug": slug, "name": shown,
             **sysport.moved_fields(request, slug, moved)}
 
@@ -653,20 +463,8 @@ def remove_system(slug: str, request: Request):
     if slug not in all_slugs:
         raise HTTPException(status_code=404, detail="no such system")
 
-    # Filed under "Built-in templates"? Then the template it published goes
-    # with it (the blank canvas excepted -- forget_format keeps that one).
-    # Read BEFORE remove_system, which drops the group assignment with the
-    # rest of the system's config block.
-    was_template = (groups_service.assignments(st.config_dir).get(slug)
-                    == groups_service.BUILTIN_GROUP)
     result = provision_service.remove_system(
         st.systems_dir, slug, all_slugs, st.config_dir)
-    if was_template:
-        try:
-            result["template_removed"] = provision_service.forget_format(
-                _format_key(slug), st.config_dir)
-        except (OSError, ValueError):
-            result["template_removed"] = False
 
     _rebuild_registry(st)
     return {"ok": True, **result}
@@ -933,16 +731,11 @@ def hub_pipelines(request: Request):
     # header meters read these rather than hardcoding 4 -- a UI holding its
     # own copy of a server limit is a UI that lies the day the limit moves.
     #
-    # 0 = "no cap, just count". The developer's box is a workshop: the system
-    # cap does not apply to them at all, and the running cap is a property of
-    # the chip rather than of their licence -- so their header states what is
-    # there instead of measuring it against a limit that is not theirs.
     from core.services import detector_control as dc
-    workshop = auth_service.is_developer(username, st.config_dir)
     return {"ok": True, "arch": _chip_arch(), "pipelines": rows,
             "running": sum(1 for r in rows if r["running"]),
-            "max_running": 0 if workshop else dc.MAX_RUNNING_APPS,
-            "max_systems": 0 if workshop else provision_service.MAX_SYSTEMS}
+            "max_running": dc.MAX_RUNNING_APPS,
+            "max_systems": provision_service.MAX_SYSTEMS}
 
 
 @router.post("/api/hub/systems/{slug}/capture", name="hub.capture")
@@ -1553,20 +1346,10 @@ def hub_cards(request: Request):
     # form and meet a 400 at the end of it.
     from core.services import provision as provision_service
     try:
-        # The DEPLOYMENT's systems, which is what the cap is about and what
-        # this account can see. A developer's workshop systems are excluded
-        # for everyone else -- counting hidden systems against a visible
-        # limit is how "6 of 5 systems" appeared over a grid showing three.
         total = provision_service.count_systems(
-            request.app.state.systems_dir, cfg,
-            include_developer=auth_service.is_developer(username, cfg))
+            request.app.state.systems_dir, cfg)
     except Exception:                                       # noqa: BLE001
         total = len(cards)
-    # 0 = no cap. A developer authors templates through workbench systems, so
-    # the customer-box limit does not apply to them; the create routes make
-    # the same exception server-side.
-    unlimited = auth_service.is_developer(
-        getattr(request.state, "user", None), cfg)
     # A system whose counters are being reset is mid-restart, so its card must
     # say so: opening it during those seconds shows an unreachable master or
     # numbers about to change, and either reads as a fault rather than as the
@@ -1576,13 +1359,6 @@ def hub_cards(request: Request):
     for card in cards:
         if card.get("slug") in resetting:
             card["resetting"] = True
-    # Which folder each card is filed under, and what folders exist. Display
-    # metadata only -- a group changes no port, slug, package or access, so a
-    # card whose group has been deleted simply reads as Ungrouped.
-    folders = groups_service.groups(cfg) if unlimited else []
-    filed = groups_service.assignments(cfg)
-    for card in cards:
-        card["group"] = filed.get(card.get("slug")) or ""
     # The NVMe-not-mounted alarm, for the banner the shell draws on every
     # page: this poll already runs every 10 s on every hub page, so the
     # banner needs no poll of its own. current() answers from the last
@@ -1591,125 +1367,7 @@ def hub_cards(request: Request):
     return {"ok": True, "cards": cards,
             "storage_alarm": storage_watch.current(cfg),
             "system_count": total,
-            "groups": folders,
             # The running platform version, for the sidebar footer -- same
             # frozen-at-import constant /api/health reports (core/version.py).
             "version": VERSION,
-            "max_systems": 0 if unlimited else provision_service.MAX_SYSTEMS}
-
-
-@router.post("/api/hub/groups", name="hub.set_groups")
-async def hub_set_groups(request: Request):
-    """Create, rename, reorder and delete the hub's folders in one write.
-
-    Developer-only: these organise a workshop's template catalogue, and a
-    deployment box's three systems do not need filing. Deleting a folder does
-    NOT touch the systems in it -- they fall back to Ungrouped, because a
-    delete of a heading must never quietly rewrite what sat under it."""
-    _require_developer(request, "organising systems into folders")
-    body = await request.json()
-    try:
-        saved = groups_service.set_groups(body.get("groups") or [],
-                                          request.app.state.config_dir)
-    except (ValueError, TypeError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    return {"ok": True, "groups": saved}
-
-
-@router.post("/api/hub/systems/{slug}/group", name="hub.set_group")
-async def hub_set_group(slug: str, request: Request):
-    """File one system under a folder. A blank id takes it out of all of them.
-
-    THE FOLDER IS THE PUBLISH SWITCH. Dropping a system into "Built-in
-    templates" snapshots it -- workflow, dashboard, class filter, the model it
-    is running -- and publishes that as a built-in format, which is the list
-    every admin's create wizard offers. Dragging it out again unpublishes
-    (draft), and dropping it in a second time republishes the CURRENT build,
-    which is how an edited template is refreshed.
-
-    Before this, the folder and the catalogue were two unrelated facts: a
-    system could sit under "Built-in templates" while the format of the same
-    name shipped empty -- classes and a label, no workflow, no dashboard --
-    so an admin creating "People Counting" started from scratch and the
-    folder read as a lie. One gesture, one meaning: in the folder = offered
-    to admins, with everything the workbench actually contains.
-    """
-    _require_developer(request, "organising systems into folders")
-    st = request.app.state
-    body = await request.json()
-    was = groups_service.assignments(st.config_dir).get(slug) or ""
-    try:
-        gid = groups_service.assign(slug, body.get("group"), st.config_dir)
-    except (ValueError, TypeError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-
-    published = None
-    warnings = []
-    existing_fmt = provision_service.builtin_formats(st.config_dir) \
-        .get(_format_key(slug))
-    if gid == groups_service.BUILTIN_GROUP:
-        # Publish (or refresh) the whole build. Failure UNDOES the move: a
-        # system sitting in the folder unpublished is exactly the lie this
-        # sync exists to end.
-        system = next((x for x in st.registry if x.slug == slug), None)
-        try:
-            doc = templates_service.snapshot_system(
-                st.systems_dir, st.config_dir, slug,
-                name=(system.display_name if system else slug),
-                description="", category=templates_service.UNCATEGORIZED)
-            fmt = provision_service.promote_template(
-                _format_key(slug), doc, st.config_dir,
-                # Republishing must not wipe where the developer filed it.
-                category=(existing_fmt or {}).get("category"),
-                model=_workbench_model(st, slug))
-            provision_service.set_format_draft(_format_key(slug), False,
-                                               st.config_dir)
-            provision_service.set_format_workbench(_format_key(slug), slug,
-                                                   st.config_dir)
-            published = _format_key(slug)
-        except (ValueError, OSError) as exc:
-            groups_service.assign(slug, was, st.config_dir)
-            raise HTTPException(
-                status_code=400,
-                detail=f"could not publish this system as a template: {exc}")
-        del fmt
-    else:
-        if was == groups_service.BUILTIN_GROUP:
-            # Out of the folder = out of the catalogue. Draft, not delete: the
-            # content survives, and dropping the system back in republishes it.
-            try:
-                provision_service.set_format_draft(_format_key(slug), True,
-                                                   st.config_dir)
-            except (ValueError, OSError) as exc:
-                warnings.append(f"the template could not be unpublished: {exc}")
-        # The grid's folders and the template panel's categories are one
-        # catalogue seen from two pages: when this system HAS a template,
-        # filing the system refiles the template. Best effort -- a system
-        # with no template simply has nothing to sync.
-        if existing_fmt is not None:
-            folder = next((g["name"] for g in
-                           groups_service.groups(st.config_dir)
-                           if g["id"] == gid), "")
-            try:
-                provision_service.set_format_category(
-                    _format_key(slug), folder or None, st.config_dir)
-            except (ValueError, OSError) as exc:
-                warnings.append(f"the template's folder was not updated: {exc}")
-    return {"ok": True, "slug": slug, "group": gid,
-            "published": published, "warnings": warnings}
-
-
-def _format_key(slug):
-    """The format a system publishes as -- provision_service.format_key, kept
-    under this name for the callers (and the tests) that grew up with it."""
-    return provision_service.format_key(slug)
-
-
-def _workbench_model(st, slug):
-    """The model the system is RUNNING, for the format's starting model --
-    best effort, the same way the dev publish flow reads it."""
-    try:
-        from core.dev.formats import _running_model         # noqa: PLC0415
-        return _running_model(st.systems_dir, slug)
-    except Exception:                                       # noqa: BLE001
-        return None
+            "max_systems": provision_service.MAX_SYSTEMS}

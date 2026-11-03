@@ -256,17 +256,6 @@ def host_health():
         pass
     out["storages"] = _storages()
     out["npu"] = _npu()
-    # WHICH BOARD this is: the CM5 serial, and the secure element's serial
-    # where one is fitted. Here rather than on a page of its own because the
-    # question is always asked in the same breath as "what is this box" --
-    # and because the licence issuer needs the chip serial read off the
-    # customer's own hub. One cached I2C read per process (atecc.info).
-    try:
-        from core.services import atecc                       # noqa: PLC0415
-        out["device"] = atecc.fingerprint()
-    except Exception:                                         # noqa: BLE001
-        out["device"] = {"cpu_serial": "", "atecc_serial": "",
-                         "atecc_present": False, "atecc_provisioned": False}
     return out
 
 

@@ -179,8 +179,8 @@ jobs:
             [core/routes/mqtt_test.py]=287 [core/routes/network.py]=423
             [core/routes/panel.py]=193 [core/routes/proxy.py]=166
             [core/routes/spa.py]=260 [core/routes/telegram.py]=271
-            [core/routes/update.py]=190 [core/routes/workflow.py]=1380
-            [core/routes/workflow_live.py]=167 [core/services/atecc.py]=411
+            [core/routes/workflow.py]=1380
+            [core/routes/workflow_live.py]=167
             [core/services/auth.py]=2369 [core/services/board_io.py]=471
             [core/services/builder.py]=2651
             [core/services/builtin_models.py]=826
@@ -211,18 +211,14 @@ jobs:
             [core/services/panel.py]=956 [core/services/provision.py]=2188
             [core/services/retention.py]=1166
             [core/services/routeheal.py]=328 [core/services/settings.py]=389
-            [core/services/source_publish.py]=331
             [core/services/sqlconsole.py]=564 [core/services/ssd1306.py]=381
             [core/services/state_points.py]=368
-            [core/services/store.py]=1228
             [core/services/telegram_bots.py]=423
             [core/services/telegram_commands.py]=571
             [core/services/telegram_links.py]=562
             [core/services/telegram_net.py]=1057
-            [core/services/template_updates.py]=660
             [core/services/trigger_out.py]=314
-            [core/services/templates.py]=1032 [core/services/update.py]=1366
-            [core/services/update_offline.py]=312
+            [core/services/templates.py]=1032
             [core/services/builder_assets.py]=331
             [core/services/class_filter.py]=378
             [core/services/workflow.py]=15203
@@ -250,7 +246,7 @@ jobs:
       # cytron_iriv and cytron-dashboard are curated builds that deliberately
       # ship without tests/. There is nothing to run there, so the job passes
       # with a notice instead of failing on a missing file. The dev branch
-      # and every release tag (release.yml runs the suite itself) carry
+      # carries
       # tests/ and run it in full.
       - name: Look for the test suite
         id: suite

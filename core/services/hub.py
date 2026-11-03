@@ -92,11 +92,8 @@ def visible_to(username, slug, masters, config_dir=None):
     Live Preview picker and the Loaded Networks table cheerfully listed
     everything the coarse grant allowed -- other users' systems included.
 
-    Two tests, both required:
+    One test:
       * auth.allowed -- the account's systems grant ("*", or a listed slug)
-      * the workshop/deployment split -- a developer sees developer-owned
-        systems, everyone else sees the deployment's (ownerless counts as
-        the deployment's; see build_cards for the full reasoning)
 
     username falsy = no session context (internal callers): show all,
     preserving the old behaviour for callers that do not scope.
@@ -105,9 +102,7 @@ def visible_to(username, slug, masters, config_dir=None):
         return True
     if not auth_service.allowed(username, slug, config_dir):
         return False
-    owner = (masters.get(slug) or {}).get("owner", "")
-    owned_by_dev = auth_service.is_developer(owner, config_dir)
-    return owned_by_dev == auth_service.is_developer(username, config_dir)
+    return True
 
 
 def build_cards(registry, masters, health, username=None, config_dir=None):
@@ -129,21 +124,8 @@ def build_cards(registry, masters, health, username=None, config_dir=None):
     """
     cards = []
     for system in registry:
-        # The workshop and the deployment are SEPARATE, both ways.
-        #
-        # A developer's systems are the product workshop -- template
-        # workbenches, store test installs -- so nobody else sees them, admin
-        # included. And the deployment's own systems are not the workshop's
-        # business either: a developer opening the hub gets their workbenches,
-        # not a customer's running lines mixed in among them. Two roles, two
-        # sets of cards, neither borrowing the other's.
-        #
-        # Ownerless systems (created before ownership existed, or shipped with
-        # the box) count as the DEPLOYMENT's: they are what the operator runs,
-        # not something a developer built to author a template with.
-        #
-        # Both this split and the account's systems grant live in
-        # visible_to(), shared with every other hub surface.
+        # The account's systems grant lives in visible_to(), shared with
+        # every other hub surface.
         if not visible_to(username, system.slug, masters, config_dir):
             continue
         entry = masters.get(system.slug) or {}

@@ -37,7 +37,6 @@ import { useCallback, useEffect, useState } from "react";
 import { api, friendlyError } from "../api/client.js";
 import { useToast } from "./ui/Toast.jsx";
 import { useConfirm } from "./ui/ask.jsx";
-import { useIsDeveloper } from "../state/app.jsx";
 import { Copy, ExternalLink, Info, Loader2, Monitor, TriangleAlert } from "lucide-react";
 import { LastResult, NOT_OWN_SERVICE, Note, RestartNote, announceChange, appliesHere,
          askRestart, restartBox, useRestartEvent } from "./BoxRestartNote.jsx";
@@ -46,7 +45,6 @@ const PROXY = "proxy";
 const PORT = "port";
 
 export default function SoftwarePortCard() {
-  const isDev = useIsDeveloper();
   const [data, setData] = useState(null);
   const [port, setPort] = useState("");
   const [choice, setChoice] = useState("");       // "proxy" | "port"
@@ -285,40 +283,6 @@ export default function SoftwarePortCard() {
         </div>
       )}
 
-      {isDev && (
-        <div className="dev-extras" data-testid="access-dev-extras">
-          <div className="dev-extras-label">Developer account only</div>
-          <div className="muted small" data-testid="port-now">
-            Access: <b>{nowWords}</b>.
-            {nextWords ? <> After restart: <b>{nextWords}</b></> : null}
-          </div>
-          {data.source === "argv" && !proxy && (
-            <Note>The software was started with <code>--port</code> on the command
-              line, which wins over this setting until it is started without it.</Note>
-          )}
-          <p className="muted small" style={{ marginTop: 6 }}>
-            Changing the access port affects the dashboard, sign-in page,
-            front-panel links, and system addresses. The change takes effect when
-            the device restarts.
-          </p>
-          {proxy ? (
-            <p className="muted small" data-testid="proxy-explain" style={{ marginTop: 6 }}>
-              One address with no port: <code>http://&lt;device&gt;/</code> for the
-              dashboard and <code>http://&lt;device&gt;{access?.prefix || "/s/"}&lt;system&gt;/</code> for
-              each system. Port 80 is fixed for this choice. Bookmarks with a port
-              keep working and lead to the new address. Live video may continue to
-              use a separate media port.
-            </p>
-          ) : (
-            <p className="muted small" style={{ marginTop: 6 }}>
-              The dashboard answers on the port above (default {data.default}); the
-              systems keep their own ports{data.systems?.length
-                ? ` (${data.systems.map((s) => s.port).join(", ")})` : ""}.
-              Existing bookmarks that include the old port number need to be updated.
-            </p>
-          )}
-        </div>
-      )}
     </div>
   );
 }

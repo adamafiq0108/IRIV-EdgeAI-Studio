@@ -12,14 +12,6 @@ export function useApp() {
   return ctx;
 }
 
-/** True for a developer account. Unlike useApp() it does not throw outside
- *  <AppShell>: a card that only hides its extras from a customer still draws
- *  (as for a customer) when it is rendered on its own. */
-export function useIsDeveloper() {
-  const ctx = useContext(AppContext);
-  return !!ctx?.user?.is_developer;
-}
-
 // nav page id -> client route. The backend nav (core/services/nav.py) is
 // capability-driven and emits page ids; the SPA owns the URL for each. Keeping
 // this map here means a new page is one entry, never a slug branch.

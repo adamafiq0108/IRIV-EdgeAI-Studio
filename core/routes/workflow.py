@@ -354,7 +354,7 @@ def _require_python_rights(request, graph, previous=None):
 
       * the box must have opted in (config/workflow.toml [python].enabled),
         which takes shell access to set;
-      * the account must be a DEVELOPER.
+      * the account must be master.
 
     Only CHANGED code is gated. An admin may move a Python node, rename it,
     rewire it or delete it -- what they may not do is write the code that
@@ -373,10 +373,10 @@ def _require_python_rights(request, graph, previous=None):
             detail="this box does not run Python written in the browser - "
                    "set [python].enabled in config/workflow.toml on the board "
                    "to turn it on")
-    if not auth_service.is_developer(getattr(request.state, "user", None), cfg):
+    if not auth_service.is_admin(getattr(request.state, "user", None), cfg):
         raise HTTPException(
             status_code=403,
-            detail="writing Python is a developer action - an admin may use "
+            detail="writing Python is a master action - an admin may use "
                    "and rewire an existing Python node, but not change its code")
 
 

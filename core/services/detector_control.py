@@ -1176,7 +1176,7 @@ _GIGE_NAME = re.compile(r"^[\w .:()+/-]{1,128}$")
 
 
 class RawSourceRefused(PermissionError):
-    """A camera source only the box owner may save (master or developer)."""
+    """A camera source only the box owner may save (master)."""
 
 
 def gige_name_ok(name):
@@ -2252,21 +2252,18 @@ DEPTH_UNAVAILABLE = ("depth (3D) cameras are not available on this box - "
 
 
 def depth_offered(config_dir=None):
-    """Are depth (3D) cameras offered on this box? Only on a developer box.
+    """Are depth (3D) cameras offered on this box? Never.
 
-    Depth is R&D: measurement from depth is still being proved on the
-    workshop board, and a customer box is not where that happens. So it is
-    the same DEPLOYMENT fact that gates the developer tooling
-    (config.is_dev_box, deploy.toml `mode`), not a setting an operator can
-    reach -- a customer box offers no Depth tab, lists no depth camera in
-    discovery, and refuses a new one; a developer box is unchanged. One
-    build for both, so a release never has to fork to take depth away.
+    Depth is R&D and is not part of the shipped product: no Depth tab, no
+    depth camera in discovery, and a new one is refused. (This used to be
+    true only on a developer box; the developer tier is gone, so it is now
+    unconditionally off. Kept as a function so every caller still asks.)
 
     What this does NOT do is touch a depth camera already stored in a
     customer box's config: none exists in the field, and silently switching
     one off would be a change nobody asked for. The gate is on the way in.
     """
-    return config_mod.is_dev_box(config_dir)
+    return False
 
 #: The running cap PER KIND, on top of the box and per-system caps above.
 #: MAX_CAMERAS is about the box's total CPU; these are about the bus each kind

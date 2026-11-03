@@ -11,17 +11,13 @@
 // it on, moving it or closing it moves no address a browser is using - except
 // this page when it was opened over HTTPS, which the confirms say.
 //
-// Master or developer only, like the cards beside it (the server answers 403
+// Master only, like the cards beside it (the server answers 403
 // to anyone else and the card draws nothing). Nothing here needs a terminal.
 //
 // Customer view (Tok Aba, 2026-10-14): the title with an Enabled / Disabled
 // pill and the switch, "HTTPS is active", the dashboard addresses with a copy
 // button each (opening over HTTP is sent here automatically; there is no second
-// switch). Everything else - the long
-// explanation, "Trust This Device" with its downloads and per-OS steps,
-// "Certificate Details", "Advanced HTTPS Settings" (port, regenerate) and the
-// port 443 / not-in-certificate notes - is drawn for a developer account only
-// (data-testid https-dev-extras). A failure (data.error) is said to everyone.
+// switch). A failure (data.error) is said to everyone.
 // Handlers, payloads and confirms are as before.
 import { useCallback, useEffect, useState } from "react";
 import { api, friendlyError } from "../api/client.js";
@@ -31,7 +27,6 @@ import { useConfirm } from "./ui/ask.jsx";
 import { Switch } from "./ui/switch.jsx";
 import { CardHeader, StateSwitch, pillClass } from "./ui/CardHeader.jsx";
 import { Copy, Download, Loader2, Lock, ShieldCheck } from "lucide-react";
-import { useIsDeveloper } from "../state/app.jsx";
 import { Note } from "./BoxRestartNote.jsx";
 import { httpsState, httpsUrls, shortDate } from "./httpsLinks.js";
 
@@ -64,7 +59,6 @@ const TRUST = [
 
 
 export default function HttpsCard() {
-  const isDev = useIsDeveloper();
   const [data, setData] = useState(null);
   const [port, setPort] = useState("");
   const [busy, setBusy] = useState("");
@@ -115,11 +109,8 @@ export default function HttpsCard() {
     const d = await post(apiUrl("/api/hub/https"), { enabled: on },
                          on ? "HTTPS could not be switched on" : "HTTPS could not be switched off");
     if (!d) return;
-    // "Trust This Device" is on a developer's card only; a customer is
-    // pointed at what the card shows them.
-    if (on && d.listening) toast.success("HTTPS is on", isDev
-      ? "Trust the root certificate on each computer or phone (Trust This Device)."
-      : "Open the dashboard at one of the HTTPS addresses on the card.");
+    if (on && d.listening) toast.success("HTTPS is on",
+      "Open the dashboard at one of the HTTPS addresses on the card.");
     else if (on) toast.error("HTTPS did not start", d.error ? "See the note on the card." : "Try again.");
     else toast.info("HTTPS is off", "The dashboard answers on HTTP as before.");
   }
@@ -235,152 +226,6 @@ export default function HttpsCard() {
         </div>
       )}
 
-      {isDev && (<div className="dev-extras" data-testid="https-dev-extras">
-      <div className="dev-extras-label">Developer account only</div>
-      <p className="muted small" style={{ marginTop: 4 }}>
-        HTTPS encrypts the connection between your browser and this device. HTTP
-        keeps working as before. Because the device uses its own certificate
-        authority, your browser may show a security warning until that authority
-        is trusted on your computer or phone.
-      </p>
-      {onHttps && (
-        <Note ok><span data-testid="https-here">This page is open over HTTPS - the
-          connection to the device is encrypted.</span></Note>
-      )}
-      {data.enabled && data.listening && !data.port443 && data.port443_detail && (
-        <Note><span>Port 443 is not used: {data.port443_detail}. HTTPS answers on
-          port {data.port}.</span></Note>
-      )}
-      {data.uncovered?.length > 0 && (
-        <Note><span>Not in the certificate: {data.uncovered.join(", ")}. The device's root
-          may only name local names and private addresses, so use one of the addresses
-          below.</span></Note>
-      )}
-
-      {root && (
-        <div style={{ marginTop: 12 }} data-testid="https-trust">
-          <strong className="small">Trust This Device</strong>
-          {/* Trust, said apart from encryption: the link is encrypted either
-              way; trusting the root is what lets the browser confirm it is
-              this device and stop warning. */}
-          <p className="muted small" style={{ marginTop: 2 }}>
-            The connection is encrypted whether or not the certificate is trusted.
-            Trusting it is what lets the browser confirm it is talking to this
-            device, so it stops showing a security warning. To avoid the warning,
-            install the device's root certificate on each computer or phone that
-            needs trusted HTTPS access.
-          </p>
-          <p className="muted small" style={{ marginTop: 4 }}>
-            Before trusting the certificate, verify its fingerprint (under
-            Certificate Details) against the one shown when this page is opened on
-            the device's own screen, or another trusted source: a page loaded over
-            plain HTTP on the network can be altered together with the download.
-          </p>
-          <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-            <a className="btn btn-sm btn-accent btn-ic" href={apiUrl("/api/hub/https/root.crt")}
-               download data-testid="https-download">
-              <Download size={14} /> Download Root Certificate (.crt)
-            </a>
-            <a className="btn btn-sm btn-ic" href={apiUrl("/api/hub/https/root.crt?format=der")} download>
-              <Download size={14} /> Download Root Certificate (.cer, Windows and Android)
-            </a>
-            <button type="button" className="btn btn-sm" data-testid="https-copy"
-                    onClick={() => copy(root.fingerprint)}>
-              Copy Certificate Fingerprint
-            </button>
-          </div>
-          <details style={{ marginTop: 8 }}>
-            <summary className="small" style={{ cursor: "pointer" }}>
-              How to trust it on a computer or phone
-            </summary>
-            <ul className="muted small" style={{ marginTop: 6, paddingLeft: 18 }}>
-              {TRUST.map(([os, how]) => <li key={os} style={{ marginBottom: 4 }}><b>{os}:</b> {how}</li>)}
-            </ul>
-            <p className="muted small">Trust only a root whose fingerprint matches the one
-              on the device's own screen. This root can vouch only for websites with local
-              names (.local, .lan, .internal, home.arpa, localhost) and private network
-              addresses - this device, and other devices on this network if its key were ever
-              stolen - and for nothing on the internet, no programs and no e-mail.</p>
-          </details>
-
-          {/* The facts a verification needs, folded but one click away. */}
-          <details style={{ marginTop: 8 }} data-testid="https-details">
-            <summary className="small" style={{ cursor: "pointer", fontWeight: 600 }}>
-              Certificate Details
-            </summary>
-            <div className="muted small" style={{ marginTop: 6 }}>
-              Root certificate fingerprint (SHA-256):
-            </div>
-            <code data-testid="https-fingerprint"
-                  style={{ display: "block", userSelect: "all", wordBreak: "break-all",
-                           fontSize: 11, marginTop: 2 }}>
-              {root.fingerprint}
-            </code>
-            <div className="muted small" style={{ marginTop: 6 }}>
-              Certificate authority: {root.subject}. Valid until {shortDate(root.not_after)}.
-            </div>
-            {leaf && (
-              <div className="muted small" style={{ marginTop: 4 }}>
-                This device's certificate is valid until {shortDate(leaf.not_after)} and
-                is renewed automatically 30 days before it expires.
-              </div>
-            )}
-            {leaf && (
-              <div className="muted small" style={{ marginTop: 4 }} data-testid="https-sans">
-                The certificate covers {[...leaf.names, ...leaf.ips].join(", ")}
-                {leaf.issued ? ` (made ${shortDate(leaf.issued)}${leaf.reason ? `, ${leaf.reason}` : ""})` : ""}.
-              </div>
-            )}
-          </details>
-        </div>
-      )}
-
-      <details style={{ marginTop: 10 }} data-testid="https-advanced">
-        <summary className="small" style={{ cursor: "pointer", fontWeight: 600 }}>
-          Advanced HTTPS Settings
-        </summary>
-        <div style={{ display: "flex", gap: 6, alignItems: "flex-end", marginTop: 8,
-                      flexWrap: "wrap" }}>
-          <label style={{ flex: "0 1 160px" }}>
-            <div className="muted small">HTTPS Port (default {data.default_port})</div>
-            <input className="input" value={port} inputMode="numeric"
-                   style={{ minWidth: 0, width: "100%",
-                            ...(port && !portValid ? { borderColor: "var(--alert)" } : {}) }}
-                   onChange={(e) => setPort(e.target.value)} />
-          </label>
-          <button type="button" className="btn btn-sm"
-                  disabled={!portValid || n === data.port || !!busy} onClick={savePort}>
-            {spin("port")} Save HTTPS Port
-          </button>
-        </div>
-        <p className="muted small" style={{ marginTop: 4 }}>
-          The port used for secure dashboard access. Changing it may affect existing
-          bookmarks and links.
-        </p>
-        {root && (
-          <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-            <button type="button" className="btn btn-sm" disabled={!!busy}
-                    title="A new certificate for this device; computers and phones notice nothing"
-                    onClick={() => regenerate("leaf")}>
-              {spin("leaf")} Generate New Certificate
-            </button>
-            <button type="button" className="btn btn-sm" disabled={!!busy}
-                    title="Every computer and phone must trust the new root again"
-                    onClick={() => regenerate("root")}>
-              {spin("root")} Replace Root Certificate...
-            </button>
-          </div>
-        )}
-        {root && (
-          <p className="muted small" style={{ marginTop: 4 }}>
-            Generate New Certificate renews this device's certificate under the same
-            root; nothing changes on computers and phones. Replace Root Certificate
-            makes a new certificate authority, which every computer and phone must
-            trust again.
-          </p>
-        )}
-      </details>
-      </div>)}
     </div>
   );
 }

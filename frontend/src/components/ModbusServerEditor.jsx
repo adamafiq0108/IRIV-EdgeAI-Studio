@@ -35,7 +35,7 @@ const DEFAULTS = {
   unit_id: 1, timeout_ms: 1000,
   reconnect_on_timeout: true, reconnect_timeout_ms: 2000,
 };
-//: The board's isolated RS485 tops out at 500 kbps (IRIV EdgeAI CM5 datasheet).
+//: The board's isolated RS485 tops out at 500 kbps (the board datasheet).
 const MAX_BAUD = 500000;
 const BAUDS = [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 500000];
 
@@ -102,7 +102,7 @@ export function ModbusServerRow({ value, onChange, onEdit, onAdd,
 }
 
 //: The board's isolated RS485 port: a USB-to-UART behind the on-board hub,
-//: so Linux names it ttyACM0 (IRIV EdgeAI CM5 datasheet). /dev/ttyAMA10,
+//: so Linux names it ttyACM0 (the board datasheet). /dev/ttyAMA10,
 //: the old default here, is the Linux console and never carried Modbus.
 const DEFAULT_SERIAL = "/dev/ttyACM0";
 

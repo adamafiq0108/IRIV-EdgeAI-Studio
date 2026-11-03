@@ -27,16 +27,7 @@
 // under Advanced; with the Hub on ports, the port choice as before and a
 // note pointing at the Software port card. No switch here.
 //
-// THE TEMPLATES COME UP TO DATE ON OPENING (Tok Aba, 2026-10-14): the wizard
-// asks the hub once, as it mounts, to fetch the latest published templates
-// (POST /api/hub/templates/refresh -- bounded, rate limited and single-flight
-// on the server, never an error). Silently now: the line that reports it
-// moved to the cards on the Hub home, where the templates are chosen. The
-// list redraws if anything landed and the chosen template stays chosen (the
-// key is stable, only its content moved). Nothing waits for it except
-// Create, which lets an unfinished refresh land first so the system is
-// built from the newest template. Offline is not an error.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
 import { useApi } from "../api/hooks.js";
 import { useApp } from "../state/app.jsx";
@@ -47,7 +38,7 @@ import { usePortCheck } from "./usePortCheck.js";
 import { Dialog } from "./ui/primitives.jsx";
 import TemplateGallery from "./TemplateGallery.jsx";
 import { HubUsesPorts, STREAM_PROXY, proxyAddress, useHubProxy } from "./boxAccess.jsx";
-import { Check, ChevronLeft, RefreshCw, ScanEye } from "lucide-react";
+import { Check, ChevronLeft, ScanEye } from "lucide-react";
 
 // A system slug the publish endpoint accepts (core/services/publish.py
 // SLUG_RE: ^[a-z][a-z0-9_]*$), derived from the human name.
@@ -75,20 +66,11 @@ function Row({ label, children, hint }) {
   );
 }
 
-export default function CreateSystemWizard({ template = "", onCreated, onCancel, onBrowseStore }) {
+export default function CreateSystemWizard({ template = "", onCreated, onCancel }) {
   const { user } = useApp();
   const toast = useToast();
-  const isDev = !!user?.is_developer;
-  const { data: tplData, reload: reloadTemplates } = useApi("/api/hub/templates");
+  const { data: tplData } = useApi("/api/hub/templates");
   const templates = tplData?.templates || [];
-  // "Check for template updates" in flight. The templates offered here are
-  // the ones this box was installed with plus whatever the developer has
-  // published since -- and the moment somebody wants a newer one is right
-  // here, choosing what to build.
-  const [checking, setChecking] = useState(false);
-  // The automatic refresh, silent here. The promise is kept so Create can
-  // let an unfinished one land first.
-  const autoRun = useRef(null);
   const [stepIdx, setStepIdx] = useState(0);
   // The template the card chose. Its key travels to Create unchanged.
   const [tpl, setTpl] = useState(template || "");
@@ -115,18 +97,6 @@ export default function CreateSystemWizard({ template = "", onCreated, onCancel,
   const [advanced, setAdvanced] = useState(false);
 
   const isAdmin = !!user?.is_admin;
-  useEffect(() => {
-    if (!isAdmin || autoRun.current) return;
-    autoRun.current = api.post("/api/hub/templates/refresh", {})
-      .then(async (d) => {
-        // Redraw the list before Create may go on.
-        if (d?.state === "updated") await reloadTemplates().catch(() => {});
-      })
-      // Never an error to the person creating a system: a refresh that
-      // could not run means the templates already here are used.
-      .catch(() => {});
-  }, [isAdmin, reloadTemplates]);
-
   if (!isAdmin) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -146,10 +116,9 @@ export default function CreateSystemWizard({ template = "", onCreated, onCancel,
   const step = steps[stepIdx];
   const effSlug = slug.trim() || slugify(name);
 
-  // A built-in template IS a whole build now -- the Built-in templates
-  // folder publishes the workbench's snapshot (workflow, dashboard, classes)
-  // -- so picking one is all anybody has to do. Starting from nothing is a
-  // deliberate choice with a name: Blank Canvas, which cannot be deleted.
+  // A built-in template IS a whole build, so picking one is all anybody has
+  // to do. Starting from nothing is a deliberate choice with a name: Blank
+  // Canvas, which cannot be deleted.
   const stepValid =
     step === "name" ? (!!chosenTpl && !!name.trim() && !!effSlug
                        && (portMode === "auto" || !!verdict?.usable))
@@ -161,81 +130,8 @@ export default function CreateSystemWizard({ template = "", onCreated, onCancel,
     setPortMode("auto"); setPort(""); setStartNow(true); setAdvanced(false);
   }
 
-  /**
-   * Fetch the templates the developer has published and install the new and
-   * changed ones on this box. Only the template list changes: a system
-   * already created keeps the workflow it has, whatever its template now
-   * says -- that is the release update's job, not this button's.
-   */
-  async function checkTemplateUpdates() {
-    setChecking(true);
-    try {
-      const d = await api.post("/api/hub/templates/update", {});
-      const names = (list) => (list || []).map((t) => t.label || t.key).join(", ");
-      const added = d.added || [];
-      const updated = d.updated || [];
-      if (d.authoring) {
-        // The developer hub is where the templates come FROM: nothing is
-        // installed here, the check says what differs from the published
-        // copy so the developer knows whether to press Publish.
-        const parts = [
-          d.differs?.length ? `${names(d.differs)} differ${d.differs.length === 1 ? "s" : ""} from the published copy.` : "",
-          d.unpublished?.length ? `Not published yet: ${names(d.unpublished)}.` : "",
-          d.removed_here?.length ? `Published but removed here: ${names(d.removed_here)}.` : "",
-          d.media?.differs?.length ? `Preview media differs for ${d.media.differs.join(", ")}.` : "",
-        ].filter(Boolean);
-        if (parts.length) {
-          toast.info("This hub authors the templates",
-            parts.join(" ") + " Press Publish templates on the System Templates page to send what is here.");
-        } else {
-          toast.success("Published templates match this hub",
-                        "Every template here is what other boxes fetch.");
-        }
-      } else if (added.length || updated.length) {
-        toast.success(
-          `${added.length + updated.length} template${added.length + updated.length === 1 ? "" : "s"} installed`,
-          [added.length ? `New: ${names(added)}.` : "",
-           updated.length ? `Updated: ${names(updated)}.` : "",
-           "Systems you already have are unchanged."].filter(Boolean).join(" "));
-      } else {
-        toast.info("Templates are up to date",
-          (d.kept || []).length
-            ? `${names(d.kept)} ${d.kept.length === 1 ? "is" : "are"} authored on this box and kept as is.`
-            : undefined);
-      }
-      for (const e of d.errors || []) {
-        toast.warn(`${e.key} could not be installed`, e.error);
-      }
-      // A picked template that the check just replaced is still the right
-      // pick: the key is stable, only its content moved.
-      await reloadTemplates();
-    } catch (err) {
-      toast.error("Could not check for template updates", err.message);
-    } finally {
-      setChecking(false);
-    }
-  }
-  const updates = tplData?.updates || null;
-  const lastChecked = updates?.checked_at || 0;
-  // What the line beside the button says. A failed check is not a check, so
-  // it is shown as the failure it was, with the reason, rather than as a
-  // time; a box with no update token cannot fetch at all, and says so
-  // instead of offering a button whose only outcome is that error.
-  const noToken = updates ? updates.token === false : false;
-  const checkNote = noToken
-    ? "This box has no update token, so it cannot fetch templates. "
-    : updates?.last && updates.last.ok === false
-      ? `Last check failed: ${updates.last.error || "unknown error"} `
-      : lastChecked
-        ? `Last checked ${new Date(lastChecked * 1000).toLocaleString()}. `
-        : "Fetches templates published since this box was installed. ";
-
   async function create() {
     setBusy(true);
-    // A refresh still under way gets to finish first (bounded on the server
-    // to a few seconds), so a template it changed after the card was picked
-    // is the one the system is built from; the server waits for it too.
-    if (autoRun.current) await autoRun.current.catch(() => {});
     // Only send what was actually set; every omitted field takes the server's
     // default, which is the same value the form shows as a placeholder.
     const body = { name: name.trim(), template: chosenTpl };
@@ -263,35 +159,11 @@ export default function CreateSystemWizard({ template = "", onCreated, onCancel,
   // ── stepper ───────────────────────────────────────────────────────────────
   return (
     <div>
-      {/* The check lives in the header, top right, on every step: the
-          templates it refreshes are what Change template offers, and the
-          line under the title is its status, so the question "are these the
-          latest?" is answered beside the choice. It changes the LIST only -- a
-          system already running keeps its own workflow until a release
-          update, and the line says so. */}
       <div className="flex flex-wrap items-start gap-3">
         <ScanEye className="mt-0.5 size-5 text-primary" />
         <div className="min-w-0 flex-1">
           <p className="font-medium">Create an AI-vision system, step by step</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isDev ? checkNote : ""}
-            {isDev && updates?.authoring
-              ? "This hub authors the templates: the check compares them with what is published."
-              : "Templates are updated with each software update. Systems you already created are not changed."}
-          </p>
         </div>
-        {/* Developer tier only: customers get their templates with each
-            software update, so the between-release fetch is not offered to
-            them. The routes stay; the button is what is gated. */}
-        {isDev && (
-          <Button type="button" variant="outline" size="sm" className="shrink-0"
-                  disabled={checking || busy || noToken}
-                  title={noToken ? "Set the box's update token first (System tab under the notification bell)" : undefined}
-                  onClick={checkTemplateUpdates}>
-            <RefreshCw className={"size-4" + (checking ? " animate-spin" : "")} />
-            {checking ? "Checking…" : "Check for template updates"}
-          </Button>
-        )}
       </div>
       {/* Every step is LABELLED, not just the current one. Bare numbered dots
           say how far along you are but not what is coming, so the wizard's
@@ -431,7 +303,7 @@ export default function CreateSystemWizard({ template = "", onCreated, onCancel,
 
       <Dialog open={changing} title="Change template" onClose={() => setChanging(false)}>
         {changing && (
-          <TemplateGallery embedded onBrowseStore={onBrowseStore}
+          <TemplateGallery embedded
                            onUse={(key) => { setTpl(key); setChanging(false); }} />
         )}
       </Dialog>

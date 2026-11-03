@@ -11,10 +11,9 @@
 # OFF by default, and deliberately not switchable from the web UI. Turning it
 # on means an account can execute arbitrary Python on this box, so it must
 # cost what it should cost: shell access. Editing the code additionally
-# requires the DEVELOPER tier (core/services/auth.py), so on a developer's own
-# board this is one line, and on a customer's deployment it is nothing an
-# admin -- or a stolen admin session -- can reach.
+# requires the MASTER tier (core/services/auth.py), so an admin -- or a stolen
+# admin session -- cannot reach it.
 #
-# Template code that ships inside a signed store bundle is a different path
+# Template code shipped with a template is a different path
 # (systems/demo/app/extensions.py) and is unaffected by this flag.
 enabled = false

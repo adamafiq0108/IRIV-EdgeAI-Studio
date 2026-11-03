@@ -116,14 +116,6 @@ def reconcile(systems_dir, slug, config_dir=None, notify=None):
         from core.services import inbox                        # noqa: PLC0415
         notify = inbox.notify_admins
     from core.services import app_lock                         # noqa: PLC0415
-    from core.services import update as update_service         # noqa: PLC0415
-    try:
-        if update_service.maintenance():
-            # An update is swapping the release: the applier decides when
-            # systems come back, after the new code passes its health gate.
-            return "maintenance"
-    except Exception:                                          # noqa: BLE001
-        pass
     try:
         # The look and the act under ONE hold of the app lock: a Start
         # detection from the hub cannot land between "nothing is running"
@@ -160,8 +152,6 @@ def start_for_press(systems_dir, slug):
     if word in ("running", "replaced", "started"):
         return "started", ""
     return word, {
-        "maintenance": "an update is being installed - try again when it "
-                       "has finished",
         "powered_off": "this system is powered off on the Hub - power it on "
                        "to run its workflow",
         "unsupported": "this system's app is too old to run the workflow "

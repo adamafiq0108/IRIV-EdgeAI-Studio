@@ -31,17 +31,6 @@ import CapacityMeters from "./CapacityMeters.jsx";
 import NotificationCenter from "./NotificationCenter.jsx";
 import NewStoragePrompt from "./NewStoragePrompt.jsx";
 
-// Developer panels: the template store, authoring built-in templates, and
-// issuing license keys.
-// `__DEV_TOOLS__` is a build-time literal (frontend/vite.config.js), so a
-// customer build collapses these to null and Rollup drops the chunks -- the
-// code is not in the bundle at all. Their endpoints are equally absent from a
-// customer install (core/deploy.py), so shipping them would only ever produce
-// panels that 404.
-const DEV_TOOLS = __DEV_TOOLS__;
-// The store is the PRODUCT's distribution channel, not a deployment's tool,
-// so it joins them: developer only, and absent from a customer bundle.
-const StorePanel = DEV_TOOLS ? lazy(() => import("./StorePanel.jsx")) : null;
 // Split for the same reason the router splits it: the Log Hub is a page an
 // admin opens occasionally, and its chunk has no business in the bundle that
 // has to parse before the Systems grid paints.
@@ -51,9 +40,9 @@ import FullscreenButton from "./FullscreenButton.jsx";
 import SessionMenu from "./SessionMenu.jsx";
 import {
   LayoutGrid, LogOut, Moon, Sun,
-  SlidersHorizontal, MonitorPlay, Activity, Users, ScrollText, Library,
+  SlidersHorizontal, MonitorPlay, Activity, Users, ScrollText,
   Settings as SettingsIcon,
-  Database, Store, KeyRound, CircuitBoard, Home, TriangleAlert,
+  Database, CircuitBoard, Home, TriangleAlert,
 } from "lucide-react";
 
 const NAV = [
@@ -62,18 +51,6 @@ const NAV = [
     { id: "control", label: "System Control", icon: SlidersHorizontal, hint: "Run, restart or stop each system" },
     { id: "health",  label: "Performance",    icon: Activity, hint: "Board + Hailo performance" },
     { id: "wall",    label: "Live Preview",   icon: MonitorPlay, hint: "Up to 4 live camera feeds" },
-    // DEVELOPER only, and spread away entirely in a customer build -- same
-    // treatment as System Templates and Licenses below. The store is the
-    // PRODUCT's distribution channel, not a deployment's tool: what a
-    // customer box runs is what was installed on it, and a catalogue of
-    // other people's templates in an operator's or an admin's hub invites
-    // installing something nobody chose for that deployment. Every store
-    // endpoint enforces the same tier (core/routes/store.py) -- hiding the
-    // nav item hides the button, not the URL.
-    ...(DEV_TOOLS ? [
-      { id: "store", label: "Template Store", icon: Store, devOnly: true,
-        hint: "Ready-made systems published online - download and run" },
-    ] : []),
   ]},
   // Settings - the box-wide decisions, managed ONCE here for every system on
   // it: who may sign in, how long data is kept, and which board terminals
@@ -118,19 +95,11 @@ const TITLES = {
   vision: "New AI Vision system",
   accounts: "Account Management",
   logs: "Logs",
-  ...(DEV_TOOLS ? { store: "Template Store", templates: "System Templates",
-                    licenses: "Licenses" } : {}),
   settings: "Settings",
 };
 
 export default function HubShell() {
   const { brand, user } = useApp();
-  // The developer panels need TWO facts: the account is a developer, and
-  // this box carries the owner's tooling (core/deploy.py mounted core/dev;
-  // the server reports it as user.dev_tools). A dev frontend build on a box
-  // in customer mode has the panels and none of the routes behind them, and
-  // used to draw every button so it could fail with a 404 or a 405.
-  const devTools = !!user?.is_developer && !!user?.dev_tools;
   const [section, setSection] = useState("systems");
   // Bumped whenever somebody is sent to a settings tab from elsewhere. It is
   // the key on SettingsHub below, so the panel REMOUNTS and reads the tab it
@@ -157,9 +126,6 @@ export default function HubShell() {
     window.addEventListener("irivai:goto", onGoto);
     return () => window.removeEventListener("irivai:goto", onGoto);
   });
-  // Which folder "New system" was opened FROM, if any -- so the system
-  // lands there instead of Unfiled without a separate move afterwards.
-  const [pendingFolder, setPendingFolder] = useState("");
   // ...and which template it starts from: a Hub home card's "Use this
   // template", or "" from New System, which the wizard reads as the
   // server's default -- Blank Canvas.
@@ -218,8 +184,7 @@ export default function HubShell() {
                 <SidebarGroupLabel>{grp.group}</SidebarGroupLabel>
                 <SidebarMenu>
                   {grp.items
-                    .filter((it) => (!it.devOnly || devTools)
-                                 && (!it.adminOnly || user?.is_admin))
+                    .filter((it) => !it.adminOnly || user?.is_admin)
                     .map((it) => (
                     <SidebarMenuItem key={it.id}>
                       <SidebarMenuButton
@@ -318,12 +283,10 @@ export default function HubShell() {
           <main className="flex-1 p-4 sm:p-6">
             {section === "systems"   && (
               <Suspense fallback={<div className="p-6 text-muted-foreground">Loading…</div>}>
-                <Hub onCreate={(folderId, template) => {
-                  setPendingFolder(folderId || "");
+                <Hub onCreate={(template) => {
                   setPendingTemplate(template || "");
                   setSection("vision");
-                }}
-                     onBrowseStore={devTools ? () => setSection("store") : null} />
+                }} />
               </Suspense>
             )}
             {section === "control"   && <ControlPanel />}
@@ -344,13 +307,6 @@ export default function HubShell() {
                 </Suspense>
               </div>
             )}
-            {/* Lazy chunk, absent from a customer build -- hence the null
-                guard as well as the developer check, same as the two below. */}
-            {section === "store"     && devTools && StorePanel && (
-              <Suspense fallback={<div className="muted p-6">Loading…</div>}>
-                <StorePanel />
-              </Suspense>
-            )}
             {/* Creating a system is reached from the Systems grid's "New
                 system" card or a template card - it is not a nav
                 destination of its own. */}
@@ -358,35 +314,21 @@ export default function HubShell() {
               <VisionPanel
                  template={pendingTemplate}
                  onCreated={async (created) => {
-                   // Metadata-only: the same call the "move to folder" menu
-                   // action makes. Best-effort -- a failed assign here must
-                   // not undo a system that was just successfully created.
-                   if (pendingFolder && created?.slug) {
-                     try {
-                       await api.post(`/api/hub/systems/${encodeURIComponent(created.slug)}/group`,
-                                      { group: pendingFolder });
-                     } catch { /* the system still exists; fix the folder by hand */ }
-                   }
-                   setPendingFolder("");
                    setPendingTemplate("");
                    setSection("systems");
                    reload().catch(() => {});
                  }}
-                 onCancel={() => { setPendingFolder(""); setPendingTemplate("");
-                                   setSection("systems"); }}
-                 onBrowseStore={devTools ? () => setSection("store") : null} />
+                 onCancel={() => { setPendingTemplate("");
+                                   setSection("systems"); }} />
             )}
-            {/* One page, its own tab strip. The developer-only tabs are
-                spread away in a customer build rather than hidden, exactly as
-                they were when they had their own rail entries. */}
+            {/* One page, its own tab strip. */}
             {/* A SITE ADMIN reaches Settings too, with fewer tabs in it --
                 their own staff, retention, mail, Telegram, network. The tab
                 list comes from the server (auth.settings_tabs), because
                 deciding it here would mean the page and the endpoints behind
                 it could disagree about who may do what. */}
             {section === "settings" && user?.is_site_admin && (
-              <SettingsHub key={goto} devTools={devTools}
-                           tabs={user?.settings_tabs} />
+              <SettingsHub key={goto} tabs={user?.settings_tabs} />
             )}
             {/* Audit.jsx is a master page component; it renders fine here -
                 same API, mounted on the hub too. */}
@@ -403,12 +345,11 @@ function PanelCard({ children, className = "" }) {
   return <div className={"rounded-xl border bg-card p-5 " + className}>{children}</div>;
 }
 
-function VisionPanel({ template, onCreated, onCancel, onBrowseStore }) {
+function VisionPanel({ template, onCreated, onCancel }) {
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <PanelCard>
-        <CreateSystemWizard template={template} onCreated={onCreated} onCancel={onCancel}
-                            onBrowseStore={onBrowseStore} />
+        <CreateSystemWizard template={template} onCreated={onCreated} onCancel={onCancel} />
       </PanelCard>
     </div>
   );

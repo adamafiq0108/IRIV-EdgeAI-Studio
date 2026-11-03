@@ -4,7 +4,7 @@
 // Every box used to be called "iriv", so on a site with two of them
 // iriv.local was a race and avahi renamed the losers iriv-2, iriv-3 in boot
 // order. New installs are iriv-<last 8 of the serial>; a box that still has
-// the shared name gets the suggestion here. Master or developer only, like
+// the shared name gets the suggestion here. Master only, like
 // the Software port card beside it (the server answers 403 to anyone else).
 //
 // Apply SAVES the name; the box takes it the next time it restarts and keeps
@@ -27,7 +27,6 @@ import { useCallback, useEffect, useState } from "react";
 import { api, friendlyError } from "../api/client.js";
 import { useToast } from "./ui/Toast.jsx";
 import { useConfirm } from "./ui/ask.jsx";
-import { useIsDeveloper } from "../state/app.jsx";
 import { Copy, Globe, Info, Loader2, Tag, TriangleAlert } from "lucide-react";
 import { LastResult, NOT_OWN_SERVICE, Note, RestartNote, announceChange, appliesHere,
          askRestart, restartBox, useRestartEvent } from "./BoxRestartNote.jsx";
@@ -35,7 +34,6 @@ import { LastResult, NOT_OWN_SERVICE, Note, RestartNote, announceChange, applies
 const LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 
 export default function HostnameCard() {
-  const isDev = useIsDeveloper();
   const [data, setData] = useState(null);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState("");
@@ -209,33 +207,6 @@ export default function HostnameCard() {
         </div>
       )}
 
-      {isDev && (
-        <div className="dev-extras" data-testid="name-dev-extras">
-          <div className="dev-extras-label">Developer account only</div>
-          <div className="muted small" data-testid="name-now">
-            Answers as <b>{data.local_name}</b>.
-            {data.pending ? <> After restart: <b>{data.pending}.local</b></> : null}
-          </div>
-          <p className="muted small" style={{ marginTop: 4 }}>
-            Choose a unique name for this device on your local network. The name
-            can be used to reach the device at <code>{data.local_name}:{data.port}</code>,
-            and the front panel shows it. A change takes effect after the device restarts.
-          </p>
-          {data.shared_name && data.local_name === `${data.hostname}.local` && (
-            <Note>
-              <span><b>{data.hostname}</b> is the factory name, and every other device
-                installed the same way has it too - which device answers to {data.hostname}.local
-                depends on which one started first. Suggested: <b>{data.default}</b>.</span>
-            </Note>
-          )}
-          {data.can_set && data.shared_name && data.hostname !== data.default && (
-            <button type="button" className="btn btn-sm" disabled={!!busy} style={{ marginTop: 6 }}
-                    onClick={() => setName(data.default)}>
-              Use {data.default}
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }

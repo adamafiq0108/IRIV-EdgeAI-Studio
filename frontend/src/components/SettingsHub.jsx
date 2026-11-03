@@ -7,15 +7,11 @@
 // made after you have decided you are changing a setting.
 //
 // The chooser is a row of tabs rather than a second sidebar: there are three
-// of them (five for a developer), which is a tab strip, not a navigation
+// of them which is a tab strip, not a navigation
 // tree. Each tab renders the panel that already existed; they wear one page
 // frame now (ui/SettingsPage.jsx) so they stop announcing themselves three
 // different ways.
 //
-// The developer-only tabs are SPREAD AWAY rather than hidden in a customer
-// build, exactly as they were in the rail: on an appliance there is no account
-// that could reveal them and no endpoint behind them, so they should not be in
-// the bundle at all.
 import { useEffect, useState } from "react";
 import AccountsPanel from "./AccountsPanel.jsx";
 import SystemPanel from "./SystemPanel.jsx";
@@ -26,16 +22,14 @@ import TelegramPanel from "./TelegramPanel.jsx";
 import NetworkPanel from "./NetworkPanel.jsx";
 import BrokerPanel from "./BrokerPanel.jsx";
 import PanelSettings from "./PanelSettings.jsx";
-import { Users, Database, CircuitBoard, Library, KeyRound, Mail, Network,
+import { Users, Database, CircuitBoard, Mail, Network,
          MonitorSmartphone, RadioTower, Send, SlidersHorizontal } from "lucide-react";
-
-const DEV_TOOLS = __DEV_TOOLS__;
 
 //: Remembered per browser, because an admin who came here to change one thing
 //: usually comes back for the same thing.
 const LAST_TAB = "hub.settings.tab";
 
-export default function SettingsHub({ devTools = false, tabs: allowed = null }) {
+export default function SettingsHub({ tabs: allowed = null }) {
   const all = [
     { id: "accounts", label: "Accounts", icon: Users, Panel: AccountsPanel },
     // The BOX's own switches -- what this appliance may do at all, as
@@ -58,12 +52,6 @@ export default function SettingsHub({ devTools = false, tabs: allowed = null }) 
     { id: "mqtt", label: "MQTT Broker", icon: RadioTower, Panel: BrokerPanel },
     { id: "panel", label: "Front Panel", icon: MonitorSmartphone,
       Panel: PanelSettings },
-    ...(DEV_TOOLS && devTools ? [
-      { id: "templates", label: "System Templates", icon: Library,
-        Panel: null, lazy: () => import("./TemplatesPanel.jsx") },
-      { id: "licenses", label: "Licenses", icon: KeyRound,
-        Panel: null, lazy: () => import("./LicensesPanel.jsx") },
-    ] : []),
   ];
 
   // WHICH of them this account may open, decided by the server
@@ -84,7 +72,7 @@ export default function SettingsHub({ devTools = false, tabs: allowed = null }) 
     try { localStorage.setItem(LAST_TAB, tab); } catch { /* private window */ }
   }, [tab]);
 
-  // A remembered tab that no longer exists (a developer's account demoted
+  // A remembered tab that no longer exists (an account demoted
   // between visits, or a tier that never had it) must not render nothing.
   const active = tabs.find((t) => t.id === tab) || tabs[0] || null;
   const [Lazy, setLazy] = useState(null);

@@ -17,20 +17,13 @@ import { useApp } from "../state/app.jsx";
 import { useToast } from "./ui/Toast.jsx";
 import { useConfirm } from "./ui/ask.jsx";
 import SettingsPage from "./ui/SettingsPage.jsx";
-import ChipBalanceCard from "./ChipBalanceCard.jsx";
 import { MonitorSwitchCard } from "./MonitorPanels.jsx";
-import PollCacheCard from "./PollCacheCard.jsx";
 import { CardHeader, StateSwitch } from "./ui/CardHeader.jsx";
 import { SlidersHorizontal, TriangleAlert } from "lucide-react";
 
 export default function SystemPanel() {
   const toast = useToast();
   const confirm = useConfirm();
-  // The two testing cards are internal diagnostics, not customer settings:
-  // only the developer tier is shown them. Display only -- the routes and
-  // defaults behind them are untouched.
-  const { user } = useApp();
-  const isDev = !!user?.is_developer;
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -164,17 +157,6 @@ export default function SystemPanel() {
           {/* -- the Monitor account ----------------------------------- */}
           <MonitorSwitchCard />
 
-          {isDev && (
-            <>
-              {/* -- the AI chip (testing) ------------------------------- */}
-              <ChipBalanceCard on={!!data.chip_balance} busy={busy}
-                               onChange={(on) => save({ chip_balance: on })} />
-
-              {/* -- the shared poll cache (testing) -------------------- */}
-              <PollCacheCard on={!!data.share_polls} busy={busy}
-                             onChange={(on) => save({ share_polls: on })} />
-            </>
-          )}
         </div>
       )}
     </SettingsPage>

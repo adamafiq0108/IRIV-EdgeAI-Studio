@@ -9,35 +9,19 @@ piece nor who fixes it, and the box had just been updated. Now the sentence
 names the helper (or its sudoers rule) and the one fix that applies to THIS
 box:
 
-  - the box has the root step (/usr/local/lib/irivai/root-steps.py, from
-    scripts/root_steps.py): every update installs the helpers by itself, so
-    the next software update brings it;
-  - it does not (installed before the root step existed, then updated over
-    the air): the one-time maintenance step, which a person with the box's
-    administrator login runs once ever. No command here: a customer never
-    types one (Tok Aba, 2026-10-07); the script is named so the installer or
-    support knows which.
+  - the helper ships with scripts/install.sh, so a missing one means the
+    installer has to be re-run. No command here: a customer never types one
+    (Tok Aba, 2026-10-07); support knows which.
 """
 
 import os
 
 LIB = "/usr/local/lib/irivai"
-ROOT_STEPS = os.path.join(LIB, "root-steps.py")
-
-
-def auto_installs():
-    """True when every update keeps this box's root helpers current."""
-    return os.path.isfile(ROOT_STEPS)
 
 
 def fix():
     """The one thing that brings a missing helper to this box."""
-    if auto_installs():
-        return ("the next software update (Settings, Update) installs it by "
-                "itself")
-    return ("it arrives with the box's one-time maintenance step "
-            "(scripts/upgrade_steps.sh), which your installer or IRIV support "
-            "runs once; after that, software updates install it by themselves")
+    return "re-run the installer (scripts/install.sh) or ask IRIV support"
 
 
 def missing(helper, rule, purpose):

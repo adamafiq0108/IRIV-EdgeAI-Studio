@@ -68,7 +68,6 @@ def bootstrap(request: Request):
     caps = _caps(st)
     username = getattr(request.state, "user", None) or ""
     is_admin = auth_service.is_admin(username, cfg)
-    is_developer = auth_service.is_developer(username, cfg)
 
     role_label = auth_service.role_label(username, cfg) if username else ""
 
@@ -106,7 +105,7 @@ def bootstrap(request: Request):
     hub_url = hubport.browser_url(request, cfg)
 
     # This viewer's category grant for THIS system -- None is "everything"
-    # (admin, developer, unrestricted account). The nav is filtered HERE, on
+    # (admin, unrestricted account). The nav is filtered HERE, on
     # the server, so a hidden category is missing from the payload rather
     # than merely undrawn; the frontend also gets the grant so its router can
     # bounce a typed URL back onto a page the account may see.
@@ -126,24 +125,16 @@ def bootstrap(request: Request):
         "user": {"name": username or "guest",
                  "role_label": role_label if username else "",
                  "is_admin": is_admin,
-                 "is_developer": is_developer,
-                 # A master mounts no developer routes, so this reads the
-                 # box's declaration (deploy.toml) -- the one fact the hub's
-                 # own answer was decided on (auth.dev_tools_of).
-                 "dev_tools": auth_service.dev_tools_of(request.app.state, cfg),
                  "tier": auth_service.tier(username, cfg),
                  "is_site_admin": auth_service.is_site_admin(username, cfg),
-                 "settings_tabs": auth_service.settings_tabs(
-                     username, cfg,
-                     dev_tools=auth_service.dev_tools_of(request.app.state, cfg))},
+                 "settings_tabs": auth_service.settings_tabs(username, cfg)},
         "system": ({"slug": system.slug, "display_name": system.display_name,
                     "subtitle": getattr(system, "subtitle", ""),
                     "icon": getattr(system, "icon", "")} if system else None),
         "nav": nav_service.build(system, caps, is_admin=is_admin,
                                  deploy_role=deploy_role,
                                  sections=grants,
-                                 pages=allowed_pages,
-                                 is_developer=is_developer) if system else [],
+                                 pages=allowed_pages) if system else [],
         # "*" = every category. Otherwise the allowed SECTION_KEYS.
         "sections": "*" if grants is None else sorted(grants),
         # "*" = every page. The router uses it to bounce a typed URL the same
@@ -156,8 +147,7 @@ def bootstrap(request: Request):
         # shipped password, so the shell routes to /account-setup rather
         # than drawing pages whose calls all answer 409 (UAT-103).
         "needs_account_setup": auth_service.setup_pending(username, cfg),
-        # The running version, same as the hub's bootstrap (UpdatePanel's
-        # fallback when the update state cannot be read).
+        # The running version, same as the hub's bootstrap.
         "version": VERSION,
     }
 

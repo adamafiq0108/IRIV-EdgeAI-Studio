@@ -10,15 +10,12 @@ the same answer whichever process is asked -- which is the point of one route
 rather than two that could drift.
 
 The caps come from the services that enforce them (provision.MAX_SYSTEMS,
-detector_control.MAX_RUNNING_APPS) rather than being restated here, and 0
-means "no cap": the developer's box is a workshop, so their header states
-what is there instead of measuring it against a limit that is not theirs.
+detector_control.MAX_RUNNING_APPS) rather than being restated here.
 """
 
 from fastapi import APIRouter, Request
 
 from core.routes import perm
-from core.services import auth as auth_service
 
 router = APIRouter()
 
@@ -31,12 +28,10 @@ def capacity(request: Request):
 
     st = request.app.state
     cfg = getattr(st, "config_dir", None)
-    username = getattr(request.state, "user", None) or ""
-    workshop = auth_service.is_developer(username, cfg)
 
     try:
         systems = provision_service.count_systems(
-            st.systems_dir, cfg, include_developer=workshop)
+            st.systems_dir, cfg)
     except Exception:                                       # noqa: BLE001
         systems = 0
     # How many detection apps are actually live. The same helper the start
@@ -61,9 +56,6 @@ def capacity(request: Request):
             "systems": systems,
             "running": running,
             "cameras": cameras,
-            "max_systems": 0 if workshop else provision_service.MAX_SYSTEMS,
-            "max_running": 0 if workshop else dc.MAX_RUNNING_APPS,
-            # The camera cap is the accelerator's, so it binds the workshop
-            # too -- a developer's chip drops frames at five cameras exactly
-            # like a customer's.
+            "max_systems": provision_service.MAX_SYSTEMS,
+            "max_running": dc.MAX_RUNNING_APPS,
             "max_cameras": dc.MAX_CAMERAS}

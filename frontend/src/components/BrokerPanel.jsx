@@ -23,10 +23,7 @@
 // Changes?" and never claims to restore defaults; there are no topic ACLs
 // (mqtt_apply.render_conf writes none), so an open broker lets anyone read
 // and publish every topic and a login lets every logged-in client do the
-// same; TLS does not exist, so customers are not shown a dead checkbox. The
-// auto-install switch and the persistence note are developer-tier only
-// (the same user.is_developer check SystemPanel uses); their behaviour and
-// routes are untouched.
+// same; TLS does not exist, so customers are not shown a dead checkbox.
 import { useCallback, useEffect, useState } from "react";
 import { api, friendlyError } from "../api/client.js";
 import { useApp } from "../state/app.jsx";
@@ -171,7 +168,6 @@ export function BrokerSettings() {
   const toast = useToast();
   const confirm = useConfirm();
   const { user } = useApp() || {};
-  const isDev = !!user?.is_developer;
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [form, setForm] = useState(null);
@@ -322,19 +318,6 @@ export function BrokerSettings() {
             )}
           </div>
         )}
-        {/* Developer tier only: an installer-level switch, not a customer
-            setting. Same route, same marker, same default as before. */}
-        {isDev && (
-          <label className="mt-3 flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={data.auto_install !== false}
-                   disabled={!!busy} data-broker-auto=""
-                   onChange={(e) => toggleAuto(e.target.checked)} />
-            Install the broker automatically when it is missing
-            <span className="text-xs text-muted-foreground">
-              - checked when the platform starts, e.g. after an update; local only
-            </span>
-          </label>
-        )}
       </SettingsSection>
 
       {/* Up here, before the ports, and the fields always on show (Tok Aba's
@@ -439,15 +422,6 @@ export function BrokerSettings() {
               Leave blank to disable WebSocket access.
             </span>
           </label>
-          {/* TLS does not exist yet. Customers are not shown a switch that
-              does nothing; the developer tier sees the plain status. */}
-          {isDev && (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground
-                          sm:col-span-2" data-broker-tls="">
-              <span className="font-medium">Secure MQTT Connection (TLS)</span>
-              <span className="text-xs">Not available yet</span>
-            </p>
-          )}
         </div>
       </SettingsSection>
 
@@ -498,13 +472,6 @@ export function BrokerSettings() {
           )}
         </fieldset>
       </SettingsSection>
-
-      {/* An implementation fact, not a setting: developer tier only. */}
-      {isDev && data.persistence_note && (
-        <p className="text-xs text-muted-foreground" data-broker-persistence="">
-          {data.persistence_note}
-        </p>
-      )}
 
       <div className="flex flex-wrap items-center justify-end gap-2">
         <p className="mr-auto text-xs text-muted-foreground" data-broker-apply-help="">

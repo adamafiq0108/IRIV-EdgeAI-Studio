@@ -334,8 +334,7 @@ export default function AccountsPanel() {
             nothing filtered out. Per-account answers "what has this account
             been doing"; this answers "what has been happening on this box",
             which is the question you have before you know whose row to open.
-            Scoped server-side: an admin sees this deployment's accounts, a
-            developer sees those and its own. */}
+            Scoped server-side to the accounts the viewer may see. */}
         <button type="button"
                 className={"acct-tab" + (tab === "all" ? " is-active" : "")}
                 onClick={() => setTab("all")}>Activity Log</button>
@@ -365,7 +364,7 @@ export default function AccountsPanel() {
               </p>
             </div>
           </div>
-          <Activity username="" nameOf={nameOf} dev={!!user?.is_developer} />
+          <Activity username="" nameOf={nameOf} />
         </div>
       ) : tab === "roles" ? (
         <div className="acct-pane">
@@ -629,7 +628,7 @@ export default function AccountsPanel() {
                     </div>
                     {/* Where a reset link for this account goes, when it has
                         one. Shown to everyone who can see the account;
-                        changed by master or the developer only (menu below).
+                        changed by master only (menu below).
                         No address is a CHOICE, not a gap -- so the line says
                         what happens instead rather than reading as a fault:
                         the master is reset at the box itself, and anyone else
@@ -637,7 +636,6 @@ export default function AccountsPanel() {
                     <div className="acct-sub" style={{ marginBottom: 2 }}>
                       {active.email
                         ? active.email
-                        : active.developer ? null
                         : active.builtin
                           ? (data?.panel_reset
                               ? <span>No email address - reset at the box: hold the USER
@@ -649,9 +647,7 @@ export default function AccountsPanel() {
                               new password for this user</span>}
                     </div>
                     <div className="acct-sub">
-                      {active.developer
-                        ? "Managed on the box - scripts/dev/make_dev_account.py"
-                        : active.builtin
+                      {active.builtin
                         ? "Master Administrator"
                         : (active.enabled === false
                             ? "Frozen - cannot sign in"
@@ -659,11 +655,6 @@ export default function AccountsPanel() {
                     </div>
                   </div>
                 </div>
-                {/* A developer row carries no controls at all: every one of
-                    them is refused by the API. An admin who could reset this
-                    password would just log in as it and hand themselves a
-                    tier meant to require shell access; delete and disable are
-                    the same hole pointed the other way. */}
                 {/* One primary action and a menu for the rest: enable,
                     password and delete were three buttons of equal weight,
                     two of which end a session. Edit is the one an admin
@@ -709,7 +700,7 @@ export default function AccountsPanel() {
                     )}
                   </div>
                 )}
-                {!active.developer && !active.builtin && (
+                {!active.builtin && (
                   <div className="acct-actions">
                     <Button variant="outline" size="sm"
                             onClick={() => setEditing(active.username)}>
@@ -735,7 +726,7 @@ export default function AccountsPanel() {
                               <KeyRound className="size-3.5" />
                               Change Password
                             </button>
-                            {/* Master and the developer only: the address is
+                            {/* Master only: the address is
                                 where a reset link goes, so whoever sets it
                                 can take the account over. can_set_tier is
                                 the same "master or above" the server checks. */}
@@ -803,8 +794,7 @@ export default function AccountsPanel() {
                           onClick={() => setDetail("activity")}>Account Activity</button>
                 </div>
                 {detail === "activity" ? (
-                  <Activity username={active.username} nameOf={nameOf}
-                            dev={!!user?.is_developer} />
+                  <Activity username={active.username} nameOf={nameOf} />
                 ) : (
                   <>
                     <div className="acct-chips">
@@ -823,7 +813,7 @@ export default function AccountsPanel() {
                 )}
               </>)}
 
-              {!active.developer && !active.builtin && (<>
+              {!active.builtin && (<>
                 <div className="acct-subtabs">
                   <button type="button"
                           className={"acct-tab" + (detail === "access" ? " is-active" : "")}
@@ -843,8 +833,7 @@ export default function AccountsPanel() {
                 </div>
 
                 {detail === "activity" ? (
-                  <Activity username={active.username} nameOf={nameOf}
-                            dev={!!user?.is_developer} />
+                  <Activity username={active.username} nameOf={nameOf} />
                 ) : detail === "access" ? (<>
                   {/* `manageable` is the server's answer to "may the viewer
                       act on this row", by the same rule the routes enforce --
@@ -1368,10 +1357,9 @@ export function SessionsPane({ me, confirm }) {
 }
 
 
-// `nameOf` turns a system slug in a detail into the name it goes by now;
-// `dev` puts the raw action id and detail beside the customer wording
-// (components/auditActions.js), which nobody else is shown.
-function Activity({ username, nameOf, dev }) {
+// `nameOf` turns a system slug in a detail into the name it goes by now
+// (the customer wording is components/auditActions.js).
+function Activity({ username, nameOf }) {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState("");
   const [size, setSize] = useState(100);
@@ -1419,10 +1407,9 @@ function Activity({ username, nameOf, dev }) {
   return (<>
     <div className="acct-activity">
       {rows.map((e, i) => {
-        // Raw for a developer (every key, as stored); the customer wording
-        // for everyone else, which drops a detail the name already says.
+        // The customer wording, which drops a detail the name already says.
         const raw = detailText(e.detail);
-        const shown = dev ? raw : actionDetail(e, raw, nameOf);
+        const shown = actionDetail(e, raw, nameOf);
         const outcome = resultLabel(e.result);
         return (
           <div key={i} className="acct-event">
@@ -1434,7 +1421,6 @@ function Activity({ username, nameOf, dev }) {
                 event. */}
             {!username ? <span className="acct-badge">{e.username || "-"}</span> : null}
             <span className="acct-event-what">{actionLabel(e)}</span>
-            {dev ? <code className="acct-sub">{e.action}</code> : null}
             {/* A FAILED entry is the one somebody comes to this tab looking for
                 -- three failed logins on an account is the thing worth seeing at
                 a glance, and it read identically to a successful one. */}
@@ -1482,10 +1468,7 @@ function Avatar({ name, big, enabled }) {
   );
 }
 
-/** A developer has no role and cannot be given one: roles describe the people
- *  who USE a deployment, and this account is the one that built it. */
 function RoleBadge({ user }) {
-  if (user.developer) return <span className="acct-badge is-dev">Developer</span>;
   // The TIER, when it is one, in place of the role. They are different
   // things -- a role is a label, a tier grants -- and an account that can
   // manage other accounts should say so where the eye already looks for what
@@ -1724,12 +1707,12 @@ function Row({ level, label, title, folder, open, onToggle,
 
 /** The TIER, and the cap that only means anything on it.
  *
- *  Master and developer only (`can_set_tier`). An admin who could promote
+ *  Master only (`can_set_tier`). An admin who could promote
  *  another admin has made a tier with no ranking in it: either of them could
  *  then delete the other.
  */
 function TierControls({ active, canSet, patch, busy }) {
-  if (!canSet || active.builtin || active.developer) return null;
+  if (!canSet || active.builtin) return null;
   const isAdmin = !!active.admin;
   return (
     <div style={{ marginTop: 14 }}>

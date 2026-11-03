@@ -33,7 +33,7 @@ def system_poll_cache(request: Request):
     st = request.app.state
     me = getattr(request.state, "user", None) or ""
     if not auth_service.is_admin(me, st.config_dir):
-        raise HTTPException(status_code=403, detail="master or developer only")
+        raise HTTPException(status_code=403, detail="master only")
     counts = (pollshare.counters() if perm.slug_of(request) else
               pollshare.box_counters(getattr(st, "masters", None),
                                      request.headers.get("cookie")))

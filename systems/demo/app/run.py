@@ -2155,7 +2155,7 @@ def main(argv=None):
     ap.add_argument("--once", action="store_true", help="one cycle, then exit")
     args = ap.parse_args(argv)
 
-    # CM5 + ATECC608 + Hailo (this app's own copy: it imports nothing from core).
+    # Hailo (this app's own copy: it imports nothing from core).
     if not args.once:
         from app import hwcheck
         hwcheck.require()

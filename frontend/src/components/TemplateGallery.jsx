@@ -13,22 +13,14 @@
 // "Change template" dialog (`embedded`: the preview replaces the cards in
 // place, since a dialog on a dialog closes both on Escape).
 //
-// SLIDES (slidesOf): the preview media added on the developer hub's System
-// Templates page -- up to 5, at most one a video -- which the signed template
-// update brings to every box (core/services/template_media*.py); else the
-// release's own pictures, core/static/img/templates/<key>.png or <key>-1,
+// SLIDES (slidesOf): the preview media shipped with the template -- up to 5,
+// at most one a video (core/services/template_media*.py); else the release's
+// own pictures, core/static/img/templates/<key>.png or <key>-1,
 // <key>-2 ... (core/services/template_preview.py). A template with neither
 // draws a tinted placeholder with an icon, so a missing picture never reads
 // as a broken page.
 //
-// THE TEMPLATES COME UP TO DATE HERE (moved from the wizard, which no longer
-// shows the cards): the Hub home asks the hub once, as it mounts, to fetch
-// the latest published templates (POST /api/hub/templates/refresh -- bounded,
-// rate limited and single-flight on the server, never an error), with one
-// quiet line under the cards. The wizard still asks too, silently, so Create
-// waits for a refresh in flight exactly as before.
-import { useEffect, useRef, useState } from "react";
-import { api } from "../api/client.js";
+import { useState } from "react";
 import { useApi } from "../api/hooks.js";
 import { useApp } from "../state/app.jsx";
 import { apiUrl } from "../lib/base.js";
@@ -38,32 +30,6 @@ import {
   ArrowLeft, Car, ChevronLeft, ChevronRight, LayoutTemplate, ScanSearch,
   ShieldAlert, SquareDashed, Users,
 } from "lucide-react";
-
-// The line under the cards for each state of the automatic refresh.
-export function autoLine(state) {
-  if (state === "checking") return "Checking for the latest templates...";
-  if (state === "updated") return "Templates updated. You are choosing from the newest ones.";
-  if (state === "current") return "Templates are up to date.";
-  return "Using the templates on this device.";
-}
-
-/**
- * The manual check's answer (POST /api/hub/templates/update) in one plain
- * sentence: what was added or updated, whether preview pictures came with
- * it (`media.installed`, template_media_sync.pull), or that all is current.
- * The developer hub installs nothing; it says so.
- */
-export function checkResultLine(d) {
-  const names = (list) => (list || []).map((t) => t.label || t.key).join(", ");
-  if (d?.authoring) {
-    return "This hub is where the templates are made, so nothing is installed here.";
-  }
-  const parts = [];
-  if ((d?.added || []).length) parts.push(`New templates: ${names(d.added)}.`);
-  if ((d?.updated || []).length) parts.push(`Updated: ${names(d.updated)}.`);
-  if ((d?.media?.installed || []).length) parts.push("Preview pictures updated.");
-  return parts.length ? parts.join(" ") : "Templates are up to date.";
-}
 
 // Blank Canvas FIRST (Tok Aba, 2026-10-23; it was last since UAT-112): the
 // cards are now the front door, and "start from nothing" is the first thing
@@ -277,49 +243,14 @@ export function TemplatePreview({ t, onUse, onBack, limitNote = "" }) {
 
 /**
  * The cards. `onUse(key)` is "Use this template"; `embedded` draws the
- * preview in place instead of in a dialog and skips the refresh (the wizard
- * that hosts it has run its own); `onBrowseStore`, when given, adds the
- * Template Store link.
+ * preview in place instead of in a dialog.
  */
-export default function TemplateGallery({ onUse, embedded = false, onBrowseStore, limitNote = "" }) {
+export default function TemplateGallery({ onUse, embedded = false, limitNote = "" }) {
   const { user } = useApp();
   const isAdmin = !!user?.is_admin;
-  const { data, reload } = useApi("/api/hub/templates");
+  const { data } = useApi("/api/hub/templates");
   const templates = sortTemplates(data?.templates);
   const [open, setOpen] = useState(null);
-  const [autoState, setAutoState] = useState("checking");
-  const [checkBusy, setCheckBusy] = useState(false);
-  const [checkMsg, setCheckMsg] = useState("");
-
-  async function checkNow() {
-    setCheckBusy(true);
-    setCheckMsg("");
-    try {
-      const d = await api.post("/api/hub/templates/update", {});
-      setCheckMsg(checkResultLine(d));
-      await reload().catch(() => {});
-    } catch (e) {
-      setCheckMsg(`Could not check for new templates: ${e.message}`);
-    } finally {
-      setCheckBusy(false);
-    }
-  }
-  const autoRun = useRef(null);
-
-  useEffect(() => {
-    if (!isAdmin || embedded || autoRun.current) return;
-    autoRun.current = api.post("/api/hub/templates/refresh", {})
-      .then(async (d) => {
-        const state = d?.state || "offline";
-        // Redraw the cards before saying so.
-        if (state === "updated") await reload().catch(() => {});
-        setAutoState(state);
-      })
-      // Never an error to the person looking: a refresh that could not run
-      // means the templates already here are used.
-      .catch(() => setAutoState("offline"));
-  }, [isAdmin, embedded, reload]);
-
   // Admin only, as creating is: a non-admin cannot use a template, so the
   // section is not there for them at all.
   if (!isAdmin) return null;
@@ -365,36 +296,6 @@ export default function TemplateGallery({ onUse, embedded = false, onBrowseStore
           </button>
         ))}
       </div>
-      {!embedded && (
-        <p className="text-xs text-muted-foreground" aria-live="polite">
-          {/* ONE line: the manual check's answer replaces the automatic one
-              (both used to show, and said "up to date" twice). */}
-          {checkMsg
-            ? <span data-template-check-result>{checkMsg}</span>
-            : <span data-template-refresh={autoState}>{autoLine(autoState)}</span>}
-          {/* The manual check, unlimited (POST /api/hub/templates/update):
-              the automatic one above fetches at most once in 10 minutes, so
-              templates or preview pictures published a minute ago would
-              otherwise wait. Quiet, beside the line it updates. */}
-          {" "}
-          <button type="button" data-template-check disabled={checkBusy}
-                  onClick={checkNow}
-                  className="font-medium text-primary underline underline-offset-2 disabled:opacity-60">
-            {checkBusy ? "Checking..." : "Check for new templates"}
-          </button>
-        </p>
-      )}
-      {/* More live online, and this is the moment someone wants them. */}
-      {onBrowseStore && (
-        <p className="text-xs text-muted-foreground">
-          Not what you need?{" "}
-          <button type="button" onClick={onBrowseStore}
-                  className="font-medium text-primary underline underline-offset-2">
-            Browse the Template Store
-          </button>{" "}
-          for ready-made systems published online.
-        </p>
-      )}
       {!embedded && (
         <Dialog open={!!shownT} title="Template preview" onClose={() => setOpen(null)}>
           {shownT && (

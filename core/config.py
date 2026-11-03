@@ -604,26 +604,6 @@ def monitoring(config_dir=None):
     return load("monitoring", config_dir)
 
 
-def deploy(config_dir=None):
-    return load("deploy", config_dir)
-
-
-def is_dev_box(config_dir=None):
-    """True only on an owner/developer box -- the workshop where product
-    content (built-in templates, store publishes, license keys) is authored.
-
-    This is a DEPLOYMENT fact, not a permission. The developer flag in
-    core/services/auth.py answers "may this account do owner things"; this
-    answers "does this box carry the owner's tooling at all". A customer
-    install ships without core/dev/ on disk (scripts/install.sh excludes it),
-    and this flag is the second lock: even if the folder is present -- a
-    developer's checkout, a support copy -- the routes only mount when the box
-    is declared a dev box, which takes editing a file over a shell. Defaulting
-    to customer means a missing or unreadable deploy.toml fails closed.
-    """
-    return str(deploy(config_dir).get("mode", "customer")).strip().lower() == "dev"
-
-
 def _toml_value(value):
     if isinstance(value, bool):
         return "true" if value else "false"

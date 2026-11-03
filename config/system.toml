@@ -11,7 +11,7 @@
 #
 # On by default, so a box already in the field keeps the behaviour it has.
 # Turning it off closes the emailed way back in for EVERY account at once,
-# which is why it is master-and-developer only, like every other setting that
+# which is why it is master only, like every other setting that
 # touches the recovery path.
 email = true
 

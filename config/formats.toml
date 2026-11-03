@@ -1,7 +1,5 @@
-# formats.toml - built-in detection formats authored on this box.
+# formats.toml - the built-in detection formats this product ships with.
 #
-# Written by the System Templates page (developer accounts only) and
-# COMMITTED on purpose: a format authored here is meant to ship.
 # Keys absent here fall back to core/services/provision.py TEMPLATES.
 
 [formats.counting]
