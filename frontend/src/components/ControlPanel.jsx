@@ -221,7 +221,7 @@ export default function ControlPanel() {
                     {user?.is_admin && (
                       <button type="button" title="Rename this system"
                               onClick={() => setRenameFor(c)}
-                              className="text-muted-foreground opacity-0 transition-opacity hover:text-primary focus-visible:opacity-100 group-hover:opacity-100">
+                              className="text-muted-foreground opacity-0 transition-opacity hover:text-primary focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100 pointer-coarse:p-2">
                         <Pencil className="size-3.5" />
                       </button>
                     )}

@@ -29,6 +29,7 @@ config reaching a running detector) are attacker-controlled. Two rules:
 import json
 import os
 import re
+import threading
 import time
 
 from core import config
@@ -414,6 +415,9 @@ def _clean_config(cfg):
                if str(c).strip()]
     if classes:
         out["detector_classes"] = classes[:64]
+    model = str(cfg.get("model") or "").strip()
+    if re.match(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,39}$", model):
+        out["model"] = model
     app = cfg.get("app") if isinstance(cfg.get("app"), dict) else {}
     app_out = {str(k): str(app[k])[:80] for k in _APP_KEYS if app.get(k)}
     if app_out:
@@ -506,14 +510,23 @@ def snapshot_system(systems_dir, config_dir, slug, name, description="",
     if zones:
         doc["zones"] = zones
     if store:
-        doc["workflows"] = _unbind_places(store, keep_zones=bool(zones))
+        # Secret-named node fields (an old node that held its own broker
+        # login) are blanked: a template is stored on disk and outlives the
+        # account that saved it, and must never be a copy of a credential.
+        doc["workflows"] = _scrub_node_secrets(
+            _unbind_places(store, keep_zones=bool(zones)))
     layout = builder_service.load(config_dir, slug)
     if layout:
-        doc["dashboard"] = layout
+        # A camera id on a widget names THIS system's camera; a template
+        # carries none (blank = the new system's first camera).
+        doc["dashboard"] = _unbind_cameras(layout)
     det = merged.get("detector") or {}
     app = merged.get("app") or {}
     doc["config"] = {
         "detector_classes": list(det.get("classes") or []),
+        # The model the source ran, by name, so the clone starts on the same
+        # one (provision.ensure_template_model fetches it if it is missing).
+        "model": str(det.get("model") or ""),
         "app": {k: app[k] for k in _APP_KEYS if app.get(k)},
         # The capture switches and the feed's status-box rows: settings an
         # operator made ON the build, so the clone behaves like the original.
@@ -579,6 +592,159 @@ def _unbind_cameras(layout):
         if isinstance(w, dict) and w.get("camera"):
             w["camera"] = ""
     return out
+
+
+# ---------------------------------------------------------------------------
+# Customer templates -- "Save as template"
+# ---------------------------------------------------------------------------
+#
+# A customer's own template is a SNAPSHOT of a system (snapshot_system above),
+# filed in the one folder templates_dir()/my-templates/<slug>.json. It is a
+# document and nothing else: no package, no master, no port, no unit -- the
+# registry only scans systems/ for folders holding a system.py, and nothing
+# reads this folder but this module, so a template can never be started,
+# counted against MAX_SYSTEMS or seen by the supervisor.
+#
+# It reaches the create wizard under the key "user:<slug>". A built-in format
+# key is [a-z][a-z0-9_]* (provision._FORMAT_KEY_RE), so the colon makes the two
+# namespaces disjoint by construction -- no customer template can shadow a
+# built-in, and the create route tells them apart by that prefix alone.
+#
+# Storage and validation reuse the saved-template library above (SEG_RE paths,
+# containment check, validate_template through every section's own validator),
+# so a hand-edited file in this folder is as untrusted as an uploaded one.
+
+USER_CATEGORY = "my-templates"
+USER_KEY_PREFIX = "user:"
+#: Documents, a handful of them. Past this it is a filing cabinet, and every
+#: one is read on each wizard open.
+MAX_USER_TEMPLATES = 20
+USER_NAME_MAX = 60
+_USER_LOCK = threading.Lock()
+
+
+def user_key(slug):
+    return USER_KEY_PREFIX + slug
+
+
+def parse_user_key(key):
+    """The slug inside a "user:<slug>" key, or None when `key` is not one (a
+    built-in key, blank). A malformed slug is a ValueError, never a path."""
+    key = str(key or "")
+    if not key.startswith(USER_KEY_PREFIX):
+        return None
+    slug = key[len(USER_KEY_PREFIX):]
+    if not SEG_RE.match(slug):
+        raise ValueError("that is not a saved template")
+    return slug
+
+
+def _user_name(name):
+    if re.search(r"[\x00-\x1f\x7f]", str(name or "")):
+        raise ValueError("a template name is plain text")
+    text = " ".join(str(name or "").split())[:USER_NAME_MAX]
+    if not text:
+        raise ValueError("give the template a name")
+    return text
+
+
+def _user_files():
+    folder = _safe_path(USER_CATEGORY)
+    try:
+        names = sorted(os.listdir(folder))
+    except OSError:
+        return []
+    return [n[:-5] for n in names if n.endswith(".json") and SEG_RE.match(n[:-5])]
+
+
+def list_user_templates():
+    """Every saved customer template, newest first, each with its validated
+    document under "doc" (the listing needs classes and a preview summary)."""
+    out = []
+    for slug in _user_files():
+        path = _safe_path(USER_CATEGORY, slug)
+        try:
+            doc = validate_template(_read(path))
+        except (OSError, ValueError):
+            continue                    # one broken file must not hide the rest
+        out.append({"slug": slug, "key": user_key(slug), "name": doc["name"],
+                    "description": doc["description"], "owner": doc["owner"],
+                    "created": doc["created"],
+                    "modified": int(os.path.getmtime(path)), "doc": doc})
+    out.sort(key=lambda t: t["modified"], reverse=True)
+    return out
+
+
+def load_user_template(slug):
+    """The validated document behind "user:<slug>", or ValueError."""
+    return load_template(USER_CATEGORY, slug)
+
+
+def _free_user_slug(name):
+    taken = set(_user_files())
+    base = slugify(name)
+    if base not in taken:
+        return base
+    for n in range(2, 100):
+        candidate = f"{base[:36]}_{n}"
+        if candidate not in taken:
+            return candidate
+    raise ValueError("too many templates already named like that")
+
+
+def save_user_template(systems_dir, config_dir, slug, name, description="",
+                       owner=""):
+    """Snapshot system `slug` into a new customer template. Returns the listing
+    row (without the document).
+
+    WHAT IS SAVED is snapshot_system's answer: the workflow (camera bindings
+    blanked, secrets scrubbed), the zones (polygons and ids, no camera), the
+    dashboard layout (camera ids blanked), the dataset table DEFINITIONS, the
+    class filter, model name, capture switches and status-box rows. WHAT IS
+    NOT: cameras and their RTSP addresses/credentials, accounts, bot tokens,
+    SMTP and MQTT passwords, hand-made outputs, ports, hosts, pids, recorded
+    data, and any runtime state.
+    """
+    name = _user_name(name)
+    description = " ".join(str(description or "").split())[:400]
+    with _USER_LOCK:
+        if len(_user_files()) >= MAX_USER_TEMPLATES:
+            raise ValueError(f"you can keep at most {MAX_USER_TEMPLATES} "
+                             "templates - delete one first")
+        if any(t["name"].lower() == name.lower() for t in list_user_templates()):
+            raise ValueError(f"you already have a template named {name!r}")
+        doc = snapshot_system(systems_dir, config_dir, slug, name, description,
+                              category=USER_CATEGORY, owner=owner)
+        # snapshot_system answers a VALIDATED doc, so this measures what will
+        # be written; a build too big to be a template is refused, not cut.
+        if len(json.dumps(doc)) > MAX_TEMPLATE_BYTES:
+            raise ValueError("that system is too large to save as a template")
+        tslug = _free_user_slug(name)
+        save_template(USER_CATEGORY, tslug, doc)
+    return {"slug": tslug, "key": user_key(tslug), "name": name,
+            "description": description}
+
+
+def rename_user_template(slug, name, description=None):
+    name = _user_name(name)
+    with _USER_LOCK:
+        doc = load_user_template(slug)
+        if any(t["name"].lower() == name.lower() and t["slug"] != slug
+               for t in list_user_templates()):
+            raise ValueError(f"you already have a template named {name!r}")
+        doc["name"] = name
+        if description is not None:
+            doc["description"] = " ".join(str(description).split())[:400]
+        save_template(USER_CATEGORY, slug, doc)
+    return {"slug": slug, "key": user_key(slug), "name": name,
+            "description": doc["description"]}
+
+
+def delete_user_template(slug):
+    if not SEG_RE.match(str(slug or "")):
+        raise ValueError("that is not a saved template")
+    with _USER_LOCK:
+        return delete_template(USER_CATEGORY, slug)
 
 
 # ---------------------------------------------------------------------------
@@ -697,9 +863,22 @@ def apply_format_workflow(systems_dir, config_dir, slug, fmt, key=""):
         doc["config"] = {k: v for k, v in fmt["settings"].items()
                          if k in ("capture", "hud")}
     try:
-        return apply_template(systems_dir, config_dir, slug, doc)
+        warnings = apply_template(systems_dir, config_dir, slug, doc)
     except (ValueError, OSError) as exc:
         return [f"the format's workflow could not be applied: {exc}"]
+    # The detector's confidence threshold travels in the format's settings
+    # (not part of the validated template doc, which has no field for it): the
+    # author tuned it for what the build detects, and a system created from
+    # the format should start there rather than on the box default.
+    conf = (fmt.get("settings") or {}).get("confidence") \
+        if isinstance(fmt.get("settings"), dict) else None
+    if conf is not None:
+        try:
+            dc.set_detector_params(_root_for(systems_dir, slug, config_dir),
+                                   slug, confidence=conf)
+        except (OSError, ValueError) as exc:
+            warnings.append(f"the confidence threshold could not be applied: {exc}")
+    return warnings
 
 
 def recompile(systems_dir, config_dir, slug):

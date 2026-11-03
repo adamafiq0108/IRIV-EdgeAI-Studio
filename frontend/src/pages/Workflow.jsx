@@ -74,6 +74,10 @@ import {
 // Workflow Guideline is hidden until its content/videos are ready; to re-enable, uncomment this import, the <Guideline/> render, the tab button and restore helpOpen/rightW below.
 // import Guideline from "../workflow/Guideline.jsx";
 import ContextMenu from "../workflow/ContextMenu.jsx";
+// A finger has no middle/right button and no rubber band: on a touch screen one
+// finger pans the canvas (nodes still drag by their body) and pinch zooms.
+const COARSE_POINTER = typeof window !== "undefined"
+  && !!window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
 import useGraphHistory from "../workflow/useGraphHistory.js";
 import ExprEditor from "../workflow/ExprEditor.jsx";
 import VariablesPanel from "../workflow/VariablesPanel.jsx";
@@ -3250,14 +3254,16 @@ function Editor() {
           </div>
         </div>
 
-        <div style={{ display: "grid",
+        <div className="wf-grid"
+             style={{ display: "grid",
                       gridTemplateColumns: `${paletteW}px minmax(0,1fr) ${rightW}px`,
                       gap: 12, flex: 1, minHeight: 0 }}>
           {/* ---- palette (drag its right edge to resize) ----
               minHeight 0 overrides the grid item's min-height:auto, so a long
               node list scrolls INSIDE the palette instead of stretching the
               row (and the whole page) to fit it. */}
-          <div style={{ position: "relative", minWidth: 0, minHeight: 0,
+          <div className="wf-rail wf-rail-left"
+               style={{ position: "relative", minWidth: 0, minHeight: 0,
                         display: "flex", overflow: "hidden" }}>
             <Palette registry={registry} zoneList={zoneList} models={modelList}
                      editable={editable} nodes={nodes} fnDefs={fnDefs}
@@ -3297,7 +3303,7 @@ function Editor() {
           </div>
 
           {/* ---- canvas ---- */}
-          <div ref={wrapperRef}
+          <div ref={wrapperRef} className="wf-canvas-wrap"
                style={{ position: "relative", borderRadius: 10, overflow: "hidden",
                         border: "1px solid rgba(128,128,128,.25)", minHeight: 420 }}
                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; }}
@@ -3327,7 +3333,7 @@ function Editor() {
               nodesDraggable={editable} nodesConnectable={editable}
               elementsSelectable
               deleteKeyCode={editable && !bpId ? ["Delete", "Backspace"] : []}
-              panOnDrag={[1, 2]} selectionOnDrag
+              panOnDrag={COARSE_POINTER ? true : [1, 2]} selectionOnDrag={!COARSE_POINTER}
               selectionMode={SelectionMode.Partial}
               selectNodesOnDrag={false}
               // Shift does both halves of "select several", because that is
@@ -3586,7 +3592,8 @@ function Editor() {
               same width), or neither - in which case the column is a 34px tab
               and the canvas keeps the ~250px the prose used to hold. The
               resize handle only exists while there is something to resize. */}
-          <div style={{ position: "relative", minWidth: 0, minHeight: 0,
+          <div className="wf-rail wf-rail-right"
+               style={{ position: "relative", minWidth: 0, minHeight: 0,
                         display: "flex", overflow: "hidden" }}>
             {(selected || helpOpen) && (
               <div onPointerDown={startInspectorResize}

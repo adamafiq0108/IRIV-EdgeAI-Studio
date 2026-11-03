@@ -167,11 +167,26 @@ def _template_listing(request):
                 **template_preview.copy_of(key, request.app.state.config_dir)}
                for key, f in formats.items()
                if not f.get("draft")]
+    # The customer's own saved templates ride in the same list, flagged
+    # `user` (key "user:<slug>", never a built-in's key). They are documents
+    # read from the store -- nothing here starts, counts or lists a system.
+    mine = []
+    for t in templates_service.list_user_templates():
+        doc = t["doc"]
+        mine.append({"key": t["key"], "label": t["name"], "hint": t["description"],
+                     "category": "my-templates", "builtin": False, "user": True,
+                     "shipped": False, "edited": False, "draft": False,
+                     "zone": {"mode": "optional", "hint": ""},
+                     "classes": (doc.get("config") or {}).get("detector_classes") or [],
+                     "widgets": 0, "images": [], "media": [],
+                     "preview": template_preview.summary(doc),
+                     "features": [], "blurb": "", "heading": "",
+                     "created": t["created"], "owner": t["owner"]})
     return {"ok": True,
             "default": provision_service.default_template(request.app.state.config_dir),
             "format_categories": provision_service.format_categories(
                 request.app.state.config_dir),
-            "templates": builtin,
+            "templates": builtin + mine,
             "categories": [],
             "saved": []}
 
@@ -221,10 +236,21 @@ async def create_system(request: Request):
     # snapshot -- workflow, dashboard, classes), so picking one is picking a
     # build. Starting from nothing is a deliberate choice with a name: the
     # Blank Canvas format, which cannot be deleted for exactly this reason.
+    # A customer's saved template ("user:<slug>") is resolved BEFORE anything
+    # is written, so a missing or damaged one refuses the create cleanly. The
+    # system itself is made exactly like a built-in's -- same
+    # create_vision_system, so fresh slug, port and stream port -- from the
+    # box's default format, and the saved build is laid over it below.
+    try:
+        user_slug = templates_service.parse_user_key(body.get("template"))
+        user_doc = (templates_service.load_user_template(user_slug)
+                    if user_slug else None)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     try:
         created = provision_service.create_vision_system(
             st.systems_dir, body.get("name"), st.config_dir,
-            template=body.get("template"),
+            template=None if user_doc else body.get("template"),
             slug=body.get("slug") or None,
             subtitle=body.get("subtitle") or None,
             icon=body.get("icon") or None,
@@ -255,7 +281,16 @@ async def create_system(request: Request):
     # letting the operator open the system and wonder why it detects nothing.
     if created.get("model_note"):
         warnings.append(created["model_note"])
-    if body.get("template"):
+    if user_doc:
+        created["template"] = str(body["template"])
+        note = provision_service.ensure_template_model(
+            created_root, created["slug"], st.config_dir,
+            (user_doc.get("config") or {}).get("model"))
+        if note:
+            warnings.append(note)
+        warnings += templates_service.apply_template(
+            st.systems_dir, st.config_dir, created["slug"], user_doc)
+    elif body.get("template"):
         fmt = provision_service.builtin_formats(st.config_dir).get(
             str(body["template"]))
         warnings += templates_service.apply_format_workflow(
@@ -296,6 +331,62 @@ async def create_system(request: Request):
     # on the grid gets (core/net.py), onto the host this request came in by.
     return {"ok": True, "started": started, "warnings": warnings,
             **created, "url": net.rewrite(created.get("url") or "", request)}
+
+
+@router.post("/api/hub/systems/{slug}/save-template", name="hub.save_template")
+async def save_template(slug: str, request: Request):
+    """"Save as template": snapshot this system's build (workflow, zones,
+    dashboard, settings -- no cameras, credentials, ports or data) as one of the
+    customer's own templates. Same gate as creating a system."""
+    _require_admin(request, "saving a template")
+    st = request.app.state
+    if slug not in [s.slug for s in st.registry]:
+        raise HTTPException(status_code=404, detail="no such system")
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    if not isinstance(body, dict):
+        body = {}
+    try:
+        saved = templates_service.save_user_template(
+            st.systems_dir, st.config_dir, slug, body.get("name"),
+            body.get("description"),
+            owner=getattr(request.state, "user", None) or "")
+    except (ValueError, OSError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, **saved}
+
+
+@router.patch("/api/hub/templates/user/{tslug}", name="hub.rename_user_template")
+async def rename_user_template(tslug: str, request: Request):
+    _require_admin(request, "renaming a template")
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    if not isinstance(body, dict):
+        body = {}
+    try:
+        saved = templates_service.rename_user_template(
+            tslug, body.get("name"), body.get("description"))
+    except (ValueError, OSError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, **saved}
+
+
+@router.delete("/api/hub/templates/user/{tslug}", name="hub.delete_user_template")
+def delete_user_template(tslug: str, request: Request):
+    """Delete one of the customer's saved templates. Systems already made from
+    it are untouched -- they were copies, not links."""
+    _require_admin(request, "deleting a template")
+    try:
+        gone = templates_service.delete_user_template(tslug)
+    except (ValueError, OSError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not gone:
+        raise HTTPException(status_code=404, detail="no such template")
+    return {"ok": True}
 
 
 @router.get("/api/hub/systems/{slug}/export", name="hub.export_system")

@@ -308,3 +308,31 @@
     @apply font-sans;
     }
 }
+
+/* Touch hardening. UNLAYERED on purpose: it must beat both the legacy sheet
+   and Tailwind's text-sm/text-xs utilities.
+   - iOS Safari zooms the whole page when a field under 16px takes focus, and
+     does not zoom back. Fields on a touch screen are therefore 16px.
+   - Controls get a 44px hit area on touch input (Apple/Google guidance). Sized
+     by INPUT (pointer: coarse), not width, so a tablet at 1024px is covered and
+     a desktop window is untouched. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  .btn, .btn-sm, .range-btn, .settings-tab, .topnav-item {
+    min-height: 44px;
+  }
+  .icon-btn, .fx-min-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Never let the document itself scroll sideways: a stray wide child should
+   clip at the viewport rather than drag the whole page (and the sticky
+   topbar) off-screen on a phone. Panels that need to scroll sideways (tables,
+   code) carry their own overflow container. */
+html, body { max-width: 100%; overflow-x: clip; }

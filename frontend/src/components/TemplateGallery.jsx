@@ -13,6 +13,11 @@
 // "Change template" dialog (`embedded`: the preview replaces the cards in
 // place, since a dialog on a dialog closes both on Escape).
 //
+// MY TEMPLATES: the customer's own saved systems ("Save as template" on a
+// system card) come in the same list flagged `user` and are drawn in their own
+// section below the built-ins, each with a delete. They are stored documents:
+// "Use this template" creates a NEW system configured like the one saved.
+//
 // SLIDES (slidesOf): the preview media shipped with the template -- up to 5,
 // at most one a video (core/services/template_media*.py); else the release's
 // own pictures, core/static/img/templates/<key>.png or <key>-1,
@@ -20,15 +25,18 @@
 // draws a tinted placeholder with an icon, so a missing picture never reads
 // as a broken page.
 //
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { api } from "../api/client.js";
 import { useApi } from "../api/hooks.js";
 import { useApp } from "../state/app.jsx";
 import { apiUrl } from "../lib/base.js";
 import { Button } from "./ui/button.jsx";
 import { Dialog } from "./ui/primitives.jsx";
+import { useToast } from "./ui/Toast.jsx";
+import { useConfirm } from "./ui/ask.jsx";
 import {
   ArrowLeft, Car, ChevronLeft, ChevronRight, LayoutTemplate, ScanSearch,
-  ShieldAlert, SquareDashed, Users,
+  ShieldAlert, SquareDashed, Trash2, Users,
 } from "lucide-react";
 
 // Blank Canvas FIRST (Tok Aba, 2026-10-23; it was last since UAT-112): the
@@ -245,19 +253,45 @@ export function TemplatePreview({ t, onUse, onBack, limitNote = "" }) {
  * The cards. `onUse(key)` is "Use this template"; `embedded` draws the
  * preview in place instead of in a dialog.
  */
-export default function TemplateGallery({ onUse, embedded = false, limitNote = "" }) {
+export default function TemplateGallery({ onUse, embedded = false, limitNote = "", refreshKey = 0 }) {
   const { user } = useApp();
+  const toast = useToast();
+  const confirm = useConfirm();
   const isAdmin = !!user?.is_admin;
-  const { data } = useApi("/api/hub/templates");
-  const templates = sortTemplates(data?.templates);
+  const { data, reload } = useApi("/api/hub/templates");
+  const all = data?.templates || [];
+  const templates = sortTemplates(all.filter((t) => !t.user));
+  const mine = all.filter((t) => t.user);
   const [open, setOpen] = useState(null);
+  // The Hub bumps refreshKey after "Save as template", so the new card shows
+  // without a reload. Skipped on mount: useApi already fetches then.
+  const firstTick = useRef(true);
+  useEffect(() => {
+    if (firstTick.current) { firstTick.current = false; return; }
+    reload().catch(() => {});
+  }, [refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
   // Admin only, as creating is: a non-admin cannot use a template, so the
   // section is not there for them at all.
   if (!isAdmin) return null;
 
   // The preview opened from a card, looked up again by key so a refresh that
   // landed meanwhile shows the newest content.
-  const shownT = open ? templates.find((t) => t.key === open) || null : null;
+  const shownT = open ? all.find((t) => t.key === open) || null : null;
+
+  async function removeMine(t) {
+    if (!await confirm({
+      title: `Delete the template "${t.label}"?`,
+      description: "Systems already created from it are not changed.",
+      destructive: true,
+    })) return;
+    try {
+      await api.del(`/api/hub/templates/user/${encodeURIComponent(t.key.replace(/^user:/, ""))}`);
+      if (open === t.key) setOpen(null);
+      await reload().catch(() => {});
+    } catch (err) {
+      toast.error("Could not delete the template", err.message);
+    }
+  }
 
   if (embedded && shownT) {
     return <TemplatePreview key={shownT.key} t={shownT} onUse={onUse} onBack={() => setOpen(null)} />;
@@ -296,6 +330,34 @@ export default function TemplateGallery({ onUse, embedded = false, limitNote = "
           </button>
         ))}
       </div>
+      {mine.length > 0 && (
+        <div className="space-y-3" data-my-templates>
+          <h3 className="text-sm font-semibold">My templates</h3>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-3">
+            {mine.map((t) => (
+              <div key={t.key} className="group relative">
+                <button type="button" data-template-card={t.key}
+                        onClick={() => setOpen(t.key)}
+                        className="w-full overflow-hidden rounded-xl border bg-card text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_8px_30px_-12px_var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <TemplateArt t={t} card className="h-28" />
+                  <span className="block border-t p-3">
+                    <span className="block truncate text-sm font-semibold">{t.label}</span>
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground" title={t.hint || ""}>
+                      {t.hint || " "}
+                    </span>
+                  </span>
+                </button>
+                <button type="button" title="Delete this template"
+                        aria-label={`Delete template ${t.label}`}
+                        onClick={() => removeMine(t)}
+                        className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full border bg-background/80 text-muted-foreground opacity-0 backdrop-blur transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100 pointer-coarse:size-10">
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {!embedded && (
         <Dialog open={!!shownT} title="Template preview" onClose={() => setOpen(null)}>
           {shownT && (

@@ -5393,3 +5393,40 @@ body.wf-fs-on .topbar { visibility: hidden; }
 /* No focus box around a chart after a click: the browser drew a blue rectangle on the
    chart's own svg. Charts are picked by clicking a line, not by keyboard focus. */
 .chart-wrap, .chart-wrap *, .recharts-wrapper, .recharts-wrapper *, .recharts-surface { outline: none !important; }
+
+/* ===========================================================================
+   Small-screen hardening (phones, portrait tablets).
+   Appended last on purpose: one place that says what changes below 900px.
+   =========================================================================== */
+
+/* Workflow: three rails side by side leave a phone ~130px of canvas. Below
+   900px the page stacks - palette on top (short, scrolls itself), the canvas
+   at a usable height, the inspector under it - and the page scrolls instead of
+   the canvas shrinking. `!important` beats the inline grid-template the JS
+   writes for the desktop widths. */
+@media screen and (max-width: 900px) {
+  .wf-page:not(.wf-fullscreen) { height: auto; min-height: calc(100dvh - 88px); }
+  .wf-grid { grid-template-columns: minmax(0, 1fr) !important;
+             grid-template-rows: auto auto auto; }
+  .wf-rail-left { max-height: 38dvh; }
+  .wf-rail [title^="Drag to resize"] { display: none; }
+  .wf-rail-right { max-height: 60dvh; }
+  .wf-canvas-wrap { min-height: 62dvh !important; }
+}
+@media screen and (max-width: 900px) {
+  .wf-fullscreen .wf-grid { overflow-y: auto; }
+}
+
+/* Dialogs sized by the DYNAMIC viewport: on a phone `vh` is the height with the
+   browser toolbar hidden, so an 86vh dialog runs under the toolbar and its
+   footer buttons are unreachable. dvh tracks what is actually visible. Browsers
+   without dvh ignore these and keep the vh rules above. */
+@supports (height: 100dvh) {
+  .modal-card { max-height: calc(100dvh - 40px); }
+  .ui-dialog, .db-modal { max-height: 86dvh; }
+  .fx-lightbox-card { max-height: 94dvh; }
+}
+@media screen and (max-width: 560px) {
+  .modal-backdrop, .ui-dialog-backdrop, .db-modal-back { padding: 10px; }
+  .modal-card, .db-modal { padding: 16px; }
+}

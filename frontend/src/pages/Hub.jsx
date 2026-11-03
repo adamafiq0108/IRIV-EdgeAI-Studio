@@ -41,7 +41,7 @@ import { authHeaders, goWithSession, withSession } from "../lib/session.js";
 import {
   Plus, ArrowUpRight, Search, Check, Trash2, ImagePlus, ImageOff,
   Download, Upload, Pencil, FolderPlus, FolderInput, Play, Square, Folders,
-  Loader2,
+  Loader2, BookmarkPlus,
 } from "lucide-react";
 import { Dialog } from "../components/ui/primitives.jsx";
 import { apiUrl } from "../lib/base.js";
@@ -81,6 +81,10 @@ export default function Hub({ onCreate }) {
   // The card being renamed; also the dialog's open flag, so the field seeds
   // from that card's current name.
   const [renameFor, setRenameFor] = useState(null);
+  // The card being saved as a template (also the dialog's open flag), and a
+  // counter that tells the template gallery below to re-read its list.
+  const [saveTplFor, setSaveTplFor] = useState(null);
+  const [tplTick, setTplTick] = useState(0);
 
   const cards = data?.cards || [];
   // The box caps how many systems may exist. At the limit the create paths are
@@ -137,7 +141,8 @@ export default function Hub({ onCreate }) {
   // The template cards: admin only (the gallery draws nothing for anyone
   // else), shown in every mode -- see the banner.
   const gallery = user?.is_admin ? (
-    <TemplateGallery onUse={(key) => onCreate(key)} limitNote={limitNote} />
+    <TemplateGallery onUse={(key) => onCreate(key)} limitNote={limitNote}
+                     refreshKey={tplTick} />
   ) : null;
   // The empty places in the grid: the box's cap, or for an uncapped
   // (developer) account at least 4 with one always free.
@@ -190,6 +195,28 @@ export default function Hub({ onCreate }) {
   // stat keys, stored layouts, workflow files all hang off it), so the dialog
   // never offers it; the name and the PORT are what it edits -- the port
   // moves the master and restarts it (components/EditSystemDialog.jsx).
+
+  // -- "Save as template": a snapshot of the system's BUILD (workflow, zones,
+  // dashboard, settings) filed under "My templates" in the gallery. It is a
+  // stored document, never run; cameras, credentials, ports and recorded data
+  // are not in it (core/services/templates.py save_user_template).
+  async function saveAsTemplate(values) {
+    const card = saveTplFor;
+    if (!card) return;
+    setBusy(true);
+    try {
+      const d = await api.post(
+        `/api/hub/systems/${encodeURIComponent(card.slug)}/save-template`,
+        { name: values.name, description: values.description || "" });
+      toast.success("Template saved", `${d.name} is under My templates.`);
+      setSaveTplFor(null);
+      setTplTick((n) => n + 1);
+    } catch (err) {
+      toast.error("Could not save the template", err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   // -- whole-system export/import. An export carries the site (cameras, zones,
   // workflow, dashboards) but never ports or credentials, so the file is safe
@@ -420,12 +447,12 @@ export default function Hub({ onCreate }) {
                   </span>
                 )}
                 {user?.is_admin && !selecting && (
-                  <span className="absolute bottom-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="absolute bottom-2 right-2 flex gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
                     <button
                       type="button"
                       title={card.image ? "Replace image" : "Set image"}
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); pickImage(card.slug); }}
-                      className="flex size-7 items-center justify-center rounded-full border bg-background/80 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
+                      className="flex size-7 pointer-coarse:size-10 items-center justify-center rounded-full border bg-background/80 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
                     >
                       <ImagePlus className="size-3.5" />
                     </button>
@@ -433,15 +460,23 @@ export default function Hub({ onCreate }) {
                       type="button"
                       title="Edit this system"
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setRenameFor(card); }}
-                      className="flex size-7 items-center justify-center rounded-full border bg-background/80 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
+                      className="flex size-7 pointer-coarse:size-10 items-center justify-center rounded-full border bg-background/80 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
                     >
                       <Pencil className="size-3.5" />
                     </button>
                     <button
                       type="button"
+                      title="Save as template"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSaveTplFor(card); }}
+                      className="flex size-7 pointer-coarse:size-10 items-center justify-center rounded-full border bg-background/80 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
+                    >
+                      <BookmarkPlus className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
                       title="Export this system to a file"
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); exportSystem(card.slug); }}
-                      className="flex size-7 items-center justify-center rounded-full border bg-background/80 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
+                      className="flex size-7 pointer-coarse:size-10 items-center justify-center rounded-full border bg-background/80 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
                     >
                       <Download className="size-3.5" />
                     </button>
@@ -450,7 +485,7 @@ export default function Hub({ onCreate }) {
                         type="button"
                         title="Remove image"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeImage(card.slug); }}
-                        className="flex size-7 items-center justify-center rounded-full border bg-background/80 text-muted-foreground backdrop-blur transition-colors hover:text-destructive"
+                        className="flex size-7 pointer-coarse:size-10 items-center justify-center rounded-full border bg-background/80 text-muted-foreground backdrop-blur transition-colors hover:text-destructive"
                       >
                         <ImageOff className="size-3.5" />
                       </button>
@@ -623,6 +658,25 @@ export default function Hub({ onCreate }) {
         card={renameFor}
         onOpenChange={(o) => { if (!o) setRenameFor(null); }}
         onSaved={() => reload().catch(() => {})}
+      />
+
+      <FormDialog
+        open={!!saveTplFor}
+        onOpenChange={(o) => { if (!o && !busy) setSaveTplFor(null); }}
+        title="Save as template"
+        description={saveTplFor
+          ? `Keep ${saveTplFor.name || saveTplFor.slug} as a starting point: its workflow, zones, dashboard and settings. Cameras, passwords, ports and recorded data are not kept. A template is never run - you create a new system from it.`
+          : ""}
+        fields={[
+          { name: "name", label: "Template name", required: true,
+            defaultValue: saveTplFor ? `${saveTplFor.name || saveTplFor.slug} template` : "",
+            placeholder: "e.g. Loading bay counting" },
+          { name: "description", label: "Description (optional)",
+            placeholder: "What this template is for" },
+        ]}
+        submitLabel="Save template"
+        busy={busy}
+        onSubmit={saveAsTemplate}
       />
 
       <ConfirmDialog

@@ -8,53 +8,17 @@ hint = "Count people crossing a line and standing inside an area."
 category = "built-in"
 model = "yolov8s"
 classes = ["person"]
-workflows_json = "{\"version\":3,\"workflows\":[{\"id\":\"main\",\"name\":\"Workflow\",\"description\":\"Imported from this system's existing functions\",\"enabled\":true,\"author\":\"\",\"created\":0,\"modified\":0,\"graph\":{\"version\":10,\"nodes\":[{\"id\":\"nmtuxdr341\",\"type\":\"source.detection\",\"position\":{\"x\":119.95705145721877,\"y\":480.82905487007037},\"data\":{\"model\":\"\",\"camera\":\"\"}},{\"id\":\"nmtuxdy1a2\",\"type\":\"filter.class\",\"position\":{\"x\":410.6817158606048,\"y\":480.8290548700703},\"data\":{\"classes\":[\"person\"]}},{\"id\":\"nmtuxe70r4\",\"type\":\"analytics.entry_exit\",\"position\":{\"x\":790.7918253885066,\"y\":428.5572300681713},\"data\":{\"fnId\":\"line_counter_70r4\",\"name\":\"Line counter\",\"mode\":\"both\"}},{\"id\":\"nmtuxeb8j6\",\"type\":\"zone.ref\",\"position\":{\"x\":412.984745115839,\"y\":602.8823070335104},\"data\":{\"zone\":\"\"}},{\"id\":\"nmtuxmbs61\",\"type\":\"output.dataset\",\"position\":{\"x\":1148.0506130918081,\"y\":762.5171476924532},\"data\":{\"dataset\":\"people_counting\",\"name\":\"People Counting\",\"op\":\"insert\",\"mode\":\"change\",\"interval_s\":60,\"min_interval_s\":0,\"sources\":{}}},{\"id\":\"nmtuxn1cx3\",\"type\":\"dashboard.card\",\"position\":{\"x\":1145.5286042560344,\"y\":401.67431335755725},\"data\":{\"name\":\"In\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"label_size\":\"medium\",\"value_size\":\"medium\",\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"nmtuxn5vf5\",\"type\":\"dashboard.card\",\"position\":{\"x\":1147.5286042560344,\"y\":489.67431335755725},\"data\":{\"name\":\"Out\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"label_size\":\"medium\",\"value_size\":\"medium\",\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"nmtuxng4e7\",\"type\":\"dashboard.card\",\"position\":{\"x\":1149.5286042560344,\"y\":577.6743133575571},\"data\":{\"name\":\"Inside\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"label_size\":\"medium\",\"value_size\":\"medium\",\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"nmtuxnnfb9\",\"type\":\"dashboard.card\",\"position\":{\"x\":1148.5286042560344,\"y\":672.6743133575571},\"data\":{\"name\":\"Crossing\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"label_size\":\"medium\",\"value_size\":\"medium\",\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"nmtva8s542\",\"type\":\"dashboard.graph\",\"position\":{\"x\":1552.9844827811812,\"y\":-386.4589036932172},\"data\":{\"kind\":\"line\",\"metric\":\"\",\"color\":\"#04dc9b\",\"range\":\"page\",\"window\":\"live\",\"name\":\"In Zone Now (Total)\",\"template\":\"stripe\",\"unit\":\"people\"}},{\"id\":\"nmtva8s543\",\"type\":\"output.dataset\",\"position\":{\"x\":1137.9921506107398,\"y\":-467.645551155196},\"data\":{\"dataset\":\"counting\",\"name\":\"Counting\",\"op\":\"insert\",\"mode\":\"change\",\"interval_s\":60,\"min_interval_s\":0,\"sources\":{\"total_counting\":{\"src\":\"stat\"}}}},{\"id\":\"nmtva8s544\",\"type\":\"dashboard.card\",\"position\":{\"x\":1549.2190323810623,\"y\":-489.9844910231212},\"data\":{\"kind\":\"tile\",\"metric\":\"\",\"color\":\"\",\"unit\":\"Total_Person_Frame\",\"window\":\"follow\",\"agg\":\"unique\",\"range\":\"page\",\"name\":\"Total People Counting\"}},{\"id\":\"nmtva8s545\",\"type\":\"dashboard.events\",\"position\":{\"x\":1547.5590163083277,\"y\":-615.9199752089088},\"data\":{\"name\":\"People Counting Table\",\"kind\":\"table\",\"agg\":\"count\",\"field\":\"\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"\",\"filters\":{},\"conditions\":[],\"sub\":\"\",\"color\":\"\",\"limit\":15,\"source_mode\":\"events\",\"metric\":\"\",\"dataset\":\"\",\"show\":[]}},{\"id\":\"nmtva8s546\",\"type\":\"dashboard.card\",\"position\":{\"x\":1119.6077367466046,\"y\":-637.8141648330518},\"data\":{\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"Total Counting\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"show\":[],\"ok_label\":\"NORMAL\",\"alert_label\":\"VIOLATION\",\"states\":[],\"op\":\">=\",\"value\":1,\"name\":\"Live People Counting\"}},{\"id\":\"nmtva8s547\",\"type\":\"analytics.counter\",\"position\":{\"x\":703.3432982809273,\"y\":-645.0437192931078},\"data\":{\"fnId\":\"in_frame_now_s547\",\"name\":\"In frame now\",\"mode\":\"realtime\",\"OID\":true}},{\"id\":\"nmtva8s548\",\"type\":\"dashboard.card\",\"position\":{\"x\":1524.404461807989,\"y\":-282.95712145869356},\"data\":{\"kind\":\"tile\",\"metric\":\"\",\"color\":\"\",\"unit\":\"Total_Person_Frame\",\"window\":\"follow\",\"agg\":\"unique\",\"range\":\"page\",\"name\":\"Total People In Zone Counting\"}},{\"id\":\"nmtva8s549\",\"type\":\"dashboard.card\",\"position\":{\"x\":1132.6526694237743,\"y\":-14.655438059270978},\"data\":{\"name\":\"Zone Counting Now\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"nmtva8s54a\",\"type\":\"source.detection\",\"position\":{\"x\":110.26956224862667,\"y\":-409.8548594127127},\"data\":{\"model\":\"\",\"camera\":\"\"}},{\"id\":\"nmtva8s54e\",\"type\":\"output.trigger\",\"position\":{\"x\":1507.4379433094691,\"y\":99.0121787829346},\"data\":{\"name\":\"Alert\",\"alert\":true,\"severity\":\"crit\",\"message\":\"\",\"cooldown_s\":30,\"draw\":true,\"box_color\":\"#00FF04\",\"color_target\":\"box\"}},{\"id\":\"nmtva8s54g\",\"type\":\"dashboard.card\",\"position\":{\"x\":1857.5481949244263,\"y\":12.097434615391421},\"data\":{\"name\":\"People enter zone\",\"metric\":\"\",\"kind\":\"verdict\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"nmtva8s54h\",\"type\":\"branch.cases\",\"position\":{\"x\":1132.4240519117382,\"y\":-303.01261349146046},\"data\":{\"fnId\":\"if_else_if_s54h\",\"metric\":\"count\",\"hold_s\":0,\"otherwise\":true,\"rules\":[{\"op\":\">\",\"value\":0,\"input\":\"in1\"}],\"name\":\"If / Else if\"}},{\"id\":\"nmtva8s54i\",\"type\":\"output.trigger\",\"position\":{\"x\":1530.1266552017441,\"y\":-151.84905955154352},\"data\":{\"name\":\"object in Zone 1\",\"alert\":true,\"severity\":\"warn\",\"message\":\"object in Zone 1\",\"cooldown_s\":2,\"box_color\":\"\",\"zone_color\":\"\",\"draw\":false,\"repeat\":\"new_object\"}},{\"id\":\"nmtvagtib1\",\"type\":\"filter.class\",\"position\":{\"x\":392.95705145721877,\"y\":-409.1709451299296},\"data\":{\"classes\":[\"person\"]}},{\"id\":\"nmtvahjjn6\",\"type\":\"zone.ref\",\"position\":{\"x\":372.4261482536935,\"y\":-74.63731167090918},\"data\":{\"zone\":\"\"}},{\"id\":\"nmtvahz868\",\"type\":\"analytics.counter\",\"position\":{\"x\":706.3555867501035,\"y\":-315.93644978657295},\"data\":{\"fnId\":\"counter_z868\",\"name\":\"Zone 1 violations now\",\"mode\":\"realtime\",\"OID\":true,\"enter_after_s\":0,\"leave_after_s\":0}},{\"id\":\"nmtvamoz0f\",\"type\":\"branch.cases\",\"position\":{\"x\":1136.9570514572188,\"y\":74.82905487007042},\"data\":{\"fnId\":\"if_else_if_oz0f\",\"metric\":\"\",\"rules\":[{\"op\":\">\",\"value\":1,\"input\":\"in1\"}],\"otherwise\":false,\"name\":\"If / Else if\"}}],\"edges\":[{\"id\":\"e_nmtuxe9rp5\",\"source\":\"nmtuxdy1a2\",\"target\":\"nmtuxe70r4\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtuxeepa7\",\"source\":\"nmtuxeb8j6\",\"target\":\"nmtuxe70r4\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmtv06mzt1\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxn1cx3\",\"sourceHandle\":\"in\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtv06obx2\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxn5vf5\",\"sourceHandle\":\"out\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtv06pp33\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxng4e7\",\"sourceHandle\":\"net\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtv06rpq4\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxnnfb9\",\"sourceHandle\":\"cross\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s54l\",\"source\":\"nmtva8s543\",\"target\":\"nmtva8s545\",\"sourceHandle\":\"table\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s54n\",\"source\":\"nmtva8s543\",\"target\":\"nmtva8s544\",\"sourceHandle\":\"o_frame_pid\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s54q\",\"source\":\"nmtva8s547\",\"target\":\"nmtva8s543\",\"sourceHandle\":\"out\",\"targetHandle\":\"c_live_counting\"},{\"id\":\"e_nmtva8s54r\",\"source\":\"nmtva8s547\",\"target\":\"nmtva8s543\",\"sourceHandle\":\"OID\",\"targetHandle\":\"c_frame_pid\"},{\"id\":\"e_nmtva8s54s\",\"source\":\"nmtva8s543\",\"target\":\"nmtva8s548\",\"sourceHandle\":\"o_zone_pid\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s54u\",\"source\":\"nmtva8s547\",\"target\":\"nmtva8s546\",\"sourceHandle\":\"out\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s54x\",\"source\":\"nmtva8s543\",\"target\":\"nmtva8s542\",\"sourceHandle\":\"o_total_in_zone\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s5412\",\"source\":\"nmtva8s54e\",\"target\":\"nmtva8s54g\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8s5414\",\"source\":\"nmtva8s54h\",\"target\":\"nmtva8s54i\",\"sourceHandle\":\"out0\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtva8zvr17\",\"source\":\"nmtuxdr341\",\"target\":\"nmtuxdy1a2\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtvabdyb18\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxmbs61\",\"sourceHandle\":\"in\",\"targetHandle\":\"c_in\"},{\"id\":\"e_nmtvabv5f19\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxmbs61\",\"sourceHandle\":\"out\",\"targetHandle\":\"c_out\"},{\"id\":\"e_nmtvagw6b2\",\"source\":\"nmtva8s54a\",\"target\":\"nmtvagtib1\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtvagysk3\",\"source\":\"nmtvagtib1\",\"target\":\"nmtva8s547\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtvai1ye9\",\"source\":\"nmtvahjjn6\",\"target\":\"nmtvahz868\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmtvai3i8a\",\"source\":\"nmtvagtib1\",\"target\":\"nmtvahz868\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtvaiiszb\",\"source\":\"nmtvahz868\",\"target\":\"nmtva8s549\",\"sourceHandle\":\"out\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtvaiqodd\",\"source\":\"nmtvahz868\",\"target\":\"nmtva8s54h\",\"sourceHandle\":\"out\",\"targetHandle\":\"in1\"},{\"id\":\"e_nmtvamrzkg\",\"source\":\"nmtvahz868\",\"target\":\"nmtvamoz0f\",\"sourceHandle\":\"out\",\"targetHandle\":\"in1\"},{\"id\":\"e_nmtvamtpuh\",\"source\":\"nmtvamoz0f\",\"target\":\"nmtva8s54e\",\"sourceHandle\":\"out0\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtwcg6zx1\",\"source\":\"nmtvahz868\",\"target\":\"nmtva8s54i\",\"sourceHandle\":\"OID\",\"targetHandle\":\"oid\"},{\"id\":\"e_nmtwcgp2m2\",\"source\":\"nmtvahz868\",\"target\":\"nmtva8s543\",\"sourceHandle\":\"OID\",\"targetHandle\":\"c_zone_pid\"},{\"id\":\"e_nmtwcgtbr3\",\"source\":\"nmtvahz868\",\"target\":\"nmtva8s543\",\"sourceHandle\":\"out\",\"targetHandle\":\"c_total_in_zone\"}]}}]}"
-dashboard_json = "{\"pages\":[{\"id\":\"main\",\"name\":\"Dashboard\",\"widgets\":[{\"id\":\"verdict_mtlasa040\",\"title\":\"People enter zone\",\"kind\":\"verdict\",\"source\":\"stat\",\"key\":\"fn_if_else_if_1c81_b0_active\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":0,\"w\":6,\"h\":3},\"status\":{},\"states\":[{\"value\":0.0,\"label\":\"COMPLIANT\",\"tone\":\"ok\"},{\"value\":1.0,\"label\":\"VIOLATION\",\"tone\":\"alert\"}],\"range\":\"\",\"node\":\"nmtlaqcwq1\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"video_mttkyu0m1\",\"title\":\"Live video\",\"kind\":\"video\",\"source\":\"stat\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":6,\"h\":6},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtuxoce60\",\"title\":\"In\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_line_counter_70r4_in\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":6,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxn1cx3\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtuxoi9h1\",\"title\":\"Out\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_line_counter_70r4_out\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":9,\"y\":6,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxn5vf5\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtuxon832\",\"title\":\"Inside\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_line_counter_70r4_net\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":9,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxng4e7\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtuxos9z3\",\"title\":\"Crossing\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_line_counter_70r4_cross\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":9,\"y\":9,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxnnfb9\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtvajo5m0\",\"title\":\"Zone Counting Now\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_counter_z868_count\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":9,\"y\":3,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtva8s549\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtvakqe71\",\"title\":\"Live People Counting\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_in_frame_now_s547_count\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"Total Counti\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":3,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtva8s546\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]},{\"id\":\"overview\",\"name\":\"Overview\",\"widgets\":[{\"id\":\"line_msrdvqyi0\",\"title\":\"In Zone Now (Total)\",\"kind\":\"line\",\"source\":\"dataset\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"#04dc9b\",\"bg\":\"\",\"template\":\"gradient\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"people\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"max\",\"field\":\"total_in_zone\",\"group_by\":\"\",\"bucket\":\"hour\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"counting\",\"columns\":[{\"name\":\"live_counting\",\"type\":\"text\"},{\"name\":\"frame_pid\",\"type\":\"text\"},{\"name\":\"total_in_zone\",\"type\":\"number\"},{\"name\":\"zone_pid\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":2,\"w\":12,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmsfv3ur21\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtcgt9qw1\",\"title\":\"Total People Counting\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"Total_Person\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"unique\",\"field\":\"frame_pid\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"counting\",\"columns\":[{\"name\":\"live_counting\",\"type\":\"text\"},{\"name\":\"frame_pid\",\"type\":\"text\"},{\"name\":\"total_in_zone\",\"type\":\"number\"},{\"name\":\"zone_pid\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":3,\"h\":2},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmsie3s4t1\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"table_mtcgtqxr2\",\"title\":\"People Counting Table\",\"kind\":\"table\",\"source\":\"dataset\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"count\",\"field\":\"\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"\",\"filters\":{}},\"dataset\":\"counting\",\"columns\":[{\"name\":\"live_counting\",\"type\":\"text\"},{\"name\":\"frame_pid\",\"type\":\"text\"},{\"name\":\"total_in_zone\",\"type\":\"number\"},{\"name\":\"zone_pid\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":5,\"w\":12,\"h\":5},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmsikdc021\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtcgu2cj3\",\"title\":\"Total People In Zone Counting\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"Total_Person\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"unique\",\"field\":\"zone_pid\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"counting\",\"columns\":[{\"name\":\"live_counting\",\"type\":\"text\"},{\"name\":\"frame_pid\",\"type\":\"text\"},{\"name\":\"total_in_zone\",\"type\":\"number\"},{\"name\":\"zone_pid\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":3,\"y\":0,\"w\":3,\"h\":2},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmsrd53eg7\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]}],\"hidden\":[\"wf_nmsfw7kzw3\",\"wf_nmsfv3ur21\",\"wf_nmsr7795u3\",\"wf_nmsikkzy24\",\"wf_nmsrdi9ao3\",\"wf_nmsre8ewp3\"]}"
-tables_json = "[{\"key\":\"counting\",\"name\":\"Counting\",\"columns\":[{\"name\":\"live_counting\",\"type\":\"text\"},{\"name\":\"frame_pid\",\"type\":\"text\"},{\"name\":\"total_in_zone\",\"type\":\"text\"},{\"name\":\"zone_pid\",\"type\":\"text\"}]},{\"key\":\"people_counting\",\"name\":\"People Counting\",\"columns\":[{\"name\":\"in\",\"type\":\"number\"},{\"name\":\"out\",\"type\":\"number\"},{\"name\":\"status\",\"type\":\"text\"}]}]"
-settings_json = "{\"capture\":{\"snap\":false,\"record\":false},\"hud\":{\"model\":false,\"camera\":false,\"hailo_fps\":true,\"camera_fps\":true}}"
+workflows_json = "{\"version\":3,\"workflows\":[{\"id\":\"main\",\"name\":\"Workflow\",\"description\":\"Imported from this system's existing functions\",\"enabled\":true,\"author\":\"dev\",\"created\":0,\"modified\":1790669208,\"graph\":{\"version\":10,\"nodes\":[{\"id\":\"nmtuxdr341\",\"type\":\"source.detection\",\"position\":{\"x\":-329.361499143684,\"y\":562.1411599570915},\"data\":{\"model\":\"\",\"camera\":\"\"}},{\"id\":\"nmtuxdy1a2\",\"type\":\"filter.class\",\"position\":{\"x\":-19.770172921857522,\"y\":564.6809578664029},\"data\":{\"classes\":[\"person\"]}},{\"id\":\"nmtuxe70r4\",\"type\":\"analytics.entry_exit\",\"position\":{\"x\":255.03535176210283,\"y\":547.2815413862385},\"data\":{\"fnId\":\"line_counter_70r4\",\"name\":\"Line counter\",\"mode\":\"both\",\"distinct\":false,\"momentary\":true,\"OID\":false,\"pinned\":false}},{\"id\":\"nmtuxeb8j6\",\"type\":\"zone.ref\",\"position\":{\"x\":-17.467143666623258,\"y\":664.3200981480014},\"data\":{\"zone\":\"\"}},{\"id\":\"nmtuxmbs61\",\"type\":\"output.dataset\",\"position\":{\"x\":1419.3234198084867,\"y\":610.3868778915377},\"data\":{\"dataset\":\"people_counting\",\"name\":\"People Counting\",\"op\":\"insert\",\"mode\":\"crossing\",\"interval_s\":60,\"min_interval_s\":0,\"sources\":{}}},{\"id\":\"nmtuxn1cx3\",\"type\":\"dashboard.card\",\"position\":{\"x\":2124.0260218072326,\"y\":517.7706516435638},\"data\":{\"name\":\"In\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"sum\",\"range\":\"page\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"label_size\":\"medium\",\"value_size\":\"medium\",\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmtuxn5vf5\",\"type\":\"dashboard.card\",\"position\":{\"x\":2124.444109862022,\"y\":796.2398045031583},\"data\":{\"name\":\"Out\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"sum\",\"range\":\"page\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"label_size\":\"medium\",\"value_size\":\"medium\",\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmtuxng4e7\",\"type\":\"dashboard.card\",\"position\":{\"x\":2125.4746772705266,\"y\":609.2456815512361},\"data\":{\"name\":\"Inside\",\"metric\":\"\",\"kind\":\"tile\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"label_size\":\"medium\",\"value_size\":\"medium\",\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmtuxnnfb9\",\"type\":\"dashboard.card\",\"position\":{\"x\":2124.6506236085725,\"y\":705.963327382712},\"data\":{\"name\":\"Crossing\",\"metric\":\"\",\"kind\":\"tile\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmu5bb3ni1\",\"type\":\"dashboard.card\",\"position\":{\"x\":2123.565413860104,\"y\":891.7897660905084},\"data\":{\"name\":\"People Counting Log\",\"kind\":\"table\",\"agg\":\"count\",\"field\":\"\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"\",\"filters\":{},\"conditions\":[],\"sub\":\"\",\"limit\":15,\"source_mode\":\"events\",\"metric\":\"\",\"dataset\":\"\",\"show\":[],\"bands\":{}}},{\"id\":\"nmu5bdvy93\",\"type\":\"dashboard.graph\",\"position\":{\"x\":2123.352795623294,\"y\":1014.5901685800054},\"data\":{\"name\":\"Enter Graph\",\"metric\":\"\",\"kind\":\"area\",\"unit\":\"\",\"range\":\"page\",\"agg\":\"sum\",\"group_by\":\"\",\"bucket\":\"\",\"window\":\"follow\",\"bands\":{},\"series\":{\"s1\":{\"label\":\"Enter\",\"agg\":\"sum\",\"query\":{\"range\":\"page\"}},\"s2\":{\"label\":\"Leave\",\"query\":{\"range\":\"page\"},\"agg\":\"sum\"}}}},{\"id\":\"nmu5cwf0et\",\"type\":\"math.arith\",\"position\":{\"x\":1790.12214985054,\"y\":543.6403350395092},\"data\":{\"fnId\":\"arithmetic_f0et\",\"op\":\"sub\",\"inputs\":2,\"a_value\":0,\"b_value\":0,\"c_value\":0,\"name\":\"Arithmetic\",\"a_agg\":\"sum\",\"b_agg\":\"sum\",\"pinned\":false,\"a_range\":\"today\",\"b_range\":\"today\"}},{\"id\":\"nmu5cwj5wu\",\"type\":\"math.arith\",\"position\":{\"x\":1789.596977932071,\"y\":767.1847067395647},\"data\":{\"fnId\":\"arithmetic_j5wu\",\"op\":\"add\",\"inputs\":2,\"a_value\":0,\"b_value\":0,\"c_value\":0,\"name\":\"Arithmetic\",\"pinned\":false,\"a_agg\":\"sum\",\"b_agg\":\"sum\",\"a_range\":\"today\",\"b_range\":\"today\"}},{\"id\":\"nmu5fnf3f6\",\"type\":\"math.setvar\",\"position\":{\"x\":826.4001285280779,\"y\":517.0826873858604},\"data\":{\"fnId\":\"set_variable_f3f6\",\"op\":\"set\",\"value_type\":\"text\",\"a_value\":0,\"b_value\":\"in\",\"c_value\":0,\"name\":\"Set Variable\"}},{\"id\":\"nmu5fnin77\",\"type\":\"math.setvar\",\"position\":{\"x\":826.5751727500999,\"y\":808.2791253409239},\"data\":{\"fnId\":\"set_variable_in77\",\"op\":\"set\",\"value_type\":\"text\",\"a_value\":0,\"b_value\":\"out\",\"c_value\":0,\"name\":\"Set Variable\"}},{\"id\":\"nmu5fnslra\",\"type\":\"variable.ref\",\"position\":{\"x\":825.7259468713612,\"y\":700.310743074408},\"data\":{\"key\":\"fn_status_value\",\"io\":\"in\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60,\"value_type\":\"text\"}},{\"id\":\"nmu5gi41a1\",\"type\":\"variable.ref\",\"position\":{\"x\":1107.0163925868808,\"y\":547.5921022443457},\"data\":{\"key\":\"fn_status_out_value\",\"io\":\"auto\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60,\"name\":\"status_out\"}},{\"id\":\"nmu6acuta1\",\"type\":\"note.comment\",\"position\":{\"x\":2104.643061468865,\"y\":463.7105240183928},\"data\":{\"text\":\"Dashboard & Analytics \",\"width\":285.403437874514,\"height\":745.7026044424738,\"color\":\"\",\"layer\":\"back\"}},{\"id\":\"nmu6aeolv2\",\"type\":\"note.comment\",\"position\":{\"x\":1763.0042061579381,\"y\":487.19866782625616},\"data\":{\"text\":\"Counting Logic\",\"width\":279.3778781777061,\"height\":521.1305548005034,\"color\":\"\",\"layer\":\"back\"}},{\"id\":\"nmu6afi603\",\"type\":\"note.comment\",\"position\":{\"x\":1396.1909034134835,\"y\":573.1224465279511},\"data\":{\"text\":\"Database Table \",\"width\":295.8317782393632,\"height\":330.9838965507035,\"color\":\"\",\"layer\":\"back\"}},{\"id\":\"nmu6ag7tz4\",\"type\":\"note.comment\",\"position\":{\"x\":-55.1909271552077,\"y\":491.23211836106077},\"data\":{\"text\":\"AI Logic\",\"width\":542.2909144923714,\"height\":393.7507010188646,\"color\":\"\",\"layer\":\"back\"}},{\"id\":\"nmu6al3u16\",\"type\":\"note.comment\",\"position\":{\"x\":-342.08068608738665,\"y\":493.61150731085013},\"data\":{\"text\":\"Camera & AI Model\",\"width\":259.78643995201526,\"height\":216.9644066586692,\"color\":\"\",\"layer\":\"back\"}},{\"id\":\"nmu6alkfd7\",\"type\":\"note.comment\",\"position\":{\"x\":497.26589018014215,\"y\":493.2555312964181},\"data\":{\"text\":\"Data Logging\",\"width\":856.7710801375785,\"height\":628.5273790400757,\"color\":\"\",\"layer\":\"back\"}},{\"id\":\"nmuf4k2ya1\",\"type\":\"variable.ref\",\"position\":{\"x\":823.2992762702507,\"y\":994.6252146400627},\"data\":{\"key\":\"fn_status_2_value\",\"io\":\"in\",\"value_type\":\"auto\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60,\"pinned\":false}},{\"id\":\"nmugg7o1q1\",\"type\":\"variable.ref\",\"position\":{\"x\":1109.6354605289084,\"y\":839.4928006847192},\"data\":{\"key\":\"fn_status_out_2_value\",\"io\":\"auto\",\"value_type\":\"auto\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60,\"name\":\"status_out_2\"}},{\"id\":\"nmuggb9bo5\",\"type\":\"output.dataset\",\"position\":{\"x\":1419.5279061008607,\"y\":747.6821500436102},\"data\":{\"dataset\":\"people_counting\",\"name\":\"People Counting\",\"op\":\"insert\",\"mode\":\"crossing\",\"interval_s\":60,\"min_interval_s\":0,\"sources\":{}}},{\"id\":\"nmuggqpv01\",\"type\":\"branch.cases\",\"position\":{\"x\":527.3896432502281,\"y\":604.1411599570915},\"data\":{\"fnId\":\"if_else_if_pv01\",\"metric\":\"\",\"rules\":[{\"op\":\">\",\"value\":0,\"input\":\"in1\"},{\"input\":\"in2\",\"op\":\">\",\"value\":0}],\"otherwise\":false,\"name\":\"If / Else if\",\"ctype\":\"compare\"}}],\"edges\":[{\"id\":\"e_nmtuxe9rp5\",\"source\":\"nmtuxdy1a2\",\"target\":\"nmtuxe70r4\",\"sourceHandle\":\"on\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtuxeepa7\",\"source\":\"nmtuxeb8j6\",\"target\":\"nmtuxe70r4\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmtva8zvr17\",\"source\":\"nmtuxdr341\",\"target\":\"nmtuxdy1a2\",\"sourceHandle\":\"on\",\"targetHandle\":\"in\"},{\"id\":\"e_nmu567fus4\",\"source\":\"nmtuxmbs61\",\"target\":\"nmtuxn1cx3\",\"sourceHandle\":\"o_in\",\"targetHandle\":\"in\"},{\"id\":\"e_nmu5bb4ys2\",\"source\":\"nmtuxmbs61\",\"target\":\"nmu5bb3ni1\",\"sourceHandle\":\"table\",\"targetHandle\":\"in\"},{\"id\":\"e_nmu5bectx4\",\"source\":\"nmtuxmbs61\",\"target\":\"nmu5bdvy93\",\"sourceHandle\":\"o_in\",\"targetHandle\":\"in\"},{\"id\":\"e_nmu5cwp9ov\",\"source\":\"nmu5cwj5wu\",\"target\":\"nmtuxnnfb9\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmu5cwqozw\",\"source\":\"nmu5cwf0et\",\"target\":\"nmtuxng4e7\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmu5czmoi1\",\"source\":\"nmtuxmbs61\",\"target\":\"nmu5cwf0et\",\"sourceHandle\":\"o_in\",\"targetHandle\":\"a\"},{\"id\":\"e_nmu5d0ys94\",\"source\":\"nmtuxmbs61\",\"target\":\"nmu5cwj5wu\",\"sourceHandle\":\"o_in\",\"targetHandle\":\"a\"},{\"id\":\"e_nmu5fecz71\",\"source\":\"nmtuxe70r4\",\"target\":\"nmtuxmbs61\",\"sourceHandle\":\"in\",\"targetHandle\":\"c_in\"},{\"id\":\"e_nmu5fnv3qb\",\"source\":\"nmu5fnslra\",\"target\":\"nmu5fnf3f6\",\"sourceHandle\":null,\"targetHandle\":\"a\"},{\"id\":\"e_nmu5gi7rr2\",\"source\":\"nmu5fnf3f6\",\"target\":\"nmu5gi41a1\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmuf4k5ba2\",\"source\":\"nmuf4k2ya1\",\"target\":\"nmu5fnin77\",\"sourceHandle\":null,\"targetHandle\":\"a\"},{\"id\":\"e_nmugb0o561\",\"source\":\"nmu5gi41a1\",\"target\":\"nmtuxmbs61\",\"sourceHandle\":null,\"targetHandle\":\"c_status\"},{\"id\":\"e_nmugg7tg52\",\"source\":\"nmu5fnin77\",\"target\":\"nmugg7o1q1\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmuggbhou6\",\"source\":\"nmugg7o1q1\",\"target\":\"nmuggb9bo5\",\"sourceHandle\":null,\"targetHandle\":\"c_status\"},{\"id\":\"e_nmuggbn047\",\"source\":\"nmtuxe70r4\",\"target\":\"nmuggb9bo5\",\"sourceHandle\":\"out\",\"targetHandle\":\"c_out\"},{\"id\":\"e_nmuggbyym8\",\"source\":\"nmuggb9bo5\",\"target\":\"nmu5cwj5wu\",\"sourceHandle\":\"o_out\",\"targetHandle\":\"b\"},{\"id\":\"e_nmuggc5b39\",\"source\":\"nmuggb9bo5\",\"target\":\"nmu5bdvy93\",\"sourceHandle\":\"o_out\",\"targetHandle\":\"s2\"},{\"id\":\"e_nmuggcajua\",\"source\":\"nmuggb9bo5\",\"target\":\"nmtuxn5vf5\",\"sourceHandle\":\"o_out\",\"targetHandle\":\"in\"},{\"id\":\"e_nmuggcdlcb\",\"source\":\"nmuggb9bo5\",\"target\":\"nmu5cwf0et\",\"sourceHandle\":\"o_out\",\"targetHandle\":\"b\"},{\"id\":\"e_nmuggtjl62\",\"source\":\"nmtuxe70r4\",\"target\":\"nmuggqpv01\",\"sourceHandle\":\"in\",\"targetHandle\":\"in1\"},{\"id\":\"e_nmuggtqdm3\",\"source\":\"nmtuxe70r4\",\"target\":\"nmuggqpv01\",\"sourceHandle\":\"out\",\"targetHandle\":\"in2\"},{\"id\":\"e_nmuggu5ww4\",\"source\":\"nmuggqpv01\",\"target\":\"nmu5fnf3f6\",\"sourceHandle\":\"out0\",\"targetHandle\":\"when\"},{\"id\":\"e_nmuggu75l5\",\"source\":\"nmuggqpv01\",\"target\":\"nmu5fnin77\",\"sourceHandle\":\"out1\",\"targetHandle\":\"when\"}]},\"variables\":[{\"name\":\"total\",\"var\":\"total\"},{\"name\":\"total_counter\",\"var\":\"total_counter\"},{\"name\":\"debug_total\",\"var\":\"debug_total\"},{\"name\":\"status\",\"var\":\"status\"},{\"name\":\"out\",\"var\":\"out\"},{\"name\":\"in\",\"var\":\"in\"},{\"name\":\"status_out\",\"var\":\"status_out\"},{\"name\":\"STATUS_IN\",\"var\":\"status_in\"},{\"name\":\"status_2\",\"var\":\"status_2\"},{\"name\":\"status_out_2\",\"var\":\"status_out_2\"}],\"zone_drawn\":[]}]}"
+dashboard_json = "{\"pages\":[{\"id\":\"main\",\"name\":\"Dashboard\",\"size\":\"medium\",\"widgets\":[{\"id\":\"video_mttrm9s80\",\"title\":\"Live video\",\"kind\":\"video\",\"source\":\"stat\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":6,\"h\":6},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtuxoce60\",\"title\":\"In\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"sum\",\"field\":\"in\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"people_counting\",\"columns\":[{\"name\":\"in\",\"type\":\"number\"},{\"name\":\"out\",\"type\":\"number\"},{\"name\":\"status\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":0,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxn1cx3\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtuxoi9h1\",\"title\":\"Out\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"sum\",\"field\":\"out\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"people_counting\",\"columns\":[{\"name\":\"in\",\"type\":\"number\"},{\"name\":\"out\",\"type\":\"number\"},{\"name\":\"status\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":9,\"y\":0,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxn5vf5\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtuxon832\",\"title\":\"Inside\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_arithmetic_f0et_value\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":3,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxng4e7\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mtuxos9z3\",\"title\":\"Crossing\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_arithmetic_j5wu_value\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":9,\"y\":3,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxnnfb9\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]},{\"id\":\"overview\",\"name\":\"Overview\",\"size\":\"small\",\"widgets\":[{\"id\":\"tile_mu56djti0\",\"title\":\"Total Enter (Day)\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"sum\",\"field\":\"in\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"people_counting\",\"columns\":[{\"name\":\"in\",\"type\":\"number\"},{\"name\":\"out\",\"type\":\"number\"},{\"name\":\"status\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":3,\"h\":4},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxn1cx3\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mu56dqdj1\",\"title\":\"Total Out (Day)\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"sum\",\"field\":\"out\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"people_counting\",\"columns\":[{\"name\":\"in\",\"type\":\"number\"},{\"name\":\"out\",\"type\":\"number\"},{\"name\":\"status\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":3,\"y\":0,\"w\":3,\"h\":4},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmtuxn5vf5\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"table_mu5bc03n0\",\"title\":\"People Counting Log\",\"kind\":\"table\",\"source\":\"dataset\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"count\",\"field\":\"\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"\",\"filters\":{}},\"dataset\":\"people_counting\",\"columns\":[{\"name\":\"in\",\"type\":\"number\"},{\"name\":\"out\",\"type\":\"number\"},{\"name\":\"status\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":4,\"w\":12,\"h\":8},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmu5bb3ni1\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"area_mu5bf9ck2\",\"title\":\"Total People Enter (Day/Days)\",\"kind\":\"area\",\"source\":\"history\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":0,\"w\":6,\"h\":4},\"status\":{},\"states\":[],\"range\":\"page\",\"node\":\"nmu5bdvy93\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[{\"source\":\"dataset\",\"label\":\"Enter\",\"color\":\"\",\"dataset\":\"people_counting\",\"columns\":[{\"name\":\"in\",\"type\":\"number\"},{\"name\":\"out\",\"type\":\"number\"},{\"name\":\"status\",\"type\":\"text\"}],\"field\":\"in\",\"ts_field\":\"\",\"agg\":\"sum\",\"query\":{\"agg\":\"sum\",\"group_by\":\"\",\"range\":\"page\",\"filters\":{}},\"id\":\"s1\"},{\"source\":\"dataset\",\"label\":\"Leave\",\"color\":\"\",\"dataset\":\"people_counting\",\"columns\":[{\"name\":\"in\",\"type\":\"number\"},{\"name\":\"out\",\"type\":\"number\"},{\"name\":\"status\",\"type\":\"text\"}],\"field\":\"out\",\"ts_field\":\"\",\"agg\":\"sum\",\"query\":{\"agg\":\"sum\",\"group_by\":\"\",\"range\":\"page\",\"filters\":{}},\"id\":\"s2\"}],\"interval\":\"\"}]}]}"
+tables_json = "[{\"key\":\"people_counting\",\"name\":\"People Counting\",\"columns\":[{\"name\":\"in\",\"type\":\"number\"},{\"name\":\"out\",\"type\":\"number\"},{\"name\":\"status\",\"type\":\"text\"}]}]"
+settings_json = "{\"capture\":{\"snap\":false,\"record\":false},\"hud\":{\"model\":false,\"camera\":false,\"hailo_fps\":true,\"camera_fps\":true},\"confidence\":0.45}"
 
 [formats.counting.zone]
-mode = "optional"
-hint = ""
+mode = "area_line"
+hint = "Draw one counting line and one area on the Detection page."
 
 [[formats.counting.widgets]]
-id = "verdict_mtlasa040"
-title = "People enter zone"
-kind = "verdict"
-source = "stat"
-key = "fn_if_else_if_1c81_b0_active"
-span = 4
-capability = ""
-color = ""
-bg = ""
-template = "plain"
-anim = ""
-anim_replay = false
-text = ""
-unit = ""
-format = ""
-sub = ""
-label_size = "medium"
-value_size = "medium"
-camera = ""
-limit = 15
-query = {  }
-dataset = ""
-columns = []
-sql = ""
-tables = []
-grid = { x = 6, y = 0, w = 6, h = 3 }
-status = {  }
-states = [{ value = 0.0, label = "COMPLIANT", tone = "ok" }, { value = 1.0, label = "VIOLATION", tone = "alert" }]
-range = ""
-node = "nmtlaqcwq1"
-bands = {  }
-by_day = false
-series = []
-interval = ""
-
-[[formats.counting.widgets]]
-id = "video_mttkyu0m1"
+id = "video_mttrm9s80"
 title = "Live video"
 kind = "video"
 source = "stat"
@@ -84,6 +48,7 @@ status = {  }
 states = []
 range = ""
 node = ""
+inject = {  }
 bands = {  }
 by_day = false
 series = []
@@ -93,8 +58,8 @@ interval = ""
 id = "tile_mtuxoce60"
 title = "In"
 kind = "tile"
-source = "stat"
-key = "fn_line_counter_70r4_in"
+source = "dataset"
+key = ""
 span = 1
 capability = ""
 color = ""
@@ -110,16 +75,17 @@ label_size = "medium"
 value_size = "huge"
 camera = ""
 limit = 15
-query = {  }
-dataset = ""
-columns = []
+query = { agg = "sum", field = "in", group_by = "", bucket = "", range = "page", filters = {  } }
+dataset = "people_counting"
+columns = [{ name = "in", type = "number" }, { name = "out", type = "number" }, { name = "status", type = "text" }]
 sql = ""
 tables = []
-grid = { x = 6, y = 6, w = 3, h = 3 }
+grid = { x = 6, y = 0, w = 3, h = 3 }
 status = {  }
 states = []
 range = ""
 node = "nmtuxn1cx3"
+inject = {  }
 bands = {  }
 by_day = false
 series = []
@@ -129,8 +95,8 @@ interval = ""
 id = "tile_mtuxoi9h1"
 title = "Out"
 kind = "tile"
-source = "stat"
-key = "fn_line_counter_70r4_out"
+source = "dataset"
+key = ""
 span = 1
 capability = ""
 color = ""
@@ -146,16 +112,17 @@ label_size = "medium"
 value_size = "huge"
 camera = ""
 limit = 15
-query = {  }
-dataset = ""
-columns = []
+query = { agg = "sum", field = "out", group_by = "", bucket = "", range = "page", filters = {  } }
+dataset = "people_counting"
+columns = [{ name = "in", type = "number" }, { name = "out", type = "number" }, { name = "status", type = "text" }]
 sql = ""
 tables = []
-grid = { x = 9, y = 6, w = 3, h = 3 }
+grid = { x = 9, y = 0, w = 3, h = 3 }
 status = {  }
 states = []
 range = ""
 node = "nmtuxn5vf5"
+inject = {  }
 bands = {  }
 by_day = false
 series = []
@@ -166,7 +133,7 @@ id = "tile_mtuxon832"
 title = "Inside"
 kind = "tile"
 source = "stat"
-key = "fn_line_counter_70r4_net"
+key = "fn_arithmetic_f0et_value"
 span = 1
 capability = ""
 color = ""
@@ -187,11 +154,12 @@ dataset = ""
 columns = []
 sql = ""
 tables = []
-grid = { x = 6, y = 9, w = 3, h = 3 }
+grid = { x = 6, y = 3, w = 3, h = 3 }
 status = {  }
 states = []
 range = ""
 node = "nmtuxng4e7"
+inject = {  }
 bands = {  }
 by_day = false
 series = []
@@ -202,43 +170,7 @@ id = "tile_mtuxos9z3"
 title = "Crossing"
 kind = "tile"
 source = "stat"
-key = "fn_line_counter_70r4_cross"
-span = 1
-capability = ""
-color = ""
-bg = ""
-template = "plain"
-anim = ""
-anim_replay = false
-text = ""
-unit = ""
-format = ""
-sub = ""
-label_size = "medium"
-value_size = "huge"
-camera = ""
-limit = 15
-query = {  }
-dataset = ""
-columns = []
-sql = ""
-tables = []
-grid = { x = 9, y = 9, w = 3, h = 3 }
-status = {  }
-states = []
-range = ""
-node = "nmtuxnnfb9"
-bands = {  }
-by_day = false
-series = []
-interval = ""
-
-[[formats.counting.widgets]]
-id = "tile_mtvajo5m0"
-title = "Zone Counting Now"
-kind = "tile"
-source = "stat"
-key = "fn_counter_z868_count"
+key = "fn_arithmetic_j5wu_value"
 span = 1
 capability = ""
 color = ""
@@ -263,43 +195,8 @@ grid = { x = 9, y = 3, w = 3, h = 3 }
 status = {  }
 states = []
 range = ""
-node = "nmtva8s549"
-bands = {  }
-by_day = false
-series = []
-interval = ""
-
-[[formats.counting.widgets]]
-id = "tile_mtvakqe71"
-title = "Live People Counting"
-kind = "tile"
-source = "stat"
-key = "fn_in_frame_now_s547_count"
-span = 1
-capability = ""
-color = ""
-bg = ""
-template = "plain"
-anim = ""
-anim_replay = false
-text = ""
-unit = "Total Counti"
-format = ""
-sub = ""
-label_size = "medium"
-value_size = "huge"
-camera = ""
-limit = 15
-query = {  }
-dataset = ""
-columns = []
-sql = ""
-tables = []
-grid = { x = 6, y = 3, w = 3, h = 3 }
-status = {  }
-states = []
-range = ""
-node = "nmtva8s546"
+node = "nmtuxnnfb9"
+inject = {  }
 bands = {  }
 by_day = false
 series = []
@@ -311,14 +208,125 @@ hint = "Detect and count the objects you choose on a live camera."
 category = "built-in"
 model = "yolov8n"
 classes = ["person", "chair"]
-widgets = []
-workflows_json = "{\"version\":3,\"workflows\":[{\"id\":\"main\",\"name\":\"Workflow\",\"description\":\"Imported from this system's existing functions\",\"enabled\":true,\"author\":\"\",\"created\":0,\"modified\":0,\"graph\":{\"version\":10,\"nodes\":[{\"id\":\"m1\",\"type\":\"source.detection\",\"position\":{\"x\":-492.0,\"y\":-105.0},\"data\":{}},{\"id\":\"nmsya3cb91\",\"type\":\"filter.class\",\"position\":{\"x\":-239.0,\"y\":-105.0},\"data\":{\"classes\":[]}}],\"edges\":[]}}]}"
-dashboard_json = "{\"pages\":[{\"id\":\"main\",\"name\":\"Dashboard\",\"widgets\":[]}]}"
-settings_json = "{\"capture\":{\"snap\":false,\"record\":false},\"hud\":{\"model\":false,\"camera\":false,\"hailo_fps\":false,\"camera_fps\":true}}"
+workflows_json = "{\"version\":3,\"workflows\":[{\"id\":\"main\",\"name\":\"Workflow\",\"description\":\"Imported from this system's existing functions\",\"enabled\":true,\"author\":\"dev\",\"created\":0,\"modified\":1790320815,\"graph\":{\"version\":10,\"nodes\":[{\"id\":\"m1\",\"type\":\"source.detection\",\"position\":{\"x\":-480.0,\"y\":-133.0},\"data\":{}},{\"id\":\"nmsya3cb91\",\"type\":\"filter.class\",\"position\":{\"x\":-193.04852803145116,\"y\":-133.0},\"data\":{\"classes\":[\"person\",\"chair\"]}},{\"id\":\"nmuez777c2\",\"type\":\"analytics.object\",\"position\":{\"x\":85.07637350330108,\"y\":-131.93949357481836},\"data\":{\"fnId\":\"object_detection_77c2\",\"name\":\"Object Detection\",\"enter_after_s\":0,\"leave_after_s\":0,\"pinned\":false}},{\"id\":\"nmuez8j066\",\"type\":\"math.setvar\",\"position\":{\"x\":771.9794526884341,\"y\":-385.7096786978968},\"data\":{\"fnId\":\"set_variable_j066\",\"op\":\"set\",\"value_type\":\"auto\",\"a_value\":0,\"b_value\":\"Chair Detected\",\"c_value\":0,\"name\":\"Set Variable\",\"pinned\":false}},{\"id\":\"nmuez958ra\",\"type\":\"math.setvar\",\"position\":{\"x\":774.2614802290743,\"y\":-179.68883937518706},\"data\":{\"fnId\":\"set_variable_58ra\",\"op\":\"set\",\"value_type\":\"auto\",\"a_value\":0,\"b_value\":\"People Detected\",\"c_value\":0,\"name\":\"Set Variable\",\"pinned\":false}},{\"id\":\"nmuezc71bo\",\"type\":\"dashboard.card\",\"position\":{\"x\":1500.4753603946588,\"y\":-342.6017268806472},\"data\":{\"name\":\"Object Detection (1)\",\"metric\":\"\",\"kind\":\"tile\",\"unit\":\"\",\"sub\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{},\"format\":\"text\"}},{\"id\":\"nmuezltxu1\",\"type\":\"variable.ref\",\"position\":{\"x\":374.1924605070733,\"y\":-445.03236402170273},\"data\":{\"key\":\"fn_object_name_value\",\"io\":\"in\",\"value_type\":\"text\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60,\"pinned\":false}},{\"id\":\"nmuf0dt572\",\"type\":\"dashboard.card\",\"position\":{\"x\":1483.6474046628805,\"y\":32.65854838757741},\"data\":{\"name\":\"Object Detection (2)\",\"metric\":\"\",\"kind\":\"tile\",\"unit\":\"\",\"sub\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{},\"format\":\"text\"}},{\"id\":\"nmuf4j2h11\",\"type\":\"variable.ref\",\"position\":{\"x\":374.0495293457024,\"y\":-333.4726918930677},\"data\":{\"key\":\"fn_object_value\",\"io\":\"in\",\"value_type\":\"auto\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60}},{\"id\":\"nmuf4v0fh1\",\"type\":\"variable.ref\",\"position\":{\"x\":1187.0774545434915,\"y\":-352.9478069553961},\"data\":{\"key\":\"fn_object_type_value\",\"io\":\"auto\",\"value_type\":\"auto\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60,\"name\":\"object_type\"}},{\"id\":\"nmuf4vqev6\",\"type\":\"branch.cases\",\"position\":{\"x\":369.24415337030433,\"y\":-100.48699343852203},\"data\":{\"fnId\":\"if_else_if_qev6\",\"metric\":\"\",\"rules\":[{\"op\":\">\",\"value\":0,\"input\":\"in1\",\"more\":[]},{\"input\":\"in2\",\"op\":\">\",\"value\":0},{\"input\":\"in2\",\"op\":\"==\",\"value\":0,\"more\":[{\"link\":\"and\",\"input\":\"in1\",\"op\":\"==\",\"value\":0}]}],\"otherwise\":false,\"name\":\"If / Else if\",\"ctype\":\"compare\"}},{\"id\":\"nmuf4xxw81\",\"type\":\"math.setvar\",\"position\":{\"x\":778.5399496539235,\"y\":30.4252404284577},\"data\":{\"fnId\":\"set_variable_xw81\",\"op\":\"set\",\"value_type\":\"text\",\"a_value\":0,\"b_value\":\"No Object Detected\",\"c_value\":0,\"name\":\"Set Variable\"}},{\"id\":\"nmuf4yiqk3\",\"type\":\"variable.ref\",\"position\":{\"x\":363.92358573538496,\"y\":-217.76901468245566},\"data\":{\"key\":\"fn_no_object_value\",\"io\":\"in\",\"value_type\":\"auto\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60}},{\"id\":\"nmuf4zn687\",\"type\":\"variable.ref\",\"position\":{\"x\":1188.5846224676334,\"y\":23.95191618345575},\"data\":{\"key\":\"fn_object_type_2_value\",\"io\":\"auto\",\"value_type\":\"auto\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60,\"name\":\"object_type_2\"}},{\"id\":\"nmuglystl3\",\"type\":\"output.trigger\",\"position\":{\"x\":1506.872588187952,\"y\":-236.32021484893988},\"data\":{\"name\":\"Trigger Chair\",\"alert\":true,\"severity\":\"info\",\"message\":\"\",\"cooldown_s\":30,\"repeat\":\"cooldown\",\"draw\":false,\"box_color\":\"\",\"zone_color\":\"\",\"color_target\":\"box\"}},{\"id\":\"nmuglz80p5\",\"type\":\"output.trigger\",\"position\":{\"x\":1502.277794767964,\"y\":-113.40949086425724},\"data\":{\"name\":\"Trigger People\",\"alert\":true,\"severity\":\"info\",\"message\":\"\",\"cooldown_s\":30,\"repeat\":\"cooldown\",\"draw\":false,\"box_color\":\"\",\"zone_color\":\"\",\"color_target\":\"box\"}},{\"id\":\"nmuglzrls7\",\"type\":\"output.dataset\",\"position\":{\"x\":1876.7534584969972,\"y\":-251.2532934639014},\"data\":{\"dataset\":\"object_detection\",\"name\":\"object detection\",\"op\":\"insert\",\"mode\":\"alert\",\"interval_s\":60,\"min_interval_s\":0,\"sources\":{}}},{\"id\":\"nmuglztfd8\",\"type\":\"output.dataset\",\"position\":{\"x\":1881.3482519169854,\"y\":-127.19387112422163},\"data\":{\"dataset\":\"object_detection\",\"name\":\"object detection\",\"op\":\"insert\",\"mode\":\"alert\",\"interval_s\":60,\"min_interval_s\":0,\"sources\":{}}},{\"id\":\"nmugmf24s1\",\"type\":\"dashboard.card\",\"position\":{\"x\":2283.933838845649,\"y\":-312.9428699062553},\"data\":{\"name\":\"Object Detection Log\",\"metric\":\"\",\"kind\":\"tile\",\"unit\":\"\",\"sub\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"page\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmugmht7l1\",\"type\":\"dashboard.graph\",\"position\":{\"x\":2283.5,\"y\":-214.0},\"data\":{\"name\":\"People Detection\",\"metric\":\"\",\"kind\":\"area\",\"unit\":\"\",\"range\":\"page\",\"agg\":\"\",\"group_by\":\"\",\"bucket\":\"\",\"series\":{\"s2\":{\"agg\":\"sum\",\"query\":{\"range\":\"page\"},\"color\":\"#0af51a\"},\"s1\":{\"query\":{\"range\":\"page\"},\"agg\":\"sum\"}},\"series_n\":2,\"window\":\"follow\",\"bands\":{}}},{\"id\":\"nmugmr1cm5\",\"type\":\"dashboard.card\",\"position\":{\"x\":2278.5,\"y\":64.0},\"data\":{\"name\":\"Chair Detected\",\"metric\":\"\",\"kind\":\"tile\",\"unit\":\"\",\"sub\":\"\",\"window\":\"follow\",\"agg\":\"sum\",\"range\":\"page\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmugmr5gj7\",\"type\":\"dashboard.card\",\"position\":{\"x\":2280.5,\"y\":-28.0},\"data\":{\"name\":\"People Detected\",\"metric\":\"\",\"kind\":\"tile\",\"unit\":\"\",\"sub\":\"\",\"window\":\"follow\",\"agg\":\"sum\",\"range\":\"page\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}}],\"edges\":[{\"id\":\"e_nmuez6js91\",\"source\":\"m1\",\"target\":\"nmsya3cb91\",\"sourceHandle\":\"on\",\"targetHandle\":\"in\"},{\"id\":\"e_nmuez7i3r3\",\"source\":\"nmsya3cb91\",\"target\":\"nmuez777c2\",\"sourceHandle\":\"on\",\"targetHandle\":\"in\"},{\"id\":\"e_nmuezlxfo3\",\"source\":\"nmuezltxu1\",\"target\":\"nmuez8j066\",\"sourceHandle\":null,\"targetHandle\":\"a\"},{\"id\":\"e_nmuf4j6882\",\"source\":\"nmuf4j2h11\",\"target\":\"nmuez958ra\",\"sourceHandle\":null,\"targetHandle\":\"a\"},{\"id\":\"e_nmuf4v80d2\",\"source\":\"nmuez8j066\",\"target\":\"nmuf4v0fh1\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmuf4vao44\",\"source\":\"nmuf4v0fh1\",\"target\":\"nmuezc71bo\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmuf4vrz07\",\"source\":\"nmuez777c2\",\"target\":\"nmuf4vqev6\",\"sourceHandle\":\"chair\",\"targetHandle\":\"in1\"},{\"id\":\"e_nmuf4vt6c8\",\"source\":\"nmuez777c2\",\"target\":\"nmuf4vqev6\",\"sourceHandle\":\"person\",\"targetHandle\":\"in2\"},{\"id\":\"e_nmuf4w1n09\",\"source\":\"nmuf4vqev6\",\"target\":\"nmuez8j066\",\"sourceHandle\":\"out0\",\"targetHandle\":\"when\"},{\"id\":\"e_nmuf4w2tca\",\"source\":\"nmuf4vqev6\",\"target\":\"nmuez958ra\",\"sourceHandle\":\"out1\",\"targetHandle\":\"when\"},{\"id\":\"e_nmuf4yltk4\",\"source\":\"nmuf4yiqk3\",\"target\":\"nmuf4xxw81\",\"sourceHandle\":null,\"targetHandle\":\"a\"},{\"id\":\"e_nmuf4zpgc8\",\"source\":\"nmuf4zn687\",\"target\":\"nmuf0dt572\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmuf4zvqn9\",\"source\":\"nmuez958ra\",\"target\":\"nmuf4zn687\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmuf56702i\",\"source\":\"nmuf4vqev6\",\"target\":\"nmuf4xxw81\",\"sourceHandle\":\"out2\",\"targetHandle\":\"when\"},{\"id\":\"e_nmuf6wt5a4\",\"source\":\"nmuf4xxw81\",\"target\":\"nmuf4zn687\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmuf753xs1\",\"source\":\"nmuf4xxw81\",\"target\":\"nmuf4v0fh1\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmugm0djbc\",\"source\":\"nmuglystl3\",\"target\":\"nmuglzrls7\",\"sourceHandle\":null,\"targetHandle\":\"trig\"},{\"id\":\"e_nmugm0fgsd\",\"source\":\"nmuglz80p5\",\"target\":\"nmuglztfd8\",\"sourceHandle\":null,\"targetHandle\":\"trig\"},{\"id\":\"e_nmugm0pcme\",\"source\":\"nmuez958ra\",\"target\":\"nmuglztfd8\",\"sourceHandle\":null,\"targetHandle\":\"c_object_type\"},{\"id\":\"e_nmugm0rp0f\",\"source\":\"nmuez8j066\",\"target\":\"nmuglzrls7\",\"sourceHandle\":null,\"targetHandle\":\"c_object_type\"},{\"id\":\"e_nmugm26dzk\",\"source\":\"nmuf4vqev6\",\"target\":\"nmuglystl3\",\"sourceHandle\":\"out0\",\"targetHandle\":\"in\"},{\"id\":\"e_nmugm28bvl\",\"source\":\"nmuf4vqev6\",\"target\":\"nmuglz80p5\",\"sourceHandle\":\"out1\",\"targetHandle\":\"in\"},{\"id\":\"e_nmugmf4ri2\",\"source\":\"nmuglzrls7\",\"target\":\"nmugmf24s1\",\"sourceHandle\":\"table\",\"targetHandle\":\"in\"},{\"id\":\"e_nmugmnkv51\",\"source\":\"nmuez777c2\",\"target\":\"nmuglzrls7\",\"sourceHandle\":\"chair\",\"targetHandle\":\"c_chair_detected\"},{\"id\":\"e_nmugmnnpf2\",\"source\":\"nmuez777c2\",\"target\":\"nmuglztfd8\",\"sourceHandle\":\"person\",\"targetHandle\":\"c_people_detected\"},{\"id\":\"e_nmugmnqtt3\",\"source\":\"nmuglzrls7\",\"target\":\"nmugmht7l1\",\"sourceHandle\":\"o_people_detected\",\"targetHandle\":\"in\"},{\"id\":\"e_nmugmnscz4\",\"source\":\"nmuglzrls7\",\"target\":\"nmugmht7l1\",\"sourceHandle\":\"o_chair_detected\",\"targetHandle\":\"s2\"},{\"id\":\"e_nmugmrjem8\",\"source\":\"nmuglztfd8\",\"target\":\"nmugmr5gj7\",\"sourceHandle\":\"o_people_detected\",\"targetHandle\":\"in\"},{\"id\":\"e_nmugmrmmo9\",\"source\":\"nmuglztfd8\",\"target\":\"nmugmr1cm5\",\"sourceHandle\":\"o_chair_detected\",\"targetHandle\":\"in\"}]},\"variables\":[{\"name\":\"object\",\"var\":\"object\"},{\"name\":\"object_name\",\"var\":\"object_name\"},{\"name\":\"object type\",\"var\":\"object_type\"},{\"name\":\"no object\",\"var\":\"no_object\"},{\"name\":\"object type 2\",\"var\":\"object_type_2\"}]}]}"
+dashboard_json = "{\"pages\":[{\"id\":\"main\",\"name\":\"Dashboard\",\"size\":\"small\",\"widgets\":[{\"id\":\"video_muezclme0\",\"title\":\"Live video\",\"kind\":\"video\",\"source\":\"stat\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":8,\"h\":8},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_muf54dlw0\",\"title\":\"Object Detection (1)\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_object_type_value\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"text\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":8,\"y\":0,\"w\":4,\"h\":4},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmuezc71bo\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_muf54h961\",\"title\":\"Object Detection (2)\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_object_type_2_value\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"text\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":8,\"y\":4,\"w\":4,\"h\":4},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmuf0dt572\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]},{\"id\":\"overview\",\"name\":\"Overview\",\"size\":\"medium\",\"widgets\":[{\"id\":\"table_mugmhd2a0\",\"title\":\"Object Detection Log\",\"kind\":\"table\",\"source\":\"dataset\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"fade_in\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"large\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"count\",\"field\":\"\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"object_detection\",\"columns\":[{\"name\":\"object_type\",\"type\":\"text\"},{\"name\":\"people_detected\",\"type\":\"number\"},{\"name\":\"chair_detected\",\"type\":\"number\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":0,\"w\":6,\"h\":7},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmugmf24s1\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"area_mugmo8k40\",\"title\":\"People Detection\",\"kind\":\"area\",\"source\":\"history\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"fade_in\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":2,\"w\":6,\"h\":5},\"status\":{},\"states\":[],\"range\":\"page\",\"node\":\"nmugmht7l1\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[{\"source\":\"dataset\",\"label\":\"people detected\",\"color\":\"\",\"dataset\":\"object_detection\",\"columns\":[{\"name\":\"object_type\",\"type\":\"text\"},{\"name\":\"people_detected\",\"type\":\"number\"},{\"name\":\"chair_detected\",\"type\":\"number\"}],\"field\":\"people_detected\",\"ts_field\":\"\",\"agg\":\"sum\",\"query\":{\"agg\":\"sum\",\"group_by\":\"\",\"range\":\"page\",\"filters\":{}},\"id\":\"s1\"},{\"source\":\"dataset\",\"label\":\"chair detected\",\"color\":\"#0af51a\",\"dataset\":\"object_detection\",\"columns\":[{\"name\":\"object_type\",\"type\":\"text\"},{\"name\":\"people_detected\",\"type\":\"number\"},{\"name\":\"chair_detected\",\"type\":\"number\"}],\"field\":\"chair_detected\",\"ts_field\":\"\",\"agg\":\"sum\",\"query\":{\"agg\":\"sum\",\"group_by\":\"\",\"range\":\"page\",\"filters\":{}},\"id\":\"s2\"}],\"interval\":\"\"},{\"id\":\"tile_mugmshyb1\",\"title\":\"Chair Detected\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"fade_in\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"large\",\"value_size\":\"large\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"sum\",\"field\":\"chair_detected\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"object_detection\",\"columns\":[{\"name\":\"object_type\",\"type\":\"text\"},{\"name\":\"people_detected\",\"type\":\"number\"},{\"name\":\"chair_detected\",\"type\":\"number\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":3,\"h\":2},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmugmr1cm5\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mugmsqk42\",\"title\":\"People Detected\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"fade_in\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"large\",\"value_size\":\"large\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"sum\",\"field\":\"people_detected\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"object_detection\",\"columns\":[{\"name\":\"object_type\",\"type\":\"text\"},{\"name\":\"people_detected\",\"type\":\"number\"},{\"name\":\"chair_detected\",\"type\":\"number\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":3,\"y\":0,\"w\":3,\"h\":2},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmugmr5gj7\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]}]}"
+tables_json = "[{\"key\":\"object_detection\",\"name\":\"object detection\",\"columns\":[{\"name\":\"object_type\",\"type\":\"text\"},{\"name\":\"people_detected\",\"type\":\"number\"},{\"name\":\"chair_detected\",\"type\":\"number\"}]}]"
+settings_json = "{\"capture\":{\"snap\":false,\"record\":false},\"hud\":{\"model\":false,\"camera\":false,\"hailo_fps\":false,\"camera_fps\":true},\"confidence\":0.6}"
 
 [formats.object_detection.zone]
-mode = "optional"
+mode = "none"
 hint = ""
+
+[[formats.object_detection.widgets]]
+id = "video_muezclme0"
+title = "Live video"
+kind = "video"
+source = "stat"
+key = ""
+span = 4
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 0, y = 0, w = 8, h = 8 }
+status = {  }
+states = []
+range = ""
+node = ""
+inject = {  }
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.object_detection.widgets]]
+id = "tile_muf54dlw0"
+title = "Object Detection (1)"
+kind = "tile"
+source = "stat"
+key = "fn_object_type_value"
+span = 1
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = "text"
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 8, y = 0, w = 4, h = 4 }
+status = {  }
+states = []
+range = ""
+node = "nmuezc71bo"
+inject = {  }
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.object_detection.widgets]]
+id = "tile_muf54h961"
+title = "Object Detection (2)"
+kind = "tile"
+source = "stat"
+key = "fn_object_type_2_value"
+span = 1
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = "text"
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 8, y = 4, w = 4, h = 4 }
+status = {  }
+states = []
+range = ""
+node = "nmuf0dt572"
+inject = {  }
+bands = {  }
+by_day = false
+series = []
+interval = ""
 
 [formats.blank_canvas]
 label = "Blank Canvas"
@@ -341,49 +349,14 @@ hint = "Alert when someone enters an area that should stay clear."
 category = "built-in"
 model = "yolov8s"
 classes = ["person"]
-workflows_json = "{\"version\":3,\"workflows\":[{\"id\":\"main\",\"name\":\"Workflow\",\"description\":\"Imported from this system's existing functions\",\"enabled\":true,\"author\":\"\",\"created\":0,\"modified\":0,\"graph\":{\"version\":10,\"nodes\":[{\"id\":\"m1\",\"type\":\"source.detection\",\"position\":{\"x\":357.1427015702229,\"y\":108.78607489427895},\"data\":{}},{\"id\":\"zn_c274fca580_a\",\"type\":\"analytics.violations\",\"position\":{\"x\":960.0,\"y\":60.0},\"data\":{\"mode\":\"realtime\",\"fnId\":\"z_zone_mss97pz4_amss97vcn0_viol\",\"name\":\"Zone 1 violations\",\"OID\":false}},{\"id\":\"zn_c274fca580_f\",\"type\":\"filter.class\",\"position\":{\"x\":657.1427015702229,\"y\":108.78607489427895},\"data\":{\"classes\":[\"person\"]}},{\"id\":\"zn_c274fca580_z0\",\"type\":\"zone.ref\",\"position\":{\"x\":658.6811631086845,\"y\":205.0720580447112},\"data\":{\"zone\":\"\"}},{\"id\":\"zn_c274fca580_al\",\"type\":\"output.alert\",\"position\":{\"x\":1260.0,\"y\":60.0},\"data\":{\"metric\":\"count\",\"op\":\">=\",\"value\":1,\"severity\":\"crit\",\"message\":\"at least 1 in Zone 1\",\"cooldown_s\":30}},{\"id\":\"zn_c274fca580_v\",\"type\":\"dashboard.card\",\"position\":{\"x\":1560.0,\"y\":59.42565082250148},\"data\":{\"name\":\"Zone 1\",\"metric\":\"active\",\"kind\":\"verdict\",\"color\":\"\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"template\":\"plain\",\"bg\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1}},{\"id\":\"n_trig_zn_c274fca580_a\",\"type\":\"output.alert\",\"position\":{\"x\":1281.354345932933,\"y\":188.4923388597731},\"data\":{\"metric\":\"count\",\"op\":\">=\",\"value\":1,\"severity\":\"crit\",\"message\":\"at least 1 in Zone 1\",\"cooldown_s\":30,\"box_color\":\"\",\"color_target\":\"box\"}}],\"edges\":[{\"id\":\"ezn_c274fca580_al\",\"source\":\"zn_c274fca580_a\",\"target\":\"zn_c274fca580_al\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"ezn_c274fca580_v\",\"source\":\"zn_c274fca580_al\",\"target\":\"zn_c274fca580_v\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"ezn_c274fca580_f\",\"source\":\"m1\",\"target\":\"zn_c274fca580_f\",\"sourceHandle\":null,\"targetHandle\":null},{\"id\":\"e_zmig_zn_c274fca580_f_zn_c274fca580_a\",\"source\":\"zn_c274fca580_f\",\"target\":\"zn_c274fca580_a\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmtazrjm51\",\"source\":\"zn_c274fca580_z0\",\"target\":\"zn_c274fca580_a\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_trig_zn_c274fca580_a\",\"source\":\"zn_c274fca580_a\",\"target\":\"n_trig_zn_c274fca580_a\",\"sourceHandle\":null,\"targetHandle\":\"in\"}]}}]}"
-dashboard_json = "{\"pages\":[{\"id\":\"main\",\"name\":\"Dashboard\",\"widgets\":[{\"id\":\"verdict_mss9z4vp1\",\"title\":\"Restricted Zone\",\"kind\":\"verdict\",\"source\":\"stat\",\"key\":\"fn_z_zone_mss97pz4_zoneviol_active\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":7,\"y\":0,\"w\":5,\"h\":4},\"status\":{},\"states\":[{\"value\":0.0,\"label\":\"COMPLIANT\",\"tone\":\"ok\"},{\"value\":1.0,\"label\":\"VIOLATION\",\"tone\":\"alert\"}],\"range\":\"\",\"node\":\"nmss9xusi6\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"video_mss9zavc2\",\"title\":\"Live video\",\"kind\":\"video\",\"source\":\"stat\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":7,\"h\":4},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]},{\"id\":\"overview\",\"name\":\"Overview\",\"widgets\":[{\"id\":\"wf_zn_c274fca580_v\",\"title\":\"Zone 1\",\"kind\":\"verdict\",\"source\":\"stat\",\"key\":\"fn_z_zone_mss97pz4_amss97vcn0_viol_active\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{},\"status\":{},\"states\":[{\"value\":0.0,\"label\":\"COMPLIANT\",\"tone\":\"ok\"},{\"value\":1.0,\"label\":\"VIOLATION\",\"tone\":\"alert\"}],\"range\":\"\",\"node\":\"\",\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]}],\"hidden\":[\"wf_zn_c274fca580_v\"]}"
-settings_json = "{\"capture\":{\"snap\":false,\"record\":false},\"hud\":{\"model\":false,\"camera\":false,\"hailo_fps\":false,\"camera_fps\":false}}"
+workflows_json = "{\"version\":3,\"workflows\":[{\"id\":\"main\",\"name\":\"Workflow\",\"description\":\"Imported from this system's existing functions\",\"enabled\":true,\"author\":\"dev\",\"created\":0,\"modified\":1790668597,\"graph\":{\"version\":10,\"nodes\":[{\"id\":\"m1\",\"type\":\"source.detection\",\"position\":{\"x\":357.1427015702229,\"y\":108.78607489427895},\"data\":{}},{\"id\":\"nmuf94goc1\",\"type\":\"branch.cases\",\"position\":{\"x\":1239.5343285109172,\"y\":59.47781861783983},\"data\":{\"fnId\":\"if_else_if_goc1\",\"metric\":\"\",\"rules\":[{\"op\":\">\",\"value\":0,\"input\":\"in1\"}],\"otherwise\":true,\"name\":\"If / Else if\"}},{\"id\":\"nmuf94s5e3\",\"type\":\"output.trigger\",\"position\":{\"x\":1522.774894395473,\"y\":63.05013249710476},\"data\":{\"name\":\"Violate\",\"alert\":true,\"severity\":\"warn\",\"message\":\"\",\"cooldown_s\":30,\"repeat\":\"cooldown\",\"draw\":true,\"box_color\":\"#FF0000\",\"zone_color\":\"#FF0000\",\"color_target\":\"box\"}},{\"id\":\"nmuf958zs5\",\"type\":\"dashboard.card\",\"position\":{\"x\":1852.8326922602414,\"y\":61.40144709121711},\"data\":{\"name\":\"Violation\",\"metric\":\"\",\"kind\":\"verdict\",\"unit\":\"\",\"sub\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmufdfdmj1\",\"type\":\"output.dataset\",\"position\":{\"x\":1856.6348479244664,\"y\":219.1778723744364},\"data\":{\"dataset\":\"violation\",\"name\":\"violation\",\"op\":\"insert\",\"mode\":\"alert\",\"interval_s\":60,\"min_interval_s\":0,\"sources\":{}}},{\"id\":\"nmufdh9cz4\",\"type\":\"variable.ref\",\"position\":{\"x\":1247.5799900601082,\"y\":347.4198944009183},\"data\":{\"key\":\"fn_status_value\",\"io\":\"in\",\"value_type\":\"text\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60}},{\"id\":\"nmufdhism5\",\"type\":\"math.setvar\",\"position\":{\"x\":1522.390627674999,\"y\":259.54709477566036},\"data\":{\"fnId\":\"set_variable_ism5\",\"op\":\"set\",\"value_type\":\"text\",\"a_value\":0,\"b_value\":\"Violate\",\"c_value\":0,\"name\":\"Set Variable\"}},{\"id\":\"nmufdk66mg\",\"type\":\"variable.ref\",\"position\":{\"x\":1857.7033150957493,\"y\":358.6919346396056},\"data\":{\"key\":\"fn_status_out_value\",\"io\":\"auto\",\"value_type\":\"text\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60,\"name\":\"status_out\"}},{\"id\":\"zn_c274fca580_a\",\"type\":\"analytics.counter\",\"position\":{\"x\":960.0,\"y\":60.0},\"data\":{\"fnId\":\"z_zone_mss97pz4_amss97vcn0_viol\",\"name\":\"Zone 1 violations\",\"OID\":true}},{\"id\":\"zn_c274fca580_f\",\"type\":\"filter.class\",\"position\":{\"x\":657.1427015702229,\"y\":108.78607489427895},\"data\":{\"classes\":[\"person\"]}},{\"id\":\"zn_c274fca580_z0\",\"type\":\"zone.ref\",\"position\":{\"x\":658.6811631086845,\"y\":205.0720580447112},\"data\":{\"zone\":\"\"}},{\"id\":\"nmufdqpu9n\",\"type\":\"dashboard.graph\",\"position\":{\"x\":2211.4358286804495,\"y\":160.67372550809813},\"data\":{\"name\":\"total violation\",\"metric\":\"\",\"kind\":\"area\",\"unit\":\"\",\"range\":\"page\",\"agg\":\"\",\"group_by\":\"\",\"bucket\":\"\",\"series\":{},\"series_n\":2,\"window\":\"follow\",\"bands\":{}}},{\"id\":\"nmufe4bznq\",\"type\":\"dashboard.card\",\"position\":{\"x\":2212.8208204616967,\"y\":333.08362690877016},\"data\":{\"name\":\"Total Violation\",\"metric\":\"\",\"kind\":\"tile\",\"unit\":\"\",\"sub\":\"\",\"window\":\"follow\",\"agg\":\"unique\",\"range\":\"page\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmufe83qtv\",\"type\":\"dashboard.card\",\"position\":{\"x\":2213.142701570223,\"y\":56.786074894278954},\"data\":{\"name\":\"Violation Log\",\"metric\":\"\",\"kind\":\"tile\",\"unit\":\"\",\"sub\":\"\",\"window\":\"follow\",\"agg\":\"\",\"range\":\"page\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"limit\":20,\"bands\":{}}}],\"edges\":[{\"id\":\"ezn_c274fca580_f\",\"source\":\"m1\",\"target\":\"zn_c274fca580_f\",\"sourceHandle\":\"on\",\"targetHandle\":null},{\"id\":\"e_zmig_zn_c274fca580_f_zn_c274fca580_a\",\"source\":\"zn_c274fca580_f\",\"target\":\"zn_c274fca580_a\",\"sourceHandle\":\"on\",\"targetHandle\":\"in\"},{\"id\":\"e_nmtazrjm51\",\"source\":\"zn_c274fca580_z0\",\"target\":\"zn_c274fca580_a\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmuf94jbc2\",\"source\":\"zn_c274fca580_a\",\"target\":\"nmuf94goc1\",\"sourceHandle\":\"out\",\"targetHandle\":\"in1\"},{\"id\":\"e_nmuf94ulc4\",\"source\":\"nmuf94goc1\",\"target\":\"nmuf94s5e3\",\"sourceHandle\":\"out0\",\"targetHandle\":\"in\"},{\"id\":\"e_nmuf95bnu6\",\"source\":\"nmuf94s5e3\",\"target\":\"nmuf958zs5\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmuf9862w7\",\"source\":\"zn_c274fca580_z0\",\"target\":\"nmuf94s5e3\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmufdfjoe2\",\"source\":\"nmuf94s5e3\",\"target\":\"nmufdfdmj1\",\"sourceHandle\":null,\"targetHandle\":\"trig\"},{\"id\":\"e_nmufdg61r3\",\"source\":\"zn_c274fca580_a\",\"target\":\"nmufdfdmj1\",\"sourceHandle\":\"OID\",\"targetHandle\":\"c_person_id\"},{\"id\":\"e_nmufdho3j7\",\"source\":\"nmufdh9cz4\",\"target\":\"nmufdhism5\",\"sourceHandle\":null,\"targetHandle\":\"a\"},{\"id\":\"e_nmufdhrd39\",\"source\":\"nmuf94goc1\",\"target\":\"nmufdhism5\",\"sourceHandle\":\"out0\",\"targetHandle\":\"when\"},{\"id\":\"e_nmufdk8r0h\",\"source\":\"nmufdhism5\",\"target\":\"nmufdk66mg\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmufdkbwgj\",\"source\":\"nmufdk66mg\",\"target\":\"nmufdfdmj1\",\"sourceHandle\":null,\"targetHandle\":\"c_status\"},{\"id\":\"e_nmufe4ly6s\",\"source\":\"nmufdfdmj1\",\"target\":\"nmufe4bznq\",\"sourceHandle\":\"o_person_id\",\"targetHandle\":\"in\"},{\"id\":\"e_nmufe6o3qt\",\"source\":\"nmufdfdmj1\",\"target\":\"nmufdqpu9n\",\"sourceHandle\":\"o_person_id\",\"targetHandle\":\"in\"},{\"id\":\"e_nmufe85a6w\",\"source\":\"nmufdfdmj1\",\"target\":\"nmufe83qtv\",\"sourceHandle\":\"table\",\"targetHandle\":\"in\"}]},\"variables\":[{\"name\":\"status\",\"var\":\"status\"},{\"name\":\"status_out\",\"var\":\"status_out\"}],\"zone_drawn\":[\"zn_c274fca580_a\",\"zn_c274fca580_al\",\"zn_c274fca580_f\",\"zn_c274fca580_v\",\"zn_c274fca580_z0\"]}]}"
+dashboard_json = "{\"pages\":[{\"id\":\"main\",\"name\":\"Dashboard\",\"size\":\"small\",\"widgets\":[{\"id\":\"video_mss9zavc2\",\"title\":\"Live video\",\"kind\":\"video\",\"source\":\"stat\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":7,\"h\":6},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"verdict_muf97hde0\",\"title\":\"Violation\",\"kind\":\"verdict\",\"source\":\"stat\",\"key\":\"fn_if_else_if_goc1_b0_active\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":7,\"y\":0,\"w\":5,\"h\":6},\"status\":{},\"states\":[{\"value\":0.0,\"label\":\"COMPLIANT\",\"tone\":\"ok\"},{\"value\":1.0,\"label\":\"VIOLATION\",\"tone\":\"alert\"}],\"range\":\"\",\"node\":\"nmuf958zs5\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]},{\"id\":\"overview\",\"name\":\"Overview\",\"size\":\"small\",\"widgets\":[{\"id\":\"tile_mufe548f6\",\"title\":\"Total Violation\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"unique\",\"field\":\"person_id\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"violation\",\"columns\":[{\"name\":\"status\",\"type\":\"text\"},{\"name\":\"person_id\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":4,\"h\":4},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmufe4bznq\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"table_mufe8xwx8\",\"title\":\"Violation Log\",\"kind\":\"table\",\"source\":\"dataset\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":20,\"query\":{\"agg\":\"count\",\"field\":\"\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"violation\",\"columns\":[{\"name\":\"status\",\"type\":\"text\"},{\"name\":\"person_id\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":4,\"w\":12,\"h\":9},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmufe83qtv\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"area_mufecucx0\",\"title\":\"total violation\",\"kind\":\"area\",\"source\":\"dataset\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"count\",\"field\":\"person_id\",\"group_by\":\"\",\"bucket\":\"hour\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"violation\",\"columns\":[{\"name\":\"status\",\"type\":\"text\"},{\"name\":\"person_id\",\"type\":\"text\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":4,\"y\":0,\"w\":8,\"h\":4},\"status\":{},\"states\":[],\"range\":\"24h\",\"node\":\"nmufdqpu9n\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]}]}"
+tables_json = "[{\"key\":\"violation\",\"name\":\"violation\",\"columns\":[{\"name\":\"status\",\"type\":\"text\"},{\"name\":\"person_id\",\"type\":\"text\"}]}]"
+settings_json = "{\"capture\":{\"snap\":false,\"record\":false},\"hud\":{\"model\":false,\"camera\":false,\"hailo_fps\":false,\"camera_fps\":false},\"confidence\":0.45}"
 
 [formats.restricted_zone.zone]
-mode = "optional"
-hint = ""
-
-[[formats.restricted_zone.widgets]]
-id = "verdict_mss9z4vp1"
-title = "Restricted Zone"
-kind = "verdict"
-source = "stat"
-key = "fn_z_zone_mss97pz4_zoneviol_active"
-span = 4
-capability = ""
-color = ""
-bg = ""
-template = "plain"
-anim = ""
-anim_replay = false
-text = ""
-unit = ""
-format = ""
-sub = ""
-label_size = "medium"
-value_size = "medium"
-camera = ""
-limit = 15
-query = {  }
-dataset = ""
-columns = []
-sql = ""
-tables = []
-grid = { x = 7, y = 0, w = 5, h = 4 }
-status = {  }
-states = [{ value = 0.0, label = "COMPLIANT", tone = "ok" }, { value = 1.0, label = "VIOLATION", tone = "alert" }]
-range = ""
-node = "nmss9xusi6"
-bands = {  }
-by_day = false
-series = []
-interval = ""
+mode = "area"
+hint = "Draw the restricted area on the Detection page."
 
 [[formats.restricted_zone.widgets]]
 id = "video_mss9zavc2"
@@ -411,11 +384,363 @@ dataset = ""
 columns = []
 sql = ""
 tables = []
-grid = { x = 0, y = 0, w = 7, h = 4 }
+grid = { x = 0, y = 0, w = 7, h = 6 }
 status = {  }
 states = []
 range = ""
 node = ""
+inject = {  }
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.restricted_zone.widgets]]
+id = "verdict_muf97hde0"
+title = "Violation"
+kind = "verdict"
+source = "stat"
+key = "fn_if_else_if_goc1_b0_active"
+span = 4
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 7, y = 0, w = 5, h = 6 }
+status = {  }
+states = [{ value = 0.0, label = "COMPLIANT", tone = "ok" }, { value = 1.0, label = "VIOLATION", tone = "alert" }]
+range = ""
+node = "nmuf958zs5"
+inject = {  }
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[formats.ai_smart_parking]
+label = "AI Smart Parking"
+hint = "Count cars in and out of a lot and watch each parking bay."
+category = "built-in"
+model = "yolov8s"
+classes = ["car"]
+workflows_json = "{\"version\":3,\"workflows\":[{\"id\":\"main\",\"name\":\"Workflow\",\"description\":\"Imported from this system's existing functions\",\"enabled\":true,\"author\":\"dev\",\"created\":0,\"modified\":1792392730,\"graph\":{\"version\":10,\"nodes\":[{\"id\":\"nmvew04ys1\",\"type\":\"source.detection\",\"position\":{\"x\":112.09732574108745,\"y\":133.75611342167682},\"data\":{\"model\":\"yolov8s\",\"camera\":\"\"}},{\"id\":\"nmvew04ys2\",\"type\":\"zone.ref\",\"position\":{\"x\":113.88973119300698,\"y\":678.202197794781},\"data\":{\"zone\":\"\"}},{\"id\":\"nmvew04ys3\",\"type\":\"filter.class\",\"position\":{\"x\":761.3980037890747,\"y\":137.0985518538113},\"data\":{\"classes\":[\"car\"]}},{\"id\":\"nmvew04ys4\",\"type\":\"analytics.entry_exit\",\"position\":{\"x\":389.6222135635705,\"y\":586.784065315292},\"data\":{\"fnId\":\"line_counter_4ys4\",\"name\":\"Line counter\",\"mode\":\"both\",\"OID\":false}},{\"id\":\"nmvew04yt5\",\"type\":\"dashboard.card\",\"position\":{\"x\":2825.740770185844,\"y\":1672.3946922336772},\"data\":{\"name\":\"Park Lot\",\"metric\":\"\",\"kind\":\"verdict\",\"unit\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"show\":[],\"ok_label\":\"Available\",\"alert_label\":\"Full\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{},\"source_mode\":\"\",\"format\":\"yesno\"}},{\"id\":\"nmvew04yt6\",\"type\":\"branch.cases\",\"position\":{\"x\":2205.822210927339,\"y\":1672.508931267846},\"data\":{\"fnId\":\"if_else_if_4yt6\",\"metric\":\"\",\"rules\":[{\"op\":\"==\",\"value\":0,\"input\":\"in1\"}],\"otherwise\":false,\"name\":\"If / Else if\"}},{\"id\":\"nmvew04yt7\",\"type\":\"output.trigger\",\"position\":{\"x\":2522.8966087157573,\"y\":1670.764782292913},\"data\":{\"name\":\"Lot Full\",\"alert\":true,\"severity\":\"crit\",\"message\":\"\",\"cooldown_s\":30,\"repeat\":\"cooldown\",\"draw\":false,\"box_color\":\"\",\"zone_color\":\"\",\"color_target\":\"box\"}},{\"id\":\"nmvew04yt9\",\"type\":\"output.dataset\",\"position\":{\"x\":813.7005668647635,\"y\":741.4542042090516},\"data\":{\"dataset\":\"car_count\",\"name\":\"car count\",\"op\":\"insert\",\"mode\":\"change\",\"interval_s\":60,\"min_interval_s\":0,\"sources\":{}}},{\"id\":\"nmvew04yta\",\"type\":\"dashboard.card\",\"position\":{\"x\":1348.738666453258,\"y\":574.5717758539971},\"data\":{\"name\":\"in stat\",\"metric\":\"\",\"kind\":\"tile\",\"unit\":\"\",\"sub\":\"\",\"window\":\"follow\",\"agg\":\"latest\",\"range\":\"page\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmvew04ytb\",\"type\":\"dashboard.card\",\"position\":{\"x\":1353.0082047694693,\"y\":484.96669889472867},\"data\":{\"name\":\"Total\",\"metric\":\"\",\"kind\":\"tile\",\"unit\":\"\",\"sub\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmvew04ytc\",\"type\":\"dashboard.graph\",\"position\":{\"x\":1340.4978802378575,\"y\":759.8190644630403},\"data\":{\"name\":\"Lane Counting\",\"metric\":\"\",\"kind\":\"area\",\"unit\":\"Cars\",\"range\":\"page\",\"agg\":\"changes\",\"group_by\":\"\",\"bucket\":\"\",\"window\":\"follow\",\"bands\":{},\"series\":{\"s1\":{\"label\":\"IN\"},\"s2\":{\"label\":\"OUT\"}},\"x_type\":\"time\",\"time_interval\":\"custom\",\"interval\":\"\",\"range_from\":\"\",\"range_to\":\"\",\"ts_field\":\"@row\"}},{\"id\":\"nmvew04ytd\",\"type\":\"dashboard.card\",\"position\":{\"x\":1347.058245968961,\"y\":669.3174171798929},\"data\":{\"name\":\"out stat\",\"metric\":\"\",\"kind\":\"tile\",\"unit\":\"\",\"sub\":\"\",\"window\":\"follow\",\"agg\":\"\",\"range\":\"page\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmvew04ytf\",\"type\":\"zone.ref\",\"position\":{\"x\":147.8881665512386,\"y\":1606.3574137703808},\"data\":{\"zone\":\"\"}},{\"id\":\"nmvew04yti\",\"type\":\"dashboard.card\",\"position\":{\"x\":2207.547775030354,\"y\":1876.4041921885446},\"data\":{\"name\":\"Park Capacity\",\"metric\":\"\",\"kind\":\"tile\",\"unit\":\"\",\"sub\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmvew04ytj\",\"type\":\"analytics.dwell\",\"position\":{\"x\":487.75066161697833,\"y\":1508.8432388752765},\"data\":{\"fnId\":\"cycle_time_4ytj\",\"name\":\"Cycle time\",\"OID\":false,\"mode\":\"present\",\"delivery\":\"live\",\"start_s\":60,\"deduct_s\":1}},{\"id\":\"nmvew04ytk\",\"type\":\"dashboard.card\",\"position\":{\"x\":1122.5466641953415,\"y\":1507.2545562507453},\"data\":{\"name\":\"Zone 1A\",\"metric\":\"\",\"kind\":\"verdict\",\"unit\":\"\",\"sub\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[{\"value\":0,\"label\":\"Empty\",\"tone\":\"ok\"},{\"value\":1,\"label\":\"Occupied\",\"tone\":\"warn\",\"color\":\"#fff700\"},{\"value\":2,\"label\":\"Violation\",\"tone\":\"alert\"}],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmvew04ytl\",\"type\":\"analytics.expr\",\"position\":{\"x\":765.56611428829,\"y\":1510.9857826003765},\"data\":{\"fnId\":\"zone_2_state_4ytl\",\"name\":\"Zone 2 State\",\"expr\":\"iff(cycle_time_8jfh > 5, 2, iff(cycle_time_8jfh > 0, 1, 0)) \"}},{\"id\":\"nmvew04ytm\",\"type\":\"common.link_out\",\"position\":{\"x\":1052.082842509675,\"y\":140.10253572462855},\"data\":{\"link\":\"car_filter\"}},{\"id\":\"nmvew04yto\",\"type\":\"common.link_in\",\"position\":{\"x\":146.94320071420253,\"y\":1514.979502535086},\"data\":{\"link\":\"car_filter\"}},{\"id\":\"nmvew04ytp\",\"type\":\"common.link_in\",\"position\":{\"x\":114.3133352479976,\"y\":589.9504161293816},\"data\":{\"link\":\"car_filter\"}},{\"id\":\"nmvew04ytq\",\"type\":\"zone.ref\",\"position\":{\"x\":133.70045866509292,\"y\":2047.4772568475962},\"data\":{\"zone\":\"\"}},{\"id\":\"nmvew04ytr\",\"type\":\"analytics.dwell\",\"position\":{\"x\":473.5629537308326,\"y\":1949.9630819524918},\"data\":{\"fnId\":\"cycle_time_4ytr\",\"name\":\"Cycle time\",\"OID\":false,\"mode\":\"present\",\"delivery\":\"live\",\"start_s\":60,\"deduct_s\":1}},{\"id\":\"nmvew04yts\",\"type\":\"dashboard.card\",\"position\":{\"x\":1108.3589563091957,\"y\":1948.3743993279606},\"data\":{\"name\":\"Zone 2A\",\"metric\":\"\",\"kind\":\"verdict\",\"unit\":\"\",\"sub\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[{\"value\":0,\"label\":\"Empty\",\"tone\":\"ok\"},{\"value\":1,\"label\":\"Occupied\",\"tone\":\"warn\",\"color\":\"#fff700\"},{\"value\":2,\"label\":\"Violation\",\"tone\":\"alert\"}],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmvew04ytt\",\"type\":\"analytics.expr\",\"position\":{\"x\":751.3784064021443,\"y\":1952.105625677592},\"data\":{\"fnId\":\"zone_2_state_4ytt\",\"name\":\"Zone 2 State\",\"expr\":\"iff(cycle_time_8jfh > 5, 2, iff(cycle_time_8jfh > 0, 1, 0)) \"}},{\"id\":\"nmvew04ytu\",\"type\":\"common.link_in\",\"position\":{\"x\":132.75549282805684,\"y\":1956.0993456123012},\"data\":{\"link\":\"car_filter\"}},{\"id\":\"nmvew04ytv\",\"type\":\"zone.ref\",\"position\":{\"x\":133.5839417662092,\"y\":2422.5584263698534},\"data\":{\"zone\":\"\"}},{\"id\":\"nmvew04ytw\",\"type\":\"analytics.dwell\",\"position\":{\"x\":473.44643683194886,\"y\":2325.044251474749},\"data\":{\"fnId\":\"cycle_time_4ytw\",\"name\":\"Cycle time\",\"OID\":false,\"mode\":\"present\",\"delivery\":\"live\",\"start_s\":60,\"deduct_s\":1}},{\"id\":\"nmvew04ytx\",\"type\":\"dashboard.card\",\"position\":{\"x\":1108.242439410312,\"y\":2323.455568850218},\"data\":{\"name\":\"Zone 3A\",\"metric\":\"\",\"kind\":\"verdict\",\"unit\":\"\",\"sub\":\"\",\"window\":\"live\",\"agg\":\"\",\"range\":\"\",\"show\":[],\"ok_label\":\"COMPLIANT\",\"alert_label\":\"VIOLATION\",\"ok_color\":\"\",\"alert_color\":\"\",\"states\":[{\"value\":0,\"label\":\"Empty\",\"tone\":\"ok\"},{\"value\":1,\"label\":\"Occupied\",\"tone\":\"warn\",\"color\":\"#fff700\"},{\"value\":2,\"label\":\"Violation\",\"tone\":\"alert\"}],\"op\":\">=\",\"value\":1,\"bands\":{}}},{\"id\":\"nmvew04yty\",\"type\":\"analytics.expr\",\"position\":{\"x\":751.2618895032604,\"y\":2327.1867951998493},\"data\":{\"fnId\":\"zone_2_state_4yty\",\"name\":\"Zone 2 State\",\"expr\":\"iff(cycle_time_8jfh > 5, 2, iff(cycle_time_8jfh > 0, 1, 0)) \"}},{\"id\":\"nmvew04ytz\",\"type\":\"common.link_in\",\"position\":{\"x\":132.6389759291731,\"y\":2331.1805151345584},\"data\":{\"link\":\"car_filter\"}},{\"id\":\"nmvew04yt1u\",\"type\":\"filter.preprocess\",\"position\":{\"x\":445.8280596983598,\"y\":141.67838583364428},\"data\":{\"steps\":[{\"op\":\"grayscale\",\"enabled\":true}],\"preview\":true}},{\"id\":\"nmvew04yt1v\",\"type\":\"analytics.object\",\"position\":{\"x\":489.54952934953536,\"y\":1343.2205359932934},\"data\":{\"fnId\":\"object_detection_yt1v\",\"name\":\"Object Detection\",\"OID\":false,\"enter_after_s\":0,\"leave_after_s\":0}},{\"id\":\"nmvew04yt1w\",\"type\":\"analytics.object\",\"position\":{\"x\":473.50420343791365,\"y\":1767.6737951095104},\"data\":{\"fnId\":\"object_detection_yt1w\",\"name\":\"Object Detection\",\"OID\":false,\"enter_after_s\":0,\"leave_after_s\":0}},{\"id\":\"nmvew04yt1x\",\"type\":\"analytics.object\",\"position\":{\"x\":474.86988879221445,\"y\":2153.8228294406977},\"data\":{\"fnId\":\"object_detection_yt1x\",\"name\":\"Object Detection\",\"OID\":false,\"enter_after_s\":0,\"leave_after_s\":0}},{\"id\":\"nmvew04yt25\",\"type\":\"analytics.expr\",\"position\":{\"x\":1824.7224442712168,\"y\":1668.5974569207938},\"data\":{\"fnId\":\"parking_counter_yt25\",\"name\":\"Parking Counter\",\"expr\":\"3 - (lot1a + lot2a + lot3a)\"}},{\"id\":\"nmvew04yt26\",\"type\":\"variable.ref\",\"position\":{\"x\":765.9166023170558,\"y\":1346.6838944090916},\"data\":{\"key\":\"fn_lot1a_value\",\"io\":\"auto\",\"value_type\":\"number\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60,\"name\":\"lot1a\"}},{\"id\":\"nmvew04yt27\",\"type\":\"variable.ref\",\"position\":{\"x\":755.5707930081278,\"y\":1761.6910120081745},\"data\":{\"key\":\"fn_lot2a_value\",\"io\":\"out\",\"value_type\":\"auto\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60,\"name\":\"lot2a\"}},{\"id\":\"nmvew04yt28\",\"type\":\"variable.ref\",\"position\":{\"x\":764.4136273430238,\"y\":2158.5572873697324},\"data\":{\"key\":\"fn_lot2a_value\",\"io\":\"auto\",\"value_type\":\"auto\",\"q_column\":\"\",\"q_pick\":\"first\",\"q_interval_s\":60,\"name\":\"lot3a\"}},{\"id\":\"nmvew04yt2g\",\"type\":\"dashboard.graph\",\"position\":{\"x\":1339.0765471965508,\"y\":936.6911153059416},\"data\":{\"name\":\"Lane Percentage\",\"metric\":\"\",\"kind\":\"pie\",\"unit\":\"Cars\",\"range\":\"page\",\"agg\":\"unique\",\"group_by\":\"\",\"bucket\":\"\",\"series\":{\"s1\":{\"label\":\"IN\"},\"s2\":{\"label\":\"OUT\"}},\"series_n\":2,\"window\":\"follow\",\"source_mode\":\"\",\"dataset\":\"\",\"field\":\"\",\"filters\":{},\"conditions\":[],\"limit\":15,\"x_type\":\"column\",\"time_interval\":\"custom\",\"interval\":\"\",\"range_from\":\"\",\"range_to\":\"\",\"ts_field\":\"\",\"builder_edit\":{\"rev\":1,\"was\":{\"bands\":[[1,\"\"]]}},\"bands\":{}}}],\"edges\":[{\"id\":\"e_nmvew04yt2j\",\"source\":\"nmvew04ys2\",\"target\":\"nmvew04ys4\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmvew04yt2k\",\"source\":\"nmvew04yt6\",\"target\":\"nmvew04yt7\",\"sourceHandle\":\"out0\",\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt2l\",\"source\":\"nmvew04yt9\",\"target\":\"nmvew04ytb\",\"sourceHandle\":\"table\",\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt2m\",\"source\":\"nmvew04ys4\",\"target\":\"nmvew04yt9\",\"sourceHandle\":\"in\",\"targetHandle\":\"c_enter\"},{\"id\":\"e_nmvew04yt2n\",\"source\":\"nmvew04ys4\",\"target\":\"nmvew04yt9\",\"sourceHandle\":\"out\",\"targetHandle\":\"c_exit\"},{\"id\":\"e_nmvew04yt2o\",\"source\":\"nmvew04yt9\",\"target\":\"nmvew04yta\",\"sourceHandle\":\"o_enter\",\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt2p\",\"source\":\"nmvew04yt9\",\"target\":\"nmvew04ytd\",\"sourceHandle\":\"o_exit\",\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt2q\",\"source\":\"nmvew04yt9\",\"target\":\"nmvew04ytc\",\"sourceHandle\":\"o_enter\",\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt2r\",\"source\":\"nmvew04yt9\",\"target\":\"nmvew04ytc\",\"sourceHandle\":\"o_exit\",\"targetHandle\":\"s2\"},{\"id\":\"e_nmvew04yt2u\",\"source\":\"nmvew04ytf\",\"target\":\"nmvew04ytj\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmvew04yt2w\",\"source\":\"nmvew04ytj\",\"target\":\"nmvew04ytl\",\"sourceHandle\":null,\"targetHandle\":\"p_cycle_time_8jfh\"},{\"id\":\"e_nmvew04yt2x\",\"source\":\"nmvew04ytl\",\"target\":\"nmvew04ytk\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt2y\",\"source\":\"nmvew04ys3\",\"target\":\"nmvew04ytm\",\"sourceHandle\":\"on\",\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt30\",\"source\":\"nmvew04yto\",\"target\":\"nmvew04ytj\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt31\",\"source\":\"nmvew04ytp\",\"target\":\"nmvew04ys4\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt32\",\"source\":\"nmvew04ytq\",\"target\":\"nmvew04ytr\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmvew04yt33\",\"source\":\"nmvew04ytr\",\"target\":\"nmvew04ytt\",\"sourceHandle\":null,\"targetHandle\":\"p_cycle_time_8jfh\"},{\"id\":\"e_nmvew04yt34\",\"source\":\"nmvew04ytt\",\"target\":\"nmvew04yts\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt35\",\"source\":\"nmvew04ytu\",\"target\":\"nmvew04ytr\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt36\",\"source\":\"nmvew04ytv\",\"target\":\"nmvew04ytw\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmvew04yt37\",\"source\":\"nmvew04ytw\",\"target\":\"nmvew04yty\",\"sourceHandle\":null,\"targetHandle\":\"p_cycle_time_8jfh\"},{\"id\":\"e_nmvew04yt38\",\"source\":\"nmvew04yty\",\"target\":\"nmvew04ytx\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt39\",\"source\":\"nmvew04ytz\",\"target\":\"nmvew04ytw\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt3y\",\"source\":\"nmvew04ys1\",\"target\":\"nmvew04yt1u\",\"sourceHandle\":\"on\",\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt3z\",\"source\":\"nmvew04yt1u\",\"target\":\"nmvew04ys3\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt40\",\"source\":\"nmvew04yto\",\"target\":\"nmvew04yt1v\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt41\",\"source\":\"nmvew04ytf\",\"target\":\"nmvew04yt1v\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmvew04yt42\",\"source\":\"nmvew04ytu\",\"target\":\"nmvew04yt1w\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt43\",\"source\":\"nmvew04ytq\",\"target\":\"nmvew04yt1w\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmvew04yt44\",\"source\":\"nmvew04ytz\",\"target\":\"nmvew04yt1x\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt45\",\"source\":\"nmvew04ytv\",\"target\":\"nmvew04yt1x\",\"sourceHandle\":null,\"targetHandle\":\"zone\"},{\"id\":\"e_nmvew04yt4k\",\"source\":\"nmvew04yt1v\",\"target\":\"nmvew04yt26\",\"sourceHandle\":\"out\",\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt4l\",\"source\":\"nmvew04yt1w\",\"target\":\"nmvew04yt27\",\"sourceHandle\":\"out\",\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt4o\",\"source\":\"nmvew04yt1x\",\"target\":\"nmvew04yt28\",\"sourceHandle\":\"out\",\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt4p\",\"source\":\"nmvew04yt26\",\"target\":\"nmvew04yt25\",\"sourceHandle\":null,\"targetHandle\":\"p_lot1a\"},{\"id\":\"e_nmvew04yt4q\",\"source\":\"nmvew04yt27\",\"target\":\"nmvew04yt25\",\"sourceHandle\":null,\"targetHandle\":\"p_lot2a\"},{\"id\":\"e_nmvew04yt4r\",\"source\":\"nmvew04yt28\",\"target\":\"nmvew04yt25\",\"sourceHandle\":null,\"targetHandle\":\"p_lot3a\"},{\"id\":\"e_nmvew04yt4u\",\"source\":\"nmvew04yt25\",\"target\":\"nmvew04yt6\",\"sourceHandle\":null,\"targetHandle\":\"in1\"},{\"id\":\"e_nmvew04yt4v\",\"source\":\"nmvew04yt7\",\"target\":\"nmvew04yt5\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt56\",\"source\":\"nmvew04yt25\",\"target\":\"nmvew04yti\",\"sourceHandle\":null,\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt57\",\"source\":\"nmvew04yt9\",\"target\":\"nmvew04yt2g\",\"sourceHandle\":\"o_enter\",\"targetHandle\":\"in\"},{\"id\":\"e_nmvew04yt58\",\"source\":\"nmvew04yt9\",\"target\":\"nmvew04yt2g\",\"sourceHandle\":\"o_exit\",\"targetHandle\":\"s2\"}]},\"variables\":[]}]}"
+dashboard_json = "{\"pages\":[{\"id\":\"main\",\"name\":\"Dashboard\",\"size\":\"medium\",\"widgets\":[{\"id\":\"video_mvew58xk0\",\"title\":\"Live video\",\"kind\":\"video\",\"source\":\"stat\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":8,\"h\":5},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"tile_mvew5hfl1\",\"title\":\"in stat\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"large\",\"value_size\":\"large\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"latest\",\"field\":\"enter\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"car_count\",\"columns\":[{\"name\":\"enter\",\"type\":\"number\"},{\"name\":\"exit\",\"type\":\"number\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":8,\"y\":3,\"w\":2,\"h\":2},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmvew04yta\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\",\"align\":\"center\"},{\"id\":\"tile_mvew5k0a2\",\"title\":\"out stat\",\"kind\":\"tile\",\"source\":\"dataset\",\"key\":\"\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"large\",\"value_size\":\"large\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"latest\",\"field\":\"exit\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"page\",\"filters\":{}},\"dataset\":\"car_count\",\"columns\":[{\"name\":\"enter\",\"type\":\"number\"},{\"name\":\"exit\",\"type\":\"number\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":10,\"y\":3,\"w\":2,\"h\":2},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmvew04ytd\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\",\"align\":\"center\"},{\"id\":\"tile_mvew5ydd3\",\"title\":\"Park Capacity\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_parking_counter_yt25_value\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"large\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":8,\"y\":0,\"w\":4,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmvew04yti\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\",\"align\":\"center\"},{\"id\":\"verdict_mvew6jy84\",\"title\":\"Park Lot\",\"kind\":\"verdict\",\"source\":\"stat\",\"key\":\"fn_if_else_if_4yt6_b0_active\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":5,\"w\":6,\"h\":3},\"status\":{},\"states\":[{\"value\":0.0,\"label\":\"Available\",\"tone\":\"ok\"},{\"value\":1.0,\"label\":\"Full\",\"tone\":\"alert\"}],\"range\":\"\",\"node\":\"nmvew04yt5\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"verdict_mvew6n4r5\",\"title\":\"Zone 1A\",\"kind\":\"verdict\",\"source\":\"stat\",\"key\":\"fn_zone_2_state_4ytl_value\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":5,\"w\":2,\"h\":3},\"status\":{},\"states\":[{\"value\":0.0,\"label\":\"Empty\",\"tone\":\"ok\"},{\"value\":1.0,\"label\":\"Occupied\",\"tone\":\"warn\",\"color\":\"#fff700\"},{\"value\":2.0,\"label\":\"Violation\",\"tone\":\"alert\"}],\"range\":\"\",\"node\":\"nmvew04ytk\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"verdict_mvew6old6\",\"title\":\"Zone 2A\",\"kind\":\"verdict\",\"source\":\"stat\",\"key\":\"fn_zone_2_state_4ytt_value\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":2,\"y\":5,\"w\":2,\"h\":3},\"status\":{},\"states\":[{\"value\":0.0,\"label\":\"Empty\",\"tone\":\"ok\"},{\"value\":1.0,\"label\":\"Occupied\",\"tone\":\"warn\",\"color\":\"#fff700\"},{\"value\":2.0,\"label\":\"Violation\",\"tone\":\"alert\"}],\"range\":\"\",\"node\":\"nmvew04yts\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"verdict_mvew6prt7\",\"title\":\"Zone 3A\",\"kind\":\"verdict\",\"source\":\"stat\",\"key\":\"fn_zone_2_state_4yty_value\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":4,\"y\":5,\"w\":2,\"h\":3},\"status\":{},\"states\":[{\"value\":0.0,\"label\":\"Empty\",\"tone\":\"ok\"},{\"value\":1.0,\"label\":\"Occupied\",\"tone\":\"warn\",\"color\":\"#fff700\"},{\"value\":2.0,\"label\":\"Violation\",\"tone\":\"alert\"}],\"range\":\"\",\"node\":\"nmvew04ytx\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"}]},{\"id\":\"overview\",\"name\":\"Overview\",\"size\":\"medium\",\"widgets\":[{\"id\":\"area_mvew8vvu8\",\"title\":\"Lane Counting\",\"kind\":\"area\",\"source\":\"history\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"stagger\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"Cars\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":3,\"w\":6,\"h\":4},\"status\":{},\"states\":[],\"range\":\"page\",\"node\":\"nmvew04ytc\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[{\"source\":\"dataset\",\"label\":\"IN\",\"color\":\"\",\"dataset\":\"car_count\",\"columns\":[{\"name\":\"enter\",\"type\":\"number\"},{\"name\":\"exit\",\"type\":\"number\"}],\"field\":\"enter\",\"ts_field\":\"\",\"agg\":\"sum\",\"query\":{\"agg\":\"changes\",\"group_by\":\"\",\"range\":\"page\",\"filters\":{}},\"id\":\"s1\"},{\"source\":\"dataset\",\"label\":\"OUT\",\"color\":\"\",\"dataset\":\"car_count\",\"columns\":[{\"name\":\"enter\",\"type\":\"number\"},{\"name\":\"exit\",\"type\":\"number\"}],\"field\":\"exit\",\"ts_field\":\"\",\"agg\":\"sum\",\"query\":{\"agg\":\"changes\",\"group_by\":\"\",\"range\":\"page\",\"filters\":{}},\"id\":\"s2\"}],\"interval\":\"\",\"chart\":{\"x_type\":\"time\",\"x_field\":\"\",\"y_agg\":\"changes\",\"y_field\":\"\",\"time_interval\":\"custom\",\"step\":\"\",\"range\":\"page\",\"ts_field\":\"@row\"}},{\"id\":\"table_mvew9ti8c\",\"title\":\"Total\",\"kind\":\"table\",\"source\":\"dataset\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{\"agg\":\"count\",\"field\":\"\",\"group_by\":\"\",\"bucket\":\"\",\"range\":\"\",\"filters\":{}},\"dataset\":\"car_count\",\"columns\":[{\"name\":\"enter\",\"type\":\"number\"},{\"name\":\"exit\",\"type\":\"number\"}],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":3,\"w\":6,\"h\":4},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmvew04ytb\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"verdict_mvewacbcf\",\"title\":\"Park Lot\",\"kind\":\"verdict\",\"source\":\"stat\",\"key\":\"fn_if_else_if_4yt6_b0_active\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":9,\"y\":0,\"w\":3,\"h\":3},\"status\":{},\"states\":[{\"value\":0.0,\"label\":\"Available\",\"tone\":\"ok\"},{\"value\":1.0,\"label\":\"Full\",\"tone\":\"alert\"}],\"range\":\"\",\"node\":\"nmvew04yt5\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\"},{\"id\":\"pie_mvewcytog\",\"title\":\"Lane Percentage\",\"kind\":\"pie\",\"source\":\"dataset\",\"key\":\"\",\"span\":4,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"stagger\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"Cars\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"medium\",\"value_size\":\"medium\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":0,\"y\":0,\"w\":6,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmvew04yt2g\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[{\"source\":\"dataset\",\"label\":\"IN\",\"color\":\"\",\"dataset\":\"car_count\",\"columns\":[{\"name\":\"enter\",\"type\":\"number\"},{\"name\":\"exit\",\"type\":\"number\"}],\"field\":\"enter\",\"ts_field\":\"\",\"agg\":\"unique\",\"query\":{\"agg\":\"unique\",\"group_by\":\"\",\"range\":\"page\",\"filters\":{}},\"id\":\"s1\"},{\"source\":\"dataset\",\"label\":\"OUT\",\"color\":\"#f09d0f\",\"dataset\":\"car_count\",\"columns\":[{\"name\":\"enter\",\"type\":\"number\"},{\"name\":\"exit\",\"type\":\"number\"}],\"field\":\"exit\",\"ts_field\":\"\",\"agg\":\"unique\",\"query\":{\"agg\":\"unique\",\"group_by\":\"\",\"range\":\"page\",\"filters\":{}},\"id\":\"s2\"}],\"interval\":\"\"},{\"id\":\"tile_mvewd469h\",\"title\":\"Park Capacity\",\"kind\":\"tile\",\"source\":\"stat\",\"key\":\"fn_parking_counter_yt25_value\",\"span\":1,\"capability\":\"\",\"color\":\"\",\"bg\":\"\",\"template\":\"plain\",\"anim\":\"\",\"anim_replay\":false,\"text\":\"\",\"unit\":\"\",\"format\":\"\",\"sub\":\"\",\"label_size\":\"large\",\"value_size\":\"huge\",\"camera\":\"\",\"limit\":15,\"query\":{},\"dataset\":\"\",\"columns\":[],\"sql\":\"\",\"tables\":[],\"grid\":{\"x\":6,\"y\":0,\"w\":3,\"h\":3},\"status\":{},\"states\":[],\"range\":\"\",\"node\":\"nmvew04yti\",\"inject\":{},\"bands\":{},\"by_day\":false,\"series\":[],\"interval\":\"\",\"align\":\"center\"}]}]}"
+tables_json = "[{\"key\":\"car_count\",\"name\":\"car count\",\"columns\":[{\"name\":\"enter\",\"type\":\"number\"},{\"name\":\"exit\",\"type\":\"number\"}]}]"
+settings_json = "{\"capture\":{\"snap\":false,\"record\":false},\"hud\":{\"model\":false,\"camera\":false,\"hailo_fps\":false,\"camera_fps\":false},\"confidence\":0.5}"
+
+[formats.ai_smart_parking.zone]
+mode = "area_line"
+hint = "Draw one entry/exit line and one area per parking bay on the Detection page."
+
+[[formats.ai_smart_parking.widgets]]
+id = "video_mvew58xk0"
+title = "Live video"
+kind = "video"
+source = "stat"
+key = ""
+span = 4
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 0, y = 0, w = 8, h = 5 }
+status = {  }
+states = []
+range = ""
+node = ""
+inject = {  }
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.ai_smart_parking.widgets]]
+id = "tile_mvew5hfl1"
+title = "in stat"
+kind = "tile"
+source = "dataset"
+key = ""
+span = 1
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "large"
+value_size = "large"
+camera = ""
+limit = 15
+query = { agg = "latest", field = "enter", group_by = "", bucket = "", range = "page", filters = {  } }
+dataset = "car_count"
+columns = [{ name = "enter", type = "number" }, { name = "exit", type = "number" }]
+sql = ""
+tables = []
+grid = { x = 8, y = 3, w = 2, h = 2 }
+status = {  }
+states = []
+range = ""
+node = "nmvew04yta"
+inject = {  }
+bands = {  }
+by_day = false
+series = []
+interval = ""
+align = "center"
+
+[[formats.ai_smart_parking.widgets]]
+id = "tile_mvew5k0a2"
+title = "out stat"
+kind = "tile"
+source = "dataset"
+key = ""
+span = 1
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "large"
+value_size = "large"
+camera = ""
+limit = 15
+query = { agg = "latest", field = "exit", group_by = "", bucket = "", range = "page", filters = {  } }
+dataset = "car_count"
+columns = [{ name = "enter", type = "number" }, { name = "exit", type = "number" }]
+sql = ""
+tables = []
+grid = { x = 10, y = 3, w = 2, h = 2 }
+status = {  }
+states = []
+range = ""
+node = "nmvew04ytd"
+inject = {  }
+bands = {  }
+by_day = false
+series = []
+interval = ""
+align = "center"
+
+[[formats.ai_smart_parking.widgets]]
+id = "tile_mvew5ydd3"
+title = "Park Capacity"
+kind = "tile"
+source = "stat"
+key = "fn_parking_counter_yt25_value"
+span = 1
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "large"
+value_size = "huge"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 8, y = 0, w = 4, h = 3 }
+status = {  }
+states = []
+range = ""
+node = "nmvew04yti"
+inject = {  }
+bands = {  }
+by_day = false
+series = []
+interval = ""
+align = "center"
+
+[[formats.ai_smart_parking.widgets]]
+id = "verdict_mvew6jy84"
+title = "Park Lot"
+kind = "verdict"
+source = "stat"
+key = "fn_if_else_if_4yt6_b0_active"
+span = 4
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 6, y = 5, w = 6, h = 3 }
+status = {  }
+states = [{ value = 0.0, label = "Available", tone = "ok" }, { value = 1.0, label = "Full", tone = "alert" }]
+range = ""
+node = "nmvew04yt5"
+inject = {  }
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.ai_smart_parking.widgets]]
+id = "verdict_mvew6n4r5"
+title = "Zone 1A"
+kind = "verdict"
+source = "stat"
+key = "fn_zone_2_state_4ytl_value"
+span = 4
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 0, y = 5, w = 2, h = 3 }
+status = {  }
+states = [{ value = 0.0, label = "Empty", tone = "ok" }, { value = 1.0, label = "Occupied", tone = "warn", color = "#fff700" }, { value = 2.0, label = "Violation", tone = "alert" }]
+range = ""
+node = "nmvew04ytk"
+inject = {  }
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.ai_smart_parking.widgets]]
+id = "verdict_mvew6old6"
+title = "Zone 2A"
+kind = "verdict"
+source = "stat"
+key = "fn_zone_2_state_4ytt_value"
+span = 4
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 2, y = 5, w = 2, h = 3 }
+status = {  }
+states = [{ value = 0.0, label = "Empty", tone = "ok" }, { value = 1.0, label = "Occupied", tone = "warn", color = "#fff700" }, { value = 2.0, label = "Violation", tone = "alert" }]
+range = ""
+node = "nmvew04yts"
+inject = {  }
+bands = {  }
+by_day = false
+series = []
+interval = ""
+
+[[formats.ai_smart_parking.widgets]]
+id = "verdict_mvew6prt7"
+title = "Zone 3A"
+kind = "verdict"
+source = "stat"
+key = "fn_zone_2_state_4yty_value"
+span = 4
+capability = ""
+color = ""
+bg = ""
+template = "plain"
+anim = ""
+anim_replay = false
+text = ""
+unit = ""
+format = ""
+sub = ""
+label_size = "medium"
+value_size = "medium"
+camera = ""
+limit = 15
+query = {  }
+dataset = ""
+columns = []
+sql = ""
+tables = []
+grid = { x = 4, y = 5, w = 2, h = 3 }
+status = {  }
+states = [{ value = 0.0, label = "Empty", tone = "ok" }, { value = 1.0, label = "Occupied", tone = "warn", color = "#fff700" }, { value = 2.0, label = "Violation", tone = "alert" }]
+range = ""
+node = "nmvew04ytx"
+inject = {  }
 bands = {  }
 by_day = false
 series = []

@@ -6,6 +6,8 @@
 // survives a resolution change. Area = polygon (>=3 points), line = 2 points.
 // Box and circle are drag shapes that compile to polygons.
 import { useEffect, useRef, useState } from "react";
+const TOUCH = typeof window !== "undefined" && !!window.matchMedia
+  && window.matchMedia("(pointer: coarse)").matches;
 
 export const ZONE_COLORS = { violation: "#ef4444", area: "#22d3ee", line: "#f59e0b" };
 // New zones cycle through these so several zones are visually distinct; each is
@@ -311,10 +313,18 @@ export default function ZoneCanvas({ zones, drawMode, draft, onDraft, onFinish,
       {/* vertex handles on the selected zone: drag one to reshape */}
       {canEditGeometry && zones.filter((z) => z.id === selectedId).map((z) =>
         z.points.map((p, i) => (
-          <circle key={`${z.id}-h${i}`} cx={p[0]} cy={p[1]} r="0.011"
-                  fill="#fff" stroke={zoneColor(z)} strokeWidth="0.004"
-                  style={{ cursor: "grab" }}
-                  onPointerDown={(e) => startEdit(e, z, "vertex", i)} />
+          <g key={`${z.id}-h${i}`}>
+            <circle cx={p[0]} cy={p[1]} r={TOUCH ? "0.016" : "0.011"}
+                    fill="#fff" stroke={zoneColor(z)} strokeWidth="0.004"
+                    style={{ cursor: "grab" }}
+                    onPointerDown={(e) => startEdit(e, z, "vertex", i)} />
+            {/* A fingertip is ~9mm; the visible handle is a few px. On touch an
+                invisible larger disc takes the press so a vertex can be grabbed. */}
+            {TOUCH && (
+              <circle cx={p[0]} cy={p[1]} r="0.04" fill="transparent"
+                      onPointerDown={(e) => startEdit(e, z, "vertex", i)} />
+            )}
+          </g>
         )))}
       {draft.length > 0 && (
         <polyline points={draft.map((p) => p.join(",")).join(" ")}
