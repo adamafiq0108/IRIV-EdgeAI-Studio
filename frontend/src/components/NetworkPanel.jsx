@@ -34,7 +34,6 @@ import {
 } from "lucide-react";
 import { CardHeader, StateSwitch, pillClass } from "./ui/CardHeader.jsx";
 import { PasswordInput } from "./ui/input.jsx";
-import SoftwarePortCard from "./SoftwarePortCard.jsx";
 import HostnameCard from "./HostnameCard.jsx";
 import HttpsCard from "./HttpsCard.jsx";
 import WifiSwitchOverlay from "./WifiSwitchOverlay.jsx";
@@ -171,9 +170,7 @@ export default function NetworkPanel() {
         </p>
         {/* The name is settable too (hostnamectl, not nmcli). */}
         <HostnameCard />
-        {/* So is the port: the software's, not NetworkManager's. */}
-        <SoftwarePortCard />
-        {/* ...and HTTPS (the hub's own listener), right after the port. */}
+        {/* ...and HTTPS (the hub's own listener). */}
         <HttpsCard />
       </SettingsPage>
     );
@@ -797,11 +794,7 @@ export default function NetworkPanel() {
 
       {/* The Hostname card: master. */}
       <HostnameCard />
-      {/* ---- the software's own port ---- */}
-      {/* Set once, if ever. Draws itself only for master or a
-          developer (the server answers 403 to anyone else). */}
-      <SoftwarePortCard />
-      {/* HTTPS with the box's own certificate, directly after the port. */}
+      {/* HTTPS with the box's own certificate. */}
       <HttpsCard />
     </SettingsPage>
   );

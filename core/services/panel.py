@@ -46,7 +46,7 @@ PAGE_IDS = ("about", "wifi", "url", "ip", "status")
 #: An unknown placeholder renders as nothing rather than raising: a typo in a
 #: settings field must not blank the screen.
 DEFAULT_TEXT = {
-    "about_title": "IRIV EdgeAI",
+    "about_title": "IRIV EdgeAI Studio",
     "about_model": "{wireless}R{total_ram}E{total_disk}",
     "about_accel": "{ai_hat}",
     "wifi_title": "ACCESS DASHBOARD:",
