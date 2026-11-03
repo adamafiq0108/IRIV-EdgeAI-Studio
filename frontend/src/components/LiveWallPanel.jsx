@@ -118,7 +118,7 @@ function SlotPicker({ systems, onPick, onPickLocal }) {
  *  exactly: not shorter, and not so tall that it scrolls. Only where the grid
  *  is two columns wide (sm and up); on a phone the tiles stack at their own
  *  16:9 and the page scrolls. */
-function useFitHeight(ref) {
+function useFitHeight(ref, ready) {
   const [h, setH] = useState(undefined);
   useLayoutEffect(() => {
     const measure = () => {
@@ -129,7 +129,7 @@ function useFitHeight(ref) {
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, [ref]);
+  }, [ref, ready]);
   return h;
 }
 
@@ -142,7 +142,9 @@ export default function LiveWallPanel() {
   // between slots - it just changes which slot draws big.
   const [layout, setLayout] = useState("grid");
   const wallRef = useRef(null);
-  const fitH = useFitHeight(wallRef);
+  // The wall div only mounts once the stream list has loaded, so the first
+  // measurement (ref still null) has to be redone then.
+  const fitH = useFitHeight(wallRef, Boolean(data));
   const [pinned, setPinned] = useState(0);
 
   if (error) return <ErrorNote error={error} />;

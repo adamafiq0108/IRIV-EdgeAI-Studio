@@ -670,9 +670,14 @@ fi
 # it, and written only on a first install and only if nothing is there already,
 # so a box that already shows demo keeps it.
 if [[ $FRESH_INSTALL -eq 1 && ! -e "${TARGET}/config/systems.local.toml" ]]; then
-    printf '# First install: the reference "demo" system is not listed on the hub.\nenabled = []\n' \
+    # Also on a first install: reach the box at one address with no port (the
+    # hub at /, each system at /s/<slug>), the reverse-proxy access mode. The
+    # hub makes the port 80 redirect at its start and, if it cannot, falls
+    # back to port addresses and says so (webaccess.ensure_redirect).
+    printf '# First install: the reference "demo" system is not listed on the hub.\nenabled = []\n\n[hub]\naccess = "proxy"\n' \
         > "${TARGET}/config/systems.local.toml"
     note "no demo card on the hub (config/systems.local.toml: enabled = [])"
+    note "systems open at /s/<name> on port 80 (config/systems.local.toml [hub].access = proxy)"
 fi
 
 if [[ $KEEP_NODE_MODULES -eq 0 && -d "${SRC_DIR}/frontend/node_modules" ]]; then
@@ -2246,7 +2251,7 @@ say "Done"
 IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 cat <<EOF
 
-  Dashboard      : http://${IP:-<this-box>}:${HUB_PORT}
+  Dashboard      : http://${IP:-<this-box>}  (port 80; also http://${IP:-<this-box>}:${HUB_PORT})
   Sign in as     : ${DEFAULT_ADMIN_USER} / ${DEFAULT_ADMIN_PASSWORD}  (change it)
   Hotspot key    : ${AP_KEY:-iriv1234 (set by the hub at its first start)}  (on the front panel; change it on Settings -> Network)
   OS account     : the pi account password was not changed; change it with passwd if you want
