@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The guided setup's Next / Skip control, top-right of every page it walks
 // through: AI Models → Camera Setup → Zones → Workflow.
 //
@@ -14,6 +15,9 @@ import { ArrowRight, Check } from "lucide-react";
 const PATHS = {
   models: "/models",
   detection: "/detection",
+  database: "/database",
+  dashboard: "/",
+  analytics: "/analytics",
   // Retired step, kept so a board saved mid-tour on it still resolves: zones
   // are a tab of Camera Setup now.
   zones: "/zones",
@@ -23,6 +27,9 @@ const PATHS = {
 const LABELS = {
   models: "AI Models",
   detection: "Camera Setup",
+  database: "Database",
+  dashboard: "Dashboard",
+  analytics: "Analytics",
   zones: "Zones",
   workflow: "Workflow",
 };
@@ -42,7 +49,9 @@ export default function TutorialNav({ step }) {
   }, []);
   useEffect(load, [load]);
 
-  if (!state || state.done || state.step !== step) return null;
+  // The sidebar's Setup guide entry (SetupGuideItem) carries Next now, so this bar
+  // would only be a second, guide-less copy of it. Kept for a box on the old flow.
+  if (!state || state.done || state.step !== step || !state.legacyBar) return null;
 
   const steps = state.steps || Object.keys(PATHS);
   const idx = steps.indexOf(step);

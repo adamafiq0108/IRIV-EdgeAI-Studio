@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // StandaloneShell - the shell for a standalone system: ONE local board running
 // its own dashboard and AI, not the head or member of a master/slave group.
 //
@@ -15,16 +16,18 @@ import { useMemo, useState } from "react";
 import { Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useApp, PAGE_PATHS, navRedirect, atPath } from "../state/app.jsx";
 import { goWithSession, withSession } from "../lib/session.js";
-import SessionMenu from "./SessionMenu.jsx";
+import UserMenu from "./UserMenu.jsx";
+import GuideSwitch from "./GuideSwitch.jsx";
+import SetupGuideItem from "./SetupGuideItem.jsx";
 import {
   SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter,
   SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton,
   SidebarInset, SidebarTrigger, SidebarRail,
 } from "./ui/sidebar.jsx";
-import { Separator } from "./ui/separator.jsx";
 import { TooltipProvider } from "./ui/tooltip.jsx";
 import { Button } from "./ui/button.jsx";
 import FullscreenButton from "./FullscreenButton.jsx";
+import GuideButton from "./GuideButton.jsx";
 import { useTheme } from "../hooks/use-theme.js";
 import HardwareFooter from "./HardwareFooter.jsx";
 import SetupWizard from "./SetupWizard.jsx";
@@ -210,7 +213,8 @@ export default function StandaloneShell() {
             ))}
           </SidebarContent>
           <SidebarFooter>
-            <SessionMenu />
+            <GuideSwitch />
+            <SetupGuideItem />
           </SidebarFooter>
           <SidebarRail />
         </Sidebar>
@@ -218,7 +222,6 @@ export default function StandaloneShell() {
         <SidebarInset className="bg-muted/40">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b bg-background/70 px-4 backdrop-blur-md">
             <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-1 h-4" />
             {/* The page name, and nothing else. The system's name is already
                 in the sidebar's brand block and on the board row above the
                 nav, so repeating it here -- with the word "standalone", which
@@ -263,6 +266,7 @@ export default function StandaloneShell() {
             <CapacityMeters />
             {/* Beside the theme toggle: both are "how this screen is shown",
                 and a shop-floor panel wants the browser chrome gone. */}
+            <GuideButton />
             <FullscreenButton />
             <Button
               variant="ghost"
@@ -273,6 +277,9 @@ export default function StandaloneShell() {
             >
               {dark ? <Sun /> : <Moon />}
             </Button>
+            {/* The same account button as the hub's top bar: sign out, reboot, shut down, and the
+                way back to the list of systems. */}
+            <UserMenu onHome={hubUrl ? () => goWithSession(withSession(hubUrl)) : undefined} />
           </header>
           <main className="cy-legacy flex-1 p-4 sm:p-6">
             <div className="mx-auto w-full max-w-[1500px]">

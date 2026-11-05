@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Database - one place to manage this system's tables AND their rows.
 //
 // Deliberately not a database administration tool. The model is a spreadsheet
@@ -20,12 +21,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { api } from "../api/client.js";
-import { ErrorNote, SkelPage } from "../components/Loading.jsx";
+import { ErrorNote, SkelDatabase } from "../components/Loading.jsx";
 import { FormDialog } from "../components/ui/dialogs.jsx";
 import { Dialog } from "../components/ui/primitives.jsx";
 import TableCsvDialog from "../components/widgets/TableCsvDialog.jsx";
 import { useToast } from "../components/ui/Toast.jsx";
 import { useConfirm } from "../components/ui/ask.jsx";
+import { useSearchParams } from "react-router-dom";
+import DatabaseSetup from "../workflow/DatabaseSetup.jsx";
+import { GUIDE_REQUEST_EVENT, guidesEnabled, setupTourActive } from "../workflow/guideState.js";
 import { useApp } from "../state/app.jsx";
 import { authHeaders } from "../lib/session.js";
 import { apiUrl } from "../lib/base.js";
@@ -92,6 +96,32 @@ export default function Database() {
   const toast = useToast();
   const confirm = useConfirm();
   const { system } = useApp();
+  // The setup slideshow: opens with the page unless told not to, from the Examples guideline
+  // (?guide=setup), or from its button.
+  const [params, setParams] = useSearchParams();
+  const [setupOpen, setSetupOpen] = useState(params.get("guide") === "setup");
+  // The Guide button in the top bar asks for it too.
+  useEffect(() => {
+    const ask = (e) => { if (e.detail?.key === "database") setSetupOpen(true); };
+    window.addEventListener(GUIDE_REQUEST_EVENT, ask);
+    return () => window.removeEventListener(GUIDE_REQUEST_EVENT, ask);
+  }, []);
+  // ...and again whenever the link is followed while this page is already open.
+  useEffect(() => {
+    if (params.get("guide") === "setup") setSetupOpen(true);
+  }, [params]);
+  // Otherwise it opens with the page, once the first-time setup guide is over.
+  useEffect(() => {
+    if (!guidesEnabled() || params.get("guide") === "setup") return undefined;
+    let live = true;
+    setupTourActive().then((active) => { if (live && !active) setSetupOpen(true); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const closeSetup = () => {
+    setSetupOpen(false);
+    if (params.has("guide")) { params.delete("guide"); setParams(params, { replace: true }); }
+  };
   const [status, setStatus] = useState(null);
   const [error, setError] = useState(null);
   const [chosen, setChosen] = useState("");
@@ -354,6 +384,11 @@ export default function Database() {
     const file = e.target.files?.[0];
     e.target.value = "";                       // same file re-pickable later
     if (!file) return;
+    // Only a database file: the export is a .db, and nothing else can be read back.
+    if (!/\.db$/i.test(file.name)) {
+      toast.error("Only a .db file can be imported", `"${file.name}" is not a .db database file.`);
+      return;
+    }
     setImporting(true);
     try {
       const found = await postDb(file, "preview");
@@ -386,7 +421,7 @@ export default function Database() {
   }
 
   if (error) return <section className="page active"><ErrorNote error={error} /></section>;
-  if (!status) return <SkelPage />;
+  if (!status) return <SkelDatabase />;
 
   // The exact count, once it has come, replaces "at least 20,000": the pager
   // then knows its last page. Until then (or if it never comes) it is capped.
@@ -437,39 +472,26 @@ export default function Database() {
               <button type="button" className="db-icon-btn" title="Rename"
                       onClick={() => setRenaming(true)}>✎</button>
             )}
-            {/* Every system on this box shares ONE database and is told apart
-                by a slug column. This carves THIS system out into a SQLite
-                file that opens in any database tool -- events, Data Table
-                rows, and each table expanded into its own columns. */}
-            <button type="button" className="db-icon-btn"
-                    disabled={exporting}
-                    title={exporting
-                      ? "Building the file…"
-                      : "Download this system's data as a SQLite database"}
-                    onClick={exportDb}>{exporting ? "…" : "⭳"}</button>
-            {/* ...and the way back in. The export was a one-way door for a
-                long time, which makes it a souvenir rather than a move. */}
-            {editable && (
-              <button type="button" className="db-icon-btn"
-                      disabled={importing}
-                      title={importing
-                        ? "Reading the file…"
-                        : "Load a SQLite export into this system"}
-                      onClick={() => importRef.current?.click()}>
-                {importing ? "…" : "⭱"}
-              </button>
-            )}
-            <input ref={importRef} type="file" accept=".db,.sqlite,.sqlite3"
+            {/* Export is in the Export menu above the table; Import .db is beside New Table. */}
+            <input ref={importRef} type="file" accept=".db"
                    style={{ display: "none" }} onChange={onImportPicked} />
           </div>
           <input className="input db-search" placeholder="Search…"
                  value={tableSearch} onChange={(e) => setTableSearch(e.target.value)} />
           {/* Directly under the search, above the list it adds to. */}
           {editable && (
-            <button type="button" className="btn btn-sm db-newtable"
-                    onClick={() => setNewTable(true)}>
-              New Table
-            </button>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button type="button" className="btn btn-sm db-newtable" style={{ flex: 1 }}
+                      onClick={() => setNewTable(true)}>
+                New Table
+              </button>
+              <button type="button" className="btn btn-sm" data-db-import disabled={importing}
+                      style={{ flex: 1 }}
+                      title="Load a .db database file into this system"
+                      onClick={() => importRef.current?.click()}>
+                {importing ? "Reading…" : "Import .db"}
+              </button>
+            </div>
           )}
           <div className="db-side-head">
             <span>Tables</span>
@@ -624,6 +646,7 @@ export default function Database() {
 
         {/* ----------------------------------------------- right panel */}
         <div className="db-main">
+          <DatabaseSetup open={setupOpen} onClose={closeSetup} />
           {!status.available && (
             <div className="db-banner">
               <strong>The row store is not reachable.</strong> Tables can still be
@@ -638,10 +661,20 @@ export default function Database() {
                 Select a table from the left panel, or create a new table.
               </p>
               {editable && (
-                <button className="btn btn-accent" onClick={() => setNewTable(true)}>
-                  New Table
-                </button>
+                <span style={{ display: "inline-flex", gap: 8 }}>
+                  <button className="btn btn-accent" onClick={() => setNewTable(true)}>
+                    New Table
+                  </button>
+                  <button className="btn" disabled={importing}
+                          onClick={() => importRef.current?.click()}>
+                    {importing ? "Reading…" : "Import .db"}
+                  </button>
+                </span>
               )}
+              <button className="btn btn-sm" style={{ marginTop: 8 }} data-db-setup-open
+                      onClick={() => setSetupOpen(true)}>
+                Database Setup guide
+              </button>
             </div>
           ) : (<>
             {/* Tabs: the table you picked, and the query editor. Two ways of

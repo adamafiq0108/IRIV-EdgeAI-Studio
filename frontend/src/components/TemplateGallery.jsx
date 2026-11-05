@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // "Start from a template" -- the built-in templates as picture cards, with a
 // preview of what each one gives you (Tok Aba, 2026-10-22, meeting notes
 // Entries 1 and 2).
@@ -298,10 +299,10 @@ export default function TemplateGallery({ onUse, embedded = false, limitNote = "
   }
 
   return (
-    <section className="space-y-3" data-template-gallery>
+    <section className="space-y-4" data-template-gallery>
       {!embedded && (
         <div>
-          <h2 className="text-base font-semibold">Start from a template</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Start from a template</h2>
           <p className="text-sm text-muted-foreground">
             Pick one to see what it gives you. You can change everything later.
           </p>
@@ -315,13 +316,13 @@ export default function TemplateGallery({ onUse, embedded = false, limitNote = "
           ) : null}
         </div>
       )}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-3">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-5">
         {templates.map((t) => (
           <button key={t.key} type="button" data-template-card={t.key}
                   onClick={() => setOpen(t.key)}
                   className="group overflow-hidden rounded-xl border bg-card text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_8px_30px_-12px_var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <TemplateArt t={t} card className="h-28" />
-            <span className="block border-t p-3">
+            <TemplateArt t={t} card className="h-32" />
+            <span className="block border-t px-4 py-3.5">
               <span className="block truncate text-sm font-semibold">{t.label}</span>
               <span className="mt-0.5 block truncate text-xs text-muted-foreground" title={t.hint || ""}>
                 {t.hint || " "}

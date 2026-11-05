@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """What the Footage page and the PDF notice show about one snapshot.
 
 The detection app writes, beside each snapshot it takes for a Snapshot output
@@ -88,7 +89,7 @@ def derive(sid, mtime):
 
 def view_timer(timer):
     """The timer as it is shown: {threshold_s, total_s, exceeded_s, ended,
-    elapsed_s, kind}. `exceeded_s` is max(0, total - threshold) and only exists
+    elapsed_s, kind}. `exceeded_s` is max(0, total - threshold - tolerance) and only exists
     once the stay has ended: while the object is still there the total is not
     known, so neither is the excess, and none is guessed. None when the record
     has no timer, which is also how the page knows to show none."""
@@ -109,13 +110,18 @@ def view_timer(timer):
             ended = False
     out = {"kind": str(timer.get("kind") or ""), "threshold_s": thr,
            "elapsed_s": timer.get("elapsed_s"), "ended": ended,
-           "total_s": total,
-           "exceeded_s": None if total is None else round(max(0.0, total - thr), 2)}
+           "total_s": total, "exceeded_s": None}
+    tol = 0.0
     try:
-        if float(timer.get("tolerance_s") or 0) > 0:
-            out["tolerance_s"] = float(timer["tolerance_s"])
+        tol = max(0.0, float(timer.get("tolerance_s") or 0))
     except (TypeError, ValueError):
         pass
+    if tol > 0:
+        out["tolerance_s"] = tol
+    # The tolerance is time the object was allowed past the limit, so only what
+    # is beyond limit + tolerance is the violation.
+    if total is not None:
+        out["exceeded_s"] = round(max(0.0, total - thr - tol), 2)
     return out
 
 

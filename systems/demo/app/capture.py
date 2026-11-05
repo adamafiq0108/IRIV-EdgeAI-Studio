@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 capture.py -- triggered snapshots and short video clips.
 
@@ -95,6 +96,7 @@ class Capture:
         # event named one and the output asked for it. Stamped into the file
         # name so a clip can be found by object later.
         self._oid = ""
+        self._page = ""        # the Record Clip node's Footage page, likewise
         # ENCODING RUNS OFF THE DETECTION LOOP.
         #
         # cv2's H.264 writer is a software encoder, and it was being called
@@ -168,7 +170,7 @@ class Capture:
             pass
         return frame
 
-    def snap(self, jpeg_bytes, tag="", oid="", kind="", hold=False):
+    def snap(self, jpeg_bytes, tag="", oid="", kind="", hold=False, page=""):
         """One JPEG into the snapshot store. Returns the snapshot id.
 
         `kind` marks WHY it was taken in the file name, after the camera's tag
@@ -187,8 +189,13 @@ class Capture:
             return None
         oid = "".join(c for c in str(oid or "") if c.isalnum())[:12]
         stamp = int(time.time() * 1000)
+        # The Snapshot node's page (its name's short form), so Footage can
+        # group a node's photos by file name alone.
+        page = "".join(c for c in str(page or "").lower()
+                       if c.isascii() and c.isalnum())[:16]
         parts = ["cap"] + ([self.tag] if self.tag else []) \
-            + ([f"oid{oid}"] if oid else []) + [f"{stamp:x}"]
+            + ([f"oid{oid}"] if oid else []) + ([f"pg{page}"] if page else []) \
+            + [f"{stamp:x}"]
         kind = "".join(c for c in str(kind or "") if c.isalnum())[:8]
         if kind:
             parts.insert(2 if self.tag else 1, kind)
@@ -276,7 +283,7 @@ class Capture:
         # alternating take/skip and halving the real frame rate.
         return (now - self._last_taken) >= self._interval * 0.9
 
-    def record(self, after_s=MAX_CLIP_S, tag="", before_s=0.0, oid=""):
+    def record(self, after_s=MAX_CLIP_S, tag="", before_s=0.0, oid="", page=""):
         """Arm (or extend) a recording: `before_s` of run-up plus `after_s`
         forward. The forward half is clamped to MAX_CLIP_S from NOW, so
         overlapping triggers stretch a clip but never past the cap.
@@ -295,6 +302,9 @@ class Capture:
             # testing it here would arm the same clip twice.
             self._writing = True
             self._oid = "".join(c for c in str(oid or "") if c.isalnum())[:12]
+            # The Record Clip node's Footage page, in the clip's file name.
+            self._page = "".join(c for c in str(page or "").lower()
+                                 if c.isascii() and c.isalnum())[:16]
             log.info("capture: recording ~%ss clip%s%s", after_s,
                      f" +{before_s}s run-up" if before_s else "",
                      f" ({tag})" if tag else "")
@@ -444,7 +454,8 @@ class Capture:
                 h, w = frame.shape[:2]
                 stamp = time.strftime("%Y%m%d_%H%M%S")
                 parts = ["clip"] + ([self.tag] if self.tag else []) \
-                    + ([f"oid{self._oid}"] if self._oid else []) + [stamp]
+                    + ([f"oid{self._oid}"] if self._oid else []) \
+                    + ([f"pg{self._page}"] if self._page else []) + [stamp]
                 self._clip_path = os.path.join(self.dir, "_".join(parts) + ".mp4")
                 # H.264, not MPEG-4 Part 2.
                 #
@@ -482,6 +493,7 @@ class Capture:
         self._writer = None
         self._clip_path = None
         self._oid = ""
+        self._page = ""
         self._prune()
 
     def _prune(self):

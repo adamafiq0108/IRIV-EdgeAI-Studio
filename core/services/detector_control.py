@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 detector_control.py -- run and shape the LOCAL detection app from the dashboard.
 
@@ -4500,6 +4501,13 @@ def _validate_output(o):
         # build on a box mid-update reads duration_s and nothing else).
         clean["duration_s"] = clean["after_s"]
     if otype in ("snapshot", "record"):
+        # The page this node's photos or clips go to in Footage: its name and
+        # the short form the files' names carry.
+        pname = " ".join(str(o.get("page_name") or "").split())[:60]
+        pslug = "".join(c for c in str(o.get("page") or "").lower()
+                        if c.isascii() and c.isalnum())[:16]
+        if pname and pslug:
+            clean["page_name"], clean["page"] = pname, pslug
         # How OFTEN a capture output may act while its trigger keeps firing.
         # Without this a violation that lasts a minute writes hundreds of
         # near-identical frames.
@@ -4530,6 +4538,8 @@ def _validate_output(o):
                 clean["crop"] = True
             if o.get("hold"):
                 clean["hold"] = True
+            # (the Footage page this node's captures go to is kept below,
+            # for a clip as well as a photo)
             for key, cap in (("location", 120), ("violation", 120),
                              ("notice_title", 60)):
                 text = " ".join(str(o.get(key) or "").split())[:cap]
@@ -5220,7 +5230,9 @@ def set_hud(systems_dir, slug, values):
 #: The setup tour, in the order the steps have to happen: a camera without a
 #: model detects nothing. Zones are drawn ON the Camera Setup page now (its
 #: Zones tab), so they are part of the detection step rather than their own.
-TUTORIAL_STEPS = ("models", "detection", "workflow")
+# The order a new system is set up in; the Dashboard and Analytics builders come
+# last, once there is a pipeline to put on them.
+TUTORIAL_STEPS = ("models", "detection", "database", "workflow", "dashboard", "analytics")
 
 #: Steps that existed in older tours, mapped to where that work lives now --
 #: a board mid-tour on a retired step must resume there, not start over.
@@ -5238,9 +5250,14 @@ def get_tutorial(systems_dir, slug):
     ui = cfg.get("ui") or {}
     step = str(ui.get("tutorial_step") or TUTORIAL_STEPS[0])
     step = _TUTORIAL_STEP_ALIASES.get(step, step)
+    # `fresh`: the guide has never moved on this system -- a system created just now,
+    # including one made under the name of a system that was removed. The browser
+    # remembers which step it folded and whether it greeted, by system NAME, so it
+    # forgets all of that when this is true.
     return {"done": bool(ui.get("tutorial_done", False)),
             "step": step if step in TUTORIAL_STEPS else TUTORIAL_STEPS[0],
-            "steps": list(TUTORIAL_STEPS)}
+            "steps": list(TUTORIAL_STEPS),
+            "fresh": not ui.get("tutorial_step") and "tutorial_done" not in ui}
 
 
 @locked
@@ -5348,9 +5365,12 @@ def list_clips(systems_dir, slug, limit=50):
             stem = name[:-4]
             cid, cname = _tagged_camera(
                 stem[5:] if stem.startswith("clip_") else stem, cams)
+            pg = _PAGE_RE.search(stem)
             out.append({"name": name, "bytes": st.st_size,
                         "mtime": int(st.st_mtime),
-                        "camera": cid, "camera_name": cname})
+                        "camera": cid, "camera_name": cname,
+                        # the Record Clip node's page (`..._pg<slug>_...`)
+                        "page": pg.group(1) if pg else ""})
     except OSError:
         return []
     out.sort(key=lambda c: c["mtime"], reverse=True)
@@ -5924,6 +5944,21 @@ from core.services.dataset_record import (  # noqa: E402,F401
     _dataset_writer, _to_h264, dataset_record, dataset_record_stop)
 
 
+_PAGE_RE = re.compile(r"_pg([a-z0-9]{1,16})_")
+
+
+def snapshot_pages(systems_dir, slug, kind="snapshot"):
+    """The pages Footage offers: [{slug, name}], one per named Snapshot node
+    (photos) or Record Clip node (kind="record", clips), in the order the
+    workflow has them."""
+    seen, out = set(), []
+    for o in get_outputs(systems_dir, slug):
+        if o.get("type") == kind and o.get("page") and o["page"] not in seen:
+            seen.add(o["page"])
+            out.append({"slug": o["page"], "name": o.get("page_name") or o["page"]})
+    return out
+
+
 def list_snapshots(systems_dir, slug, limit=300):
     """The LOCAL app's saved snapshots (event/violation frames + workflow
     captures), newest first -- what the standalone Footage page lists. Rows:
@@ -5931,9 +5966,21 @@ def list_snapshots(systems_dir, slug, limit=300):
     pkg_dir = _pkg_dir(systems_dir, slug)
     folder = os.path.join(_data_dir(pkg_dir, _merged(pkg_dir)), "snapshots")
     try:
-        names = [n for n in os.listdir(folder) if n.endswith(".jpg")]
+        everything = os.listdir(folder)
     except OSError:
         return []
+    names = [n for n in everything if n.endswith(".jpg")]
+    # A photo taken before its node had a page carries none in its file name,
+    # but a photo with a record (a .json beside it) knows which rule took it:
+    # when exactly one named Snapshot node hangs off that rule, the photo is
+    # that node's. Photos with neither stay on "All photos" -- nothing says
+    # which node took them.
+    records = {n[:-5] for n in everything if n.endswith(".json")}
+    by_rule = {}
+    for o in get_outputs(systems_dir, slug):
+        if o.get("type") == "snapshot" and o.get("page") and o.get("function"):
+            by_rule.setdefault(o["function"], set()).add(o["page"])
+    by_rule = {fn: next(iter(pages)) for fn, pages in by_rule.items() if len(pages) == 1}
     cams = _capture_cameras(pkg_dir)
     rows = []
     for n in names:
@@ -5944,8 +5991,19 @@ def list_snapshots(systems_dir, slug, limit=300):
         stem = n[:-4]
         cid, cname = _tagged_camera(
             stem[4:] if stem.startswith("cap_") else stem, cams)
+        pg = _PAGE_RE.search(stem)
+        page = pg.group(1) if pg else ""
+        if not page and by_rule and stem in records:
+            try:
+                with open(os.path.join(folder, stem + ".json"), "r", encoding="utf-8") as f:
+                    page = by_rule.get(str(json.load(f).get("function") or ""), "")
+            except (OSError, ValueError, AttributeError):
+                page = ""
         rows.append({"id": stem, "mtime": int(st.st_mtime), "size": st.st_size,
                      "camera": cid, "camera_name": cname,
+                     # the Snapshot node's page: in the file name (`..._pg<slug>_...`),
+                     # or, for an older photo, from the rule its record names
+                     "page": page,
                      # "snap" = a frame a Snapshot Detection Stream detected
                      # (capture.snap kind "snp"); "" for every other picture.
                      "kind": "snap" if "_snp_" in stem else ""})

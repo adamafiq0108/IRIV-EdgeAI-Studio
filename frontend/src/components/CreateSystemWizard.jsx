@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Step-by-step system creation (the hub's New System panel).
 //
 //   name -> review
@@ -144,7 +145,7 @@ export default function CreateSystemWizard({ template = "", onCreated, onCancel 
       const d = await api.post("/api/hub/systems", body);
       const detail = d.started
         ? `Starting at ${d.url} - the card is on the Systems grid.`
-        : `Created without starting it - start it from System Control.`;
+        : `Created without starting it - press Start on its card.`;
       toast.success(`${d.name} created`, detail);
       // Just "created": what is left to set up is the guide's job (SetupWizard),
       // and a second warning toast stacked under this one read as an error.

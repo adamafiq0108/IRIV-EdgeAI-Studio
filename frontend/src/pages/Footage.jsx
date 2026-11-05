@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Footage - the images this system saved. Nothing lands here by accident any
 // more: a frame is written only when a zone action asks for a photo or a
 // workflow Snapshot node fires, so every image is one somebody configured.
@@ -170,6 +171,8 @@ export default function Footage() {
   // four-camera system the question is always "which camera", and the badge
   // on each card still says how it was saved.
   const [cam, setCam] = useState("all");
+  // WHICH Snapshot node's page: "all" (every photo, whatever page), or a page's slug.
+  const [pageKey, setPageKey] = useState("all");
   // Always a bounded window. "Today"/"7 days"/"30 days" used to be separate
   // buttons; DateRangePicker's own preset rail already offers all of those
   // (and more), so keeping a parallel set of buttons here was the same
@@ -234,19 +237,56 @@ export default function Footage() {
 
   // Changing what is on screen clears the selection: a bulk delete must never
   // reach images the operator can no longer see.
-  useEffect(() => { setSelected(new Set()); }, [cam, from, to, media]);
+  useEffect(() => { setSelected(new Set()); }, [cam, from, to, media, pageKey]);
   // Photos and clips are filtered by the same camera buttons, but a camera
   // that saved photos may have recorded no clips -- so switching media with a
   // camera picked would land on an empty grid with no visible reason.
-  useEffect(() => { setCam("all"); }, [media]);
+  useEffect(() => { setCam("all"); setPageKey("all"); }, [media]);
 
   // Everything in this media, before the camera filter -- the camera buttons
   // are built from it, so they must not disappear as soon as one is picked.
   const all = useMemo(() => (media === "clip"
     ? (clipData?.clips || []).map((c) => ({
         id: c.name, mtime: c.mtime, size: c.bytes,
-        camera: c.camera || "", camera_name: c.camera_name || "" }))
+        camera: c.camera || "", camera_name: c.camera_name || "",
+        page: c.page || "" }))
     : (data?.snapshots || [])), [data, clipData, media]);
+
+  // What the picked DATES leave: every count on this page (the Photos and Clips
+  // buttons, the pages, the cameras) is of these, so a button never promises
+  // photos the grid will not show.
+  const lo = startOfDay(new Date(from)).getTime() / 1000;
+  const hi = (startOfDay(new Date(to)).getTime() + 86400000) / 1000;
+  const inDates = (r) => r.mtime >= lo && r.mtime < hi && !pending.has(r.id);
+  const photosInDates = useMemo(
+    () => (data?.snapshots || []).filter(inDates),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, lo, hi, pending]);
+  const clipsInDates = useMemo(
+    () => (clipData?.clips || []).filter((c) => inDates({ id: c.name, mtime: c.mtime })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [clipData, lo, hi, pending]);
+
+  // The Snapshot nodes' pages, and how many photos each holds in those dates.
+  const snapPages = useMemo(
+    () => (media === "clip" ? clipData?.pages : data?.pages) || [], [data, clipData, media]);
+  const pageCounts = useMemo(() => {
+    const m = new Map();
+    for (const r of (media === "clip" ? clipsInDates : photosInDates)) {
+      // With a camera picked, a page counts only what that camera saved on it.
+      if (cam !== "all" && (r.camera || NO_CAMERA) !== cam) continue;
+      if (r.page) m.set(r.page, (m.get(r.page) || 0) + 1);
+    }
+    return m;
+  }, [photosInDates, clipsInDates, media, snapPages, cam]);
+  // ...and only the pages that camera has anything on are offered.
+  const shownPages = useMemo(
+    () => (cam === "all" ? snapPages : snapPages.filter((pg) => pageCounts.get(pg.slug))),
+    [snapPages, pageCounts, cam]);
+  // A picked page the camera has nothing on goes back to every page.
+  useEffect(() => {
+    if (cam !== "all" && pageKey !== "all" && !pageCounts.get(pageKey)) setPageKey("all");
+  }, [cam, pageKey, pageCounts]);
 
   // One button per camera that actually saved something in this media. A
   // camera with no footage is not offered: a filter that can only ever
@@ -254,6 +294,8 @@ export default function Footage() {
   const cameras = useMemo(() => {
     const seen = new Map();
     for (const r of all) {
+      if (!inDates({ id: r.id, mtime: r.mtime })) continue;
+      if (pageKey !== "all" && r.page !== pageKey) continue;
       const key = r.camera || NO_CAMERA;
       if (!seen.has(key)) {
         seen.set(key, { key, label: r.camera_name || r.camera || "Unattributed",
@@ -264,23 +306,25 @@ export default function Footage() {
     return [...seen.values()].sort((a, b) => (a.key === NO_CAMERA ? 1 : 0)
                                            - (b.key === NO_CAMERA ? 1 : 0)
                                            || a.label.localeCompare(b.label));
-  }, [all]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [all, lo, hi, pending, pageKey, media, snapPages]);
 
   const rows = useMemo(() => {
     // Clips carry `name`, snapshots carry `id`. Normalise here so one grid,
     // one selection model and one delete path serve both.
     let list = all;
+    if (pageKey !== "all") {
+      list = list.filter((r) => r.page === pageKey);
+    }
     if (cam !== "all") list = list.filter((r) => (r.camera || NO_CAMERA) === cam);
     // LOCAL-midnight to LOCAL-midnight, not "24h ago" -- an operator asking
     // for a day means since midnight, and a rolling window silently hides
     // this morning's images once it is past noon.
-    const lo = startOfDay(new Date(from)).getTime() / 1000;
-    const hi = (startOfDay(new Date(to)).getTime() + 86400000) / 1000;
     list = list.filter((r) => r.mtime >= lo && r.mtime < hi);
     // Awaiting the Undo window: gone from view, still on disk.
     if (pending.size) list = list.filter((r) => !pending.has(r.id));
     return list;
-  }, [all, cam, from, to, pending]);
+  }, [all, cam, lo, hi, pending, pageKey, media, snapPages]);
 
   // Everything the filters allow, in the order it will be shown -- BEFORE the
   // page is cut out of it. Ordering has to happen across the whole list or
@@ -452,13 +496,17 @@ export default function Footage() {
       </div>
 
       <div className="filter-bar" style={{ marginBottom: 12, flexWrap: "wrap" }}>
-        <button className={"btn btn-sm" + (media === "photo" ? " btn-accent" : "")}
-                onClick={() => setMedia("photo")}>
-          Photos ({(data?.snapshots || []).length})
+        <button className={"btn btn-sm"
+                  + (media === "photo" && pageKey === "all" ? " btn-accent" : "")}
+                data-all-photos
+                onClick={() => { setMedia("photo"); setPageKey("all"); }}>
+          All photos ({photosInDates.length})
         </button>
-        <button className={"btn btn-sm" + (media === "clip" ? " btn-accent" : "")}
-                onClick={() => setMedia("clip")}>
-          Clips ({(clipData?.clips || []).length})
+        <button className={"btn btn-sm"
+                  + (media === "clip" && pageKey === "all" ? " btn-accent" : "")}
+                data-all-clips
+                onClick={() => { setMedia("clip"); setPageKey("all"); }}>
+          All clips ({clipsInDates.length})
         </button>
         <span style={{ width: 8 }} />
         {/* One camera, or all of them. Offered only when there is more than
@@ -540,6 +588,21 @@ export default function Footage() {
           </button>
         )}
       </div>
+
+      {/* One page for every Snapshot node that has a name, so the photos of
+          different nodes are never mixed: the node's own name is the tab. */}
+      {shownPages.length > 0 && (
+        <div className="filter-bar" style={{ marginBottom: 8, flexWrap: "wrap" }}
+             data-snapshot-pages>
+          {shownPages.map((pg) => (
+            <button key={pg.slug} data-page={pg.slug}
+                    className={"btn btn-sm" + (pageKey === pg.slug ? " btn-accent" : "")}
+                    onClick={() => setPageKey(pg.slug)}>
+              {pg.name} <span className="muted">({pageCounts.get(pg.slug) || 0})</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {mailOpen && (
         <EmailFootageDialog

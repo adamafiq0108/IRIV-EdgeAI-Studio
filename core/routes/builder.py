@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 builder.py -- the widget builder's API: read, save, preview, publish.
 
@@ -328,10 +329,10 @@ async def save_layout(request: Request):
     # `partial: true` says "these are MY widgets, keep whatever else is in
     # there" -- so an Analytics layout save cannot clobber the wf_* widgets a
     # concurrent workflow recompile wrote between the read and this write.
-    if body.get("partial"):
-        body = builder_service.merge_partial(
-            builder_service.load(config_dir, _slug(request)), body)
     try:
+        if body.get("partial"):
+            body = builder_service.merge_partial(
+                builder_service.load(config_dir, _slug(request)), body)
         layout = builder_service.save(config_dir, _slug(request), body)
     except (ValueError, TypeError) as e:
         raise HTTPException(status_code=400, detail=str(e))

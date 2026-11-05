@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Dashboard Builder - drag widgets from the palette onto the canvas, bind each
 // to a live data key, publish the result as a deployable system package.
 //
@@ -32,6 +33,7 @@ import NextPageButton from "../components/NextPageButton.jsx";
 import { ArrowLeft, LayoutGrid } from "lucide-react";
 import { authHeaders } from "../lib/session.js";
 import { apiUrl } from "../lib/base.js";
+import PageGuideHost from "../workflow/PageGuides.jsx";
 
 
 export default function Builder() {
@@ -433,8 +435,23 @@ export default function Builder() {
   return (
     <section className="page active">
       <div className="page-head">
-        <div className="page-title">Dashboard Builder{newSlug ? ` - new system “${newName || newSlug}”` : ""}</div>
+        {/* The way out, at the left where a Back button is expected: keep the work (Save, on the
+            right) or leave it. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+          {!newSlug && (
+            <Link className="btn" to="/"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6,
+                           whiteSpace: "nowrap" }}
+                  title={dirty
+                    ? "Back to the dashboard - your unsaved changes stay here"
+                    : "Back to the dashboard"}>
+              <ArrowLeft size={15} /> Back to dashboard
+            </Link>
+          )}
+          <div className="page-title">Dashboard Builder{newSlug ? ` - new system “${newName || newSlug}”` : ""}</div>
+        </div>
         <div className="page-actions">
+          <PageGuideHost guide="dashboardBuilder" />
           {/* The way OUT. Composing a new system is a flow that ends in
               Install, but editing this system's dashboard just... ends, and
               the only way back to the thing being edited was the sidebar or
@@ -447,19 +464,6 @@ export default function Builder() {
           {!newSlug && (dirty ? <Badge tone="warn">unsaved</Badge> : <Badge tone="ok">saved</Badge>)}
           {!newSlug && (
             <button className="btn" disabled={!editable || !dirty} onClick={save}>Save</button>
-          )}
-          {/* Beside Save, not before the state badge: the two buttons are the
-              ways OUT of this page -- keep the work, or leave it -- and the
-              badge between them separated the pair it describes. */}
-          {!newSlug && (
-            <Link className="btn" to="/"
-                  style={{ display: "inline-flex", alignItems: "center", gap: 6,
-                           whiteSpace: "nowrap" }}
-                  title={dirty
-                    ? "Back to the dashboard - your unsaved changes stay here"
-                    : "Back to the dashboard"}>
-              <ArrowLeft size={15} /> Back to dashboard
-            </Link>
           )}
           {/* Publish… is gone from the ordinary builder: templates are
               published by dropping a system into the Built-in templates

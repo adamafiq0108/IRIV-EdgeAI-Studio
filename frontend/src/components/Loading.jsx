@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 import { friendlyError } from "../api/client.js";
 
 // Shared loading and empty states.
@@ -127,33 +128,150 @@ export function SkelEditor({ railFirst = false, title = "" }) {
   );
 }
 
-/** The whole app before its first answer: sidebar, header bar, content.
- *  This is the ONE place a skeleton earns the most -- it stands in for a
- *  blank screen on a cold load, which is the slowest moment the product has. */
+/** The whole app before its first answer: the top bar and a content area.
+ *  The hub has no side rail any more -- the logo and name sit at the left of
+ *  the bar and the account menu at the right -- so the placeholder is that bar
+ *  and nothing beside it. This is the ONE place a skeleton earns the most: it
+ *  stands in for a blank screen on a cold load, the slowest moment the
+ *  product has. */
 export function SkelShell() {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <div style={{ width: 220, flex: "none", padding: 12,
-                    borderRight: "1px solid var(--line)" }}>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 18 }}>
-          <SkelLine w={32} h={32} style={{ borderRadius: 8, flex: "none" }} />
-          <SkelLine w="60%" h={12} />
-        </div>
-        {[0, 1, 2, 3, 4, 5].map((i) => (
-          <SkelLine key={i} w={`${62 + (i % 3) * 12}%`} h={14}
-                    style={{ marginBottom: 12 }} />
-        ))}
+    <div style={{ minHeight: "100vh" }}>
+      <div style={{ height: 56, borderBottom: "1px solid var(--line)",
+                    display: "flex", alignItems: "center", gap: 10, padding: "0 16px" }}>
+        <SkelLine w={36} h={36} style={{ borderRadius: 8, flex: "none" }} />
+        <SkelLine w={150} h={14} />
+        <SkelLine w={34} h={34} style={{ borderRadius: "50%", marginLeft: "auto", flex: "none" }} />
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ height: 64, borderBottom: "1px solid var(--line)",
-                      display: "flex", alignItems: "center", padding: "0 16px" }}>
-          <SkelLine w={160} h={14} />
-        </div>
-        <div style={{ padding: 16 }}>
-          <SkelCard rows={3} />
-          <SkelCard rows={4} />
-        </div>
+      <div style={{ padding: 16 }}>
+        <SkelHome />
       </div>
     </div>
+  );
+}
+
+/** Home: the systems grid. Same grid and tile height as the real cards, so
+ *  nothing moves when they arrive. */
+export function SkelHome({ tiles = 6 }) {
+  return (
+    <div key="skel" className="page active page-skel mx-auto w-full max-w-[1400px] space-y-5">
+      <SkelLine w={140} h={20} style={{ marginTop: 8 }} />
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(17rem,1fr))] gap-5">
+        {Array.from({ length: tiles }, (_, i) => (
+          <div key={i} className="panel-card"
+               style={{ minHeight: "14rem", display: "flex", flexDirection: "column", gap: 10 }}>
+            <SkelFeed height={96} />
+            <SkelLine w={`${52 + (i % 3) * 12}%`} h={14} />
+            <SkelLine w="34%" h={10} />
+            <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
+              <SkelLine w={70} h={28} style={{ borderRadius: 8 }} />
+              <SkelLine w={28} h={28} style={{ borderRadius: 8, marginLeft: "auto" }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Workflow: node palette, canvas, and the right column (the guide card above
+ *  the properties). `wf-page` and `wf-grid` are the real page's own classes,
+ *  so the three columns stack on a phone exactly as the page does. */
+export function SkelWorkflow() {
+  return (
+    <section key="skel" className="page active wf-page page-skel">
+      <div className="page-head">
+        <div className="page-title"><SkelLine w={110} h={18} /></div>
+      </div>
+      <div className="wf-grid"
+           style={{ display: "grid", gap: 12, minHeight: "68vh",
+                    gridTemplateColumns: "240px minmax(0,1fr) 320px" }}>
+        <div className="panel-card wf-rail wf-rail-left">
+          <SkelLine h={32} style={{ marginBottom: 8 }} />
+          <SkelLine h={30} style={{ marginBottom: 12, borderRadius: 8 }} />
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <SkelLine key={i} h={34} style={{ marginBottom: 8, borderRadius: 8 }} />
+          ))}
+        </div>
+        <div className="panel-card wf-canvas-wrap" style={{ minWidth: 0 }}>
+          <SkelFeed height={460} />
+        </div>
+        <div className="wf-rail wf-rail-right" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="panel-card">
+            <SkelLine w="55%" h={14} style={{ marginBottom: 10 }} />
+            <SkelLine h={10} style={{ marginBottom: 6 }} />
+            <SkelLine w="80%" h={10} />
+          </div>
+          <div className="panel-card" style={{ flex: 1 }}>
+            <SkelLine w="45%" h={14} style={{ marginBottom: 12 }} />
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} style={{ marginBottom: 12 }}>
+                <SkelLine w={`${40 + (i % 3) * 12}%`} h={10} style={{ marginBottom: 5 }} />
+                <SkelLine h={28} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Database: the table list down the left, the rows on the right. */
+export function SkelDatabase() {
+  return (
+    <section key="skel" className="page active db-page page-skel">
+      <div className="db-shell">
+        <aside className="db-side">
+          <SkelLine h={34} style={{ marginBottom: 10, borderRadius: 8 }} />
+          <SkelLine h={30} style={{ marginBottom: 10, borderRadius: 8 }} />
+          {[0, 1, 2, 3, 4].map((i) => (
+            <SkelLine key={i} h={44} style={{ marginBottom: 8, borderRadius: 8 }} />
+          ))}
+        </aside>
+        <div className="db-main">
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <SkelLine w={160} h={20} />
+            <SkelLine w={90} h={30} style={{ marginLeft: "auto", borderRadius: 8 }} />
+            <SkelLine w={90} h={30} style={{ borderRadius: 8 }} />
+          </div>
+          <SkelTable rows={10} cols={5} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Nodes Guideline: node list, the selected node, then how it connects. */
+export function SkelGuideline() {
+  return (
+    <section key="skel" className="page active page-skel">
+      <div className="page-head" style={{ justifyContent: "flex-start", gap: 12 }}>
+        <div className="page-title">Nodes Guideline</div>
+      </div>
+      <div className="ng-grid">
+        <aside className="ng-col">
+          <SkelLine h={32} style={{ marginBottom: 12, borderRadius: 8 }} />
+          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+            <SkelLine key={i} h={34} style={{ marginBottom: 8, borderRadius: 8 }} />
+          ))}
+        </aside>
+        <div className="ng-col">
+          <SkelFeed height={160} />
+          <SkelLine w="40%" h={16} style={{ margin: "16px 0 10px" }} />
+          {[0, 1, 2, 3].map((i) => (
+            <SkelLine key={i} w={`${90 - i * 12}%`} h={10} style={{ marginBottom: 8 }} />
+          ))}
+        </div>
+        <div className="ng-col">
+          {[0, 1].map((i) => (
+            <div key={i} style={{ marginBottom: 14 }}>
+              <SkelLine w="50%" h={14} style={{ marginBottom: 10 }} />
+              <SkelFeed height={150} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

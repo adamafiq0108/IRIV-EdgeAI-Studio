@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Detection - run the camera. That is the whole job of this page.
 //
 // It used to do four unrelated things: pick a model, choose a camera, run the
@@ -24,6 +25,8 @@ import { ZONE_COLORS } from "../components/ZoneCanvas.jsx";
 import { Switch } from "../components/ui/switch.jsx";
 import FeedStatusPanel from "../components/FeedStatusPanel.jsx";
 import TutorialNav from "../components/TutorialNav.jsx";
+import PageGuideHost from "../workflow/PageGuides.jsx";
+import { setupTourActive } from "../workflow/guideState.js";
 import NextPageButton from "../components/NextPageButton.jsx";
 import { Loader2, Play, Square, Camera as CameraIcon,
          ZoomIn, ZoomOut, Usb, Wifi, Network, FileVideo,
@@ -1231,7 +1234,9 @@ export default function Detection() {
     const src = String(list[0].source || "").trim();
     if (src && src !== "synthetic") return;
     autoPicked.current = true;
-    beginAddCam();
+    // While the first-time setup guide is going it comes first, and the person
+    // presses + Add camera themselves when the guide says to.
+    setupTourActive().then((active) => { if (!active) beginAddCam(); });
   }, [status, editable]);
 
   function beginAddCam() {
@@ -1515,6 +1520,7 @@ export default function Detection() {
               leaves. See ZONE_ACTIONS_SLOT in Zones.jsx. */}
           <div id={ZONE_ACTIONS_SLOT}
                style={{ display: "inline-flex", alignItems: "center", gap: 8 }} />
+          <PageGuideHost guide="camera" />
           <TutorialNav step="detection" />
           <NextPageButton />
         </div>

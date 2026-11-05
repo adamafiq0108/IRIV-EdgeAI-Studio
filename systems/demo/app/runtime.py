@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 runtime.py -- the app's state file, and starting/stopping it as a process.
 
@@ -439,8 +440,24 @@ def stop(data_dir, timeout_s=10, pkg_dir=None):
             os.kill(pid, signal.SIGTERM)
         except OSError:
             pass
+
+    def _end_strays():
+        # SIGTERM is a request: an app stuck in a call to the AI chip does not
+        # act on it, and a stray with no pid file was never insisted upon, so it
+        # outlived its system (deleted systems left apps holding a Hailo slot).
+        deadline_s = time.time() + timeout_s
+        while time.time() < deadline_s and any(_alive(p) for p in strays):
+            time.sleep(0.3)
+        for p in strays:
+            if _alive(p):
+                try:
+                    os.kill(p, getattr(signal, "SIGKILL", signal.SIGTERM))
+                except OSError:
+                    pass
+
     if not state["running"]:
         if strays:
+            _end_strays()
             write(data_dir, running=False, pid=None)
             return True, f"stopped stray pid(s) {strays}"
         return False, "not running"
@@ -449,6 +466,8 @@ def stop(data_dir, timeout_s=10, pkg_dir=None):
         os.kill(pid, signal.SIGTERM if os.name != "nt" else signal.SIGTERM)
     except OSError as e:
         return False, f"could not signal pid {pid}: {e}"
+    if strays:
+        _end_strays()
     deadline = time.time() + timeout_s
     while time.time() < deadline:
         if not _alive(pid):

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Systems grid - the hub's home. One card per registered system; each links out
 // to that system's own master (a separate process/URL). A system with no master
 // configured still gets a card, disabled, so the gap is visible not silent.
@@ -27,8 +28,9 @@
 import { useMemo, useRef, useState } from "react";
 import { api } from "../api/client.js";
 import { usePoll } from "../api/hooks.js";
+import { Switch } from "@/components/ui/switch.jsx";
 import { useApp } from "../state/app.jsx";
-import { ErrorNote, SkelPage } from "../components/Loading.jsx";
+import { ErrorNote, SkelHome } from "../components/Loading.jsx";
 import { Card } from "../components/ui/card.jsx";
 import { Button } from "../components/ui/button.jsx";
 import { Input } from "../components/ui/input.jsx";
@@ -73,6 +75,13 @@ export default function Hub({ onCreate }) {
   const toast = useToast();
   const confirm = useConfirm();
   const { data, error, reload } = usePoll("/api/hub", 10000);
+  // Which systems start with the box: one flag per system, shown as a switch on its card.
+  const { data: pipes, reload: reloadPipes } = usePoll("/api/hub/pipelines", 10000);
+  const autostartOf = useMemo(() => {
+    const m = new Map();
+    for (const p of pipes?.pipelines || []) m.set(p.slug, !!p.autostart);
+    return m;
+  }, [pipes]);
   const [query, setQuery] = useState("");
   const [selecting, setSelecting] = useState(false);
   const [sel, setSel] = useState(() => new Set());
@@ -116,7 +125,7 @@ export default function Hub({ onCreate }) {
   const importDbRef = useRef(null);
 
   if (error) return <ErrorNote error={error} />;
-  if (!data) return <SkelPage title="Systems" cards={2} rows={4} />;
+  if (!data) return <SkelHome />;
 
   function toggle(slug) {
     setSel((prev) => {
@@ -304,7 +313,7 @@ export default function Hub({ onCreate }) {
       if (action === "stop") toast.success(`${card.name || card.slug} stopped`);
       else toast.success(`${card.name || card.slug} is starting`,
                          "Its pages come up in a few seconds. AI detection "
-                         + "stays off until you turn it on in System Control.");
+                         + "stays off until you press Start on its Dashboard.");
       await reload().catch(() => {});
       // The button stays busy through the second read, not just the request:
       // a master takes a few seconds to answer, and a card that goes back to
@@ -314,6 +323,26 @@ export default function Hub({ onCreate }) {
       await reload().catch(() => {});
     } catch (e) {
       toast.error(`Could not ${action} ${card.name || card.slug}`, e.message);
+    } finally {
+      setPowerBusy((prev) => {
+        const next = new Set(prev);
+        next.delete(card.slug);
+        return next;
+      });
+    }
+  }
+
+  // Autostart: this system comes up by itself when the box powers on. Turning it on also
+  // starts it now.
+  async function setAutostart(card, on) {
+    setPowerBusy((prev) => new Set(prev).add(card.slug));
+    try {
+      const d = await api.post(`/api/hub/systems/${encodeURIComponent(card.slug)}/autostart`, { on });
+      toast.success(`${card.name || card.slug}: autostart ${on ? "on" : "off"}`,
+                    on ? (d?.started?.message || "Starting now, and with the box on power-on.") : undefined);
+      await Promise.all([reloadPipes().catch(() => {}), reload().catch(() => {})]);
+    } catch (e) {
+      toast.error("Could not set autostart", e.message);
     } finally {
       setPowerBusy((prev) => {
         const next = new Set(prev);
@@ -350,14 +379,19 @@ export default function Hub({ onCreate }) {
     // `page active` for the entrance every other page has: this one is built
     // out of Tailwind utilities rather than the .page shell, which is why it
     // was the one screen that appeared without one.
-    <div className="page active space-y-4">
+    <div className="page active mx-auto w-full max-w-[1400px] space-y-5">
       {/* One hidden picker serves every card's "Set image" button. */}
       <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
              className="hidden" onChange={onImagePicked} />
       <input ref={importRef} type="file" accept="application/json,.json"
              className="hidden" onChange={onExportPicked} />
       {gallery}
-      {user?.is_admin && <h2 className="pt-2 text-base font-semibold">Your systems</h2>}
+      {user?.is_admin && (
+        <h2 className="flex items-baseline gap-2 pt-6 text-lg font-semibold tracking-tight">
+          Your systems
+          {cards.length ? <span className="text-sm font-normal text-muted-foreground">{cards.length}</span> : null}
+        </h2>
+      )}
       {/* Toolbar: search filters as you type; Select is the admin's curation
           mode - its only action is Remove, so the button reads as that. */}
       <div className="flex flex-wrap items-center gap-2">
@@ -415,7 +449,7 @@ export default function Hub({ onCreate }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(17rem,1fr))] gap-5">
         {shown.map((card) => {
           // A reset in flight outranks whatever the probe just saw: the
           // master is deliberately down for a second, and "offline" would
@@ -437,7 +471,7 @@ export default function Hub({ onCreate }) {
             >
               {/* Cover: the uploaded image when one is stored on the device,
                   otherwise the brand tint + icon. */}
-              <div className="relative flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-transparent">
+              <div className="relative flex h-32 items-center justify-center overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-transparent">
                 {card.image ? (
                   <img src={card.image} alt=""
                        className="absolute inset-0 h-full w-full object-cover" />
@@ -514,7 +548,7 @@ export default function Hub({ onCreate }) {
                   {st.label}
                 </span>
               </div>
-              <div className="flex items-start justify-between gap-2 border-t p-4">
+              <div className="flex min-h-[4.5rem] items-start justify-between gap-2 border-t px-4 py-3.5">
                 <div className="min-w-0">
                   <div className="truncate font-semibold leading-tight">{card.name}</div>
                   {/* The id shows only when it adds something: a system called
@@ -555,6 +589,17 @@ export default function Hub({ onCreate }) {
                   </span>
                 )}
               </div>
+              {!dead && !selecting && (
+                <div className="flex items-center justify-between border-t bg-muted/30 px-4 py-2.5 text-xs text-muted-foreground"
+                     data-autostart-row
+                     title="Start this system by itself when the box powers on"
+                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                  <span className="font-medium">Autostart</span>
+                  <Switch size="sm" checked={!!autostartOf.get(card.slug)} aria-label={`Autostart ${card.name || card.slug}`}
+                          disabled={powerBusy.has(card.slug)}
+                          onCheckedChange={(on) => setAutostart(card, on)} />
+                </div>
+              )}
             </Card>
           );
           if (selecting) {
@@ -646,7 +691,7 @@ export default function Hub({ onCreate }) {
             type="button"
             data-new-slot={i}
             onClick={() => onCreate()}
-            className="flex min-h-[11.5rem] flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-primary/40 p-6 text-center text-muted-foreground transition-all hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex min-h-[14rem] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 p-6 text-center text-muted-foreground transition-all hover:border-primary hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Plus className="size-5" />
             <span className="text-xs font-medium">New system</span>

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Analytics - date range + a grid of generic widgets.
 //
 // ONE page, "Overview": the backend folds the system package's own widgets,
@@ -13,11 +14,12 @@
 // Auto-refreshes so widgets update as new events arrive (near real-time).
 // Rendering is generic - no slug branching.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client.js";
 import { useVisibleInterval } from "../api/hooks.js";
 import NextPageButton from "../components/NextPageButton.jsx";
 import { useApp } from "../state/app.jsx";
+import PageGuideHost from "../workflow/PageGuides.jsx";
 import WidgetGrid from "../components/widgets/WidgetGrid.jsx";
 import ScopeBadge from "../components/ScopeBadge.jsx";
 import DateRangePicker from "../components/ui/DateRangePicker.jsx";
@@ -25,6 +27,7 @@ import { saveAnalyticsRange } from "../lib/analyticsRange.js";
 import DayStrip from "../components/ui/DayStrip.jsx";
 import { ErrorNote, SkelPage } from "../components/Loading.jsx";
 import { useToast } from "../components/ui/Toast.jsx";
+import { useAsk } from "../components/ui/ask.jsx";
 import { downloadAnalyticsPdf, periodText, reportFileName } from "../lib/analyticsReport.js";
 
 const REFRESH_MS = 4000;    // live tiles track the feed; same cadence as Detection
@@ -38,9 +41,15 @@ const isoDay = (d) => {
        + `-${String(x.getDate()).padStart(2, "0")}`;
 };
 
+/** An id for a page the operator adds; the "an_" prefix is how the server
+ *  tells it from the Overview and keeps it (builder.ANALYTICS_PAGE_PREFIX). */
+const newPageId = () => "an_" + Math.random().toString(36).slice(2, 8);
+
 export default function Analytics() {
   const { system, brand } = useApp();
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const ask = useAsk();
   // Today/Week/Month/Custom used to be four buttons plus a picker that only
   // appeared for the fourth. DateRangePicker's own preset rail already covers
   // all three (and more), so this page now always operates in explicit
@@ -133,13 +142,41 @@ export default function Analytics() {
   if (error) return <ErrorNote error={error} />;
   if (!data) return <SkelPage title="Analytics" cards={2} rows={4} />;
 
-  // compute_pages folds everything into one page; the fallback covers a
-  // payload that predates it.
-  const page = (data.pages || [])[0]
-    || { id: PAGE_ID, name: "Overview", widgets: data.widgets || [] };
+  // The Overview, then any page the operator added. The fallback covers a
+  // payload that predates pages.
+  const allPages = (data.pages || []).length
+    ? data.pages
+    : [{ id: PAGE_ID, name: "Overview", widgets: data.widgets || [] }];
+  const page = allPages.find((p) => p.id === params.get("page")) || allPages[0];
   const widgets = page.widgets || [];
   const gridSize = page.size || "medium";
   const canEdit = !!data.editable;
+
+  // Switching page keeps the period (range, day) the operator is looking at.
+  function pickPage(id) {
+    const next = new URLSearchParams(params);
+    if (id === allPages[0].id) next.delete("page"); else next.set("page", id);
+    setParams(next);
+  }
+
+  // A second page for the operator's own widgets. Created empty, then opened
+  // in the Builder so the widgets can be put on it straight away.
+  async function newPage() {
+    const name = await ask({
+      title: "New page",
+      description: "A page of its own on Analytics, for the widgets you put on it.",
+      label: "Page name", placeholder: "Handrail", submitLabel: "Create page" });
+    const clean = String(name || "").split(/\s+/).join(" ").trim().slice(0, 60);
+    if (!clean) return;
+    const id = newPageId();
+    try {
+      await api.put("/api/builder", { partial: true,
+        pages: [{ id, name: clean, size: "medium", widgets: [] }] });
+      navigate(`/analytics/builder?page=${id}`);
+    } catch (e) {
+      toast.error("Could not make the page", e?.message || "Try again in a moment.");
+    }
+  }
 
   return (
     <section className="page active">
@@ -156,6 +193,7 @@ export default function Analytics() {
       <div className="page-head">
         <div className="page-title">Analytics<ScopeBadge /></div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <PageGuideHost guide="analytics" />
           <DateRangePicker start={start} end={end}
                            // An applied range means "show me this period":
                            // the whole span, every day lit. No day param --
@@ -180,11 +218,34 @@ export default function Analytics() {
             {pdfBusy ? `${pdfBusy}...` : "Download PDF"}
           </button>
           {canEdit && (
-            <Link className="btn btn-sm" to="/analytics/builder">Edit layout</Link>
+            <Link className="btn btn-sm"
+                  to={page.id === allPages[0].id ? "/analytics/builder"
+                    : `/analytics/builder?page=${page.id}`}>Edit layout</Link>
           )}
           <NextPageButton />
         </div>
       </div>
+
+      {/* One tab per page: the Overview, then each page the operator added.
+          Shown when there is a second page, or when this account can add one. */}
+      {(allPages.length > 1 || canEdit) && (
+        <div className="filter-bar" style={{ marginBottom: 8, flexWrap: "wrap" }}
+             data-analytics-pages>
+          {allPages.map((p) => (
+            <button key={p.id} data-page={p.id}
+                    className={"btn btn-sm" + (p.id === page.id ? " btn-accent" : "")}
+                    onClick={() => pickPage(p.id)}>
+              {p.name}
+            </button>
+          ))}
+          {canEdit && (
+            <button className="btn btn-sm" data-new-page onClick={newPage}
+                    title="Add another Analytics page for your own widgets">
+              + New Page
+            </button>
+          )}
+        </div>
+      )}
 
       {/* The days of the span, under the header: picking one scopes every
           widget to that day. Today is picked on open, so the page lands on
@@ -208,7 +269,9 @@ export default function Analytics() {
         empty={
           <div className="empty"><p>
             {canEdit
-              ? "Nothing here yet - press Edit layout and add what your workflow publishes."
+              ? (page.user
+                ? "This page is empty - press Edit layout and put widgets on it."
+                : "Nothing here yet - press Edit layout and add what your workflow publishes.")
               : `${system?.display_name} has no analytics widgets yet.`}
           </p></div>
         }

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // ZonesPanel - create and manage zone DEFINITIONS, nothing else: geometry,
 // names, colours, the count-when mode and the enabled flag. Everything a zone
 // DOES -- counting, alerts, timers -- is wired on the Workflow page; the
@@ -24,7 +25,6 @@ import { Badge } from "../components/ui/primitives.jsx";
 import { useToast } from "../components/ui/Toast.jsx";
 import { useConfirm } from "../components/ui/ask.jsx";
 import ZoneCanvas, { ZONE_PALETTE, zoneColor, buildPoints } from "../components/ZoneCanvas.jsx";
-import OverlayPanel from "../components/OverlayPanel.jsx";
 import WebRTCVideo from "../components/WebRTCVideo.jsx";
 import { camErrorText } from "../lib/camErrors.js";
 import { apiUrl } from "../lib/base.js";
@@ -1363,10 +1363,6 @@ export default function ZonesPanel({ camera: cameraProp, actions = null,
           })}
         </div>
 
-        {/* The Overlay rules (a proximity link line, a guard bubble): placed
-            while looking at the picture, so they stay beside it, under the
-            zones they share the scene with. */}
-        <OverlayPanel />
         {sidebarExtra}
         </div>
       </div>

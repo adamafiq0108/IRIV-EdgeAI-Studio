@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // AI Models - bring your own model instead of the built-in ones.
 //
 // Upload a compiled Hailo .hef and describe it in a form.
@@ -23,6 +24,7 @@ import { useToast } from "../components/ui/Toast.jsx";
 import CollapsibleCard from "../components/ui/CollapsibleCard.jsx";
 import { HoldToDelete } from "../components/ui/HoldToDelete.jsx";
 import TutorialNav from "../components/TutorialNav.jsx";
+import PageGuideHost from "../workflow/PageGuides.jsx";
 import NextPageButton from "../components/NextPageButton.jsx";
 import { authHeaders } from "../lib/session.js";
 import { apiUrl } from "../lib/base.js";
@@ -352,6 +354,7 @@ export default function Models() {
       <div className="page-head">
         <div className="page-title">AI Models</div>
         <div className="page-actions">
+          <PageGuideHost guide="models" />
           <TutorialNav step="models" />
           {/* Tracking lives here rather than on Camera Setup because it belongs
               to the MODEL's output: the ids these knobs decide are what every
@@ -994,6 +997,8 @@ function TrackerAdvanced({ open, onClose }) {
             </InfoHint>
           </p>
 
+          {/* Two columns: eight sliders in one column is a long scroll. */}
+          <div className="tracker-grid">
           {Object.entries(fields).map(([key, spec]) => {
             const copy = TRACKER_COPY[key] || { label: key, hint: "" };
             return (
@@ -1017,6 +1022,7 @@ function TrackerAdvanced({ open, onClose }) {
               </Field>
             );
           })}
+          </div>
 
           <div className="filter-bar" style={{ marginTop: 12 }}>
             <button className="btn"

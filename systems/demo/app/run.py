@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 run.py -- the detection loop and the MJPEG stream.
 
@@ -2454,6 +2455,8 @@ def main(argv=None):
         shot_img = _shot_frame(p)
         shot = camera_mod.encode_jpeg(shot_img) if shot_img is not None else None
         held = {"hold": True} if o.get("hold") else {}
+        if o.get("page"):
+            held["page"] = o["page"]
         sid = p.capture.snap(shot or p.jpeg or p.cam.last_jpeg(), o.get("label") or "",
                              oid=_source_oid(o, event), **held)
         if sid:
@@ -2525,7 +2528,8 @@ def main(argv=None):
                 sid, time.time(), p.id, cam_name, o.get("label") or "", oid,
                 event, str(o.get("location") or ""), crops, timer,
                 violation=str(o.get("violation") or ""),
-                notice_title=str(o.get("notice_title") or ""))
+                notice_title=str(o.get("notice_title") or ""),
+                page_name=str(o.get("page_name") or ""))
             store.save_snapshot_extra(sid, meta, jpegs)
             if timer and fn_id and raw is not None:
                 if len(snap_wait) > 200:                 # never grows without end
@@ -2557,7 +2561,9 @@ def main(argv=None):
             late, ev, cn = out_wait.pop(key)[:3]
             outputs_mod.fire(late, ev, capture_hooks, cn)
         out_wait[(str(clock), str(raw))] = (
-            parked, event, dict(counts), float(fn.params.get("timer_s") or 0), now, pipe)
+            parked, event, dict(counts),
+            (float(fn.params.get("timer_s") or 0), float(fn.params.get("timer_tol_s") or 0)),
+            now, pipe)
 
     def _fire_parked(clock_id, track, detail):
         """The stay ended: complete what waited for it, with the real total and
@@ -2565,14 +2571,18 @@ def main(argv=None):
         got = out_wait.pop((str(clock_id), str(track)), None)
         if not got:
             return
-        parked, event, counts, limit, _at, pipe = got
+        parked, event, counts, (limit, tol), _at, pipe = got
         d = event.setdefault("detail", {})
         for key in ("duration_s", "entered_at", "exited_at"):
             if detail.get(key) is not None:
                 d[key] = detail[key]
         if detail.get("duration_s") is not None and limit > 0:
             d["threshold_s"] = limit
-            d["exceeded_s"] = round(max(0.0, float(detail["duration_s"]) - limit), 2)
+            if tol > 0:
+                d["tolerance_s"] = tol
+            # Past the limit AND its tolerance: the tolerance is time the object
+            # was allowed, so it is not part of the violation.
+            d["exceeded_s"] = round(max(0.0, float(detail["duration_s"]) - limit - tol), 2)
         if detail.get("duration_s") is not None:
             counts = pipe.fn_engine.restate(counts, clock_id, detail["duration_s"])
         outputs_mod.fire(parked, event, capture_hooks, counts)
@@ -2619,10 +2629,11 @@ def main(argv=None):
         # 3-4x, and a 30fps header over 8fps of offered frames plays the event
         # as a timelapse.
         p.capture.set_fps(p.fps_ema or p.cam.measured_fps or p.cam.fps)
+        pg = {"page": o["page"]} if o.get("page") else {}
         p.capture.record(o.get("after_s") or o.get("duration_s") or 5,
                          o.get("label") or "",
                          before_s=o.get("before_s") or 0,
-                         oid=_source_oid(o, event))
+                         oid=_source_oid(o, event), **pg)
 
     # A Dataset node records a ROW of the operator's own columns. This app has
     # no database -- it imports nothing from core/ -- so the row travels as an

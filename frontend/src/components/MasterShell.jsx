@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // MasterShell - a master's shell (ports 511x), built on the SAME shadcn sidebar
 // template as HubShell so the hub and every system read as one product. The old
 // horizontal topbar nav moves into the sidebar as a "Pages" group; the device
@@ -13,7 +14,9 @@ import { Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useApp, PAGE_PATHS, navRedirect, atPath } from "../state/app.jsx";
 import { goWithSession, withSession } from "../lib/session.js";
 import DeviceTree from "./Sidebar.jsx";
-import SessionMenu from "./SessionMenu.jsx";
+import UserMenu from "./UserMenu.jsx";
+import GuideSwitch from "./GuideSwitch.jsx";
+import SetupGuideItem from "./SetupGuideItem.jsx";
 import HardwareFooter from "./HardwareFooter.jsx";
 import SetupWizard from "./SetupWizard.jsx";
 import CapacityMeters from "./CapacityMeters.jsx";
@@ -22,10 +25,10 @@ import {
   SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton,
   SidebarInset, SidebarTrigger, SidebarRail,
 } from "./ui/sidebar.jsx";
-import { Separator } from "./ui/separator.jsx";
 import { TooltipProvider } from "./ui/tooltip.jsx";
 import { Button } from "./ui/button.jsx";
 import FullscreenButton from "./FullscreenButton.jsx";
+import GuideButton from "./GuideButton.jsx";
 import { useTheme } from "../hooks/use-theme.js";
 import {
   LayoutDashboard, BarChart3, Film,
@@ -181,7 +184,8 @@ export default function MasterShell() {
 
           </SidebarContent>
           <SidebarFooter>
-            <SessionMenu />
+            <GuideSwitch />
+            <SetupGuideItem />
           </SidebarFooter>
           <SidebarRail />
         </Sidebar>
@@ -204,7 +208,6 @@ export default function MasterShell() {
         <SidebarInset className="bg-muted/40">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b bg-background/70 px-4 backdrop-blur-md">
             <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-1 h-4" />
             <div className="min-w-0 flex-1">
               {/* Page name only. The system's name is already in the brand
                   block at the top of the sidebar; a second copy here was a
@@ -216,6 +219,7 @@ export default function MasterShell() {
             <CapacityMeters />
             {/* Beside the theme toggle: both are "how this screen is shown",
                 and a shop-floor panel wants the browser chrome gone. */}
+            <GuideButton />
             <FullscreenButton />
             <Button
               variant="ghost"
@@ -226,6 +230,9 @@ export default function MasterShell() {
             >
               {dark ? <Sun /> : <Moon />}
             </Button>
+            {/* The same account button as the hub's top bar: sign out, reboot, shut down, and the
+                way back to the list of systems. */}
+            <UserMenu onHome={hubUrl ? () => goWithSession(withSession(hubUrl)) : undefined} />
           </header>
           {/* .cy-legacy: the routed pages are legacy-styled. mx-auto/max-w
               mirrors the old .main container (without its topbar margin). */}

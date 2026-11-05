@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Workflow - the visual pipeline editor. Wire the detection pipeline as nodes:
 //
 //   Detection Stream → Class Filter → Zone → Analytics → Dashboard / Output
@@ -7,9 +8,13 @@
 // widgets) - see core/services/workflow.py. This page owns editing UX only:
 // palette drag-drop, wires with validation, zoom/pan/minimap, undo/redo,
 // copy/paste, context menu, search, auto-save with compile badges.
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useUnsavedGuard } from "../hooks/use-unsaved-guard.jsx";
 import { useDarkClass } from "../hooks/use-theme.js";
+import { Drawer, PALETTE_ORDER, PaletteItem, SubHead, nodeMatches } from "../workflow/PaletteParts.jsx";
+import { GUIDE_REQUEST_EVENT, guidesEnabled } from "../workflow/guideState.js";
+// Loaded only when it opens, so the canvas does not wait on it.
+import GuideDock from "../workflow/GuideDock.jsx";
 import { InfoHint } from "../components/ui/InfoHint.jsx";
 import BusSettingsPanel from "../components/BusSettingsPanel.jsx";
 import EmailListField from "../components/EmailListField.jsx";
@@ -17,15 +22,15 @@ import ModbusServerEditor, { ModbusServerRow, REQUIRED_EMPTY, useModbusServers }
   from "../components/ModbusServerEditor.jsx";
 import MqttConnectionEditor, { MqttConnectionRow }
   from "../components/MqttConnectionEditor.jsx";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
-  ReactFlow, ReactFlowProvider, Background, MiniMap, Controls, SelectionMode,
+  ReactFlow, ReactFlowProvider, Background, MiniMap, Controls, Panel, SelectionMode,
   applyNodeChanges, applyEdgeChanges, addEdge, useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { api, saveBlob } from "../api/client.js";
 import { usePoll } from "../api/hooks.js";
-import { ErrorNote, SkelEditor } from "../components/Loading.jsx";
+import { ErrorNote, SkelWorkflow } from "../components/Loading.jsx";
 import { Badge, Dialog } from "../components/ui/primitives.jsx";
 import { useToast } from "../components/ui/Toast.jsx";
 import { useAsk, useConfirm } from "../components/ui/ask.jsx";
@@ -42,7 +47,7 @@ import SearchList from "../workflow/SearchList.jsx";
 import { summaryFor } from "../workflow/nodeSummary.js";
 import { closestPlaceholder, csvNames, csvTokens, unknownPlaceholders }
   from "../workflow/msgPlaceholders.js";
-import { ArrowRight, ChevronRight, Trash2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import {
   WorkflowCtx, buildNodeTypes, scheduleSentence, WEEKDAYS, slug,
   triggerAdvanced,
@@ -85,7 +90,7 @@ import NewVariableForm from "../workflow/NewVariableForm.jsx";
 import DebugPanel from "../workflow/DebugPanel.jsx";
 import UndoRedo from "../components/ui/UndoRedo.jsx";
 import { ChevronsLeft } from "lucide-react";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, Eye, EyeOff } from "lucide-react";
 import useCanvasFullscreen from "../workflow/useCanvasFullscreen.js";
 import TriggerFields from "../workflow/TriggerInspector.jsx";
 import BlueprintEditor from "../workflow/BlueprintEditor.jsx";
@@ -160,41 +165,6 @@ const SELF_FIRED_OUT = ["integration.command", "integration.watch",
 //: the app's own fallback (app/camera.py annotate) -- shown as the swatch's
 //: starting value so the picker opens on the colour actually in use.
 const DEFAULT_BOX_COLOR = "#FF0000";
-
-const PALETTE_ORDER = ["common",
-                       "source", "filter", "board", "time",
-                       // No analytics drawer: analytics is the server's
-                       // WIRING category, and the last node still filed under
-                       // it in the palette (Custom Formula) reads as Math. A
-                       // one-node drawer called Functions, sitting next to a
-                       // drawer full of functions, was a place to miss things.
-                       "zone",
-                       // Maths, its own drawer: the Formula's 34-operation
-                       // picker became one node per operation, and thirteen
-                       // of them in the Functions drawer would have buried
-                       // the things that MEASURE under the things that
-                       // calculate.
-                       "math",
-                       "logic", "variable",
-                       "database", "dashboard", "output",
-                       // Integration LAST, because it is the end of the end:
-                       // a report goes out after everything else has decided
-                       // there is something to report. It also holds the
-                       // protocol families (MQTT, HTTP, API, Modbus) whole,
-                       // reading half and sending half together, which is
-                       // why the External Values drawer is gone.
-                       "integration"];
-
-// Does this node answer what was typed in the palette's search box? The
-// label is the obvious half; the description and the sub-heading are the half
-// that finds a node by what it DOES ("modbus", "http", "footage") rather than
-// by a name you would have to know already. The type is in too, so
-// "storage.query" pasted from a graph file finds its node.
-function nodeMatches(spec, type, q) {
-  if (!q) return true;
-  const hay = [spec.label, spec.description, spec.palette?.group, spec.group, type];
-  return hay.some((v) => v && String(v).toLowerCase().includes(q));
-}
 
 // Renaming a function renames the whole function.
 //
@@ -1305,13 +1275,13 @@ function Editor() {
   // 1366/1440 laptop does not start out with two fat rails around a slot.
   const [paletteW, setPaletteW] = useState(() => {
     const v = parseInt(localStorage.getItem("wf.palette.w") || "", 10);
-    if (Number.isFinite(v)) return Math.max(200, Math.min(480, v));
+    if (Number.isFinite(v)) return v <= 0 ? 0 : Math.max(200, Math.min(480, v));
     return window.innerWidth < 1500 ? 200 : 215;
   });
   // The inspector too: a long recorded-events form wants room.
   const [inspectorW, setInspectorW] = useState(() => {
     const v = parseInt(localStorage.getItem("wf.inspector.w") || "", 10);
-    if (Number.isFinite(v)) return Math.max(240, Math.min(560, v));
+    if (Number.isFinite(v)) return v <= 0 ? 0 : Math.max(240, Math.min(560, v));
     return window.innerWidth < 1500 ? 250 : 270;
   });
   // The "Pipeline" primer explains the canvas - once. Left in the right-hand
@@ -1383,19 +1353,105 @@ function Editor() {
   const paletteWRef = useRef(paletteW);
   const inspectorDrag = useRef(null);
   const inspectorWRef = useRef(inspectorW);
+  // The right column can be dragged shut. Selecting a node, or asking for the guide, opens it again
+  // at the width it had; with neither asked for it stays shut.
+  const lastOpenW = useRef(inspectorW || 270);
+  // `auto`: opened only because a node was picked, so it shuts again when the node is let go.
+  const autoOpened = useRef(false);
+  const openRight = useCallback((auto = false) => {
+    if (!auto) autoOpened.current = false;
+    if (inspectorWRef.current !== 0) return;
+    const w = lastOpenW.current || 270;
+    inspectorWRef.current = w;
+    setInspectorW(w);
+    autoOpened.current = auto;
+    // A column opened for one node is not the new saved state: the closed one stays saved.
+    if (!auto) { try { localStorage.setItem("wf.inspector.w", String(w)); } catch { /* private mode */ } }
+  }, []);
+  // A node picked for its properties opens a shut column; once no node is picked and nobody
+  // took the column over, it shuts again. (Before any early return: hooks run on every render.)
+  useEffect(() => {
+    if (selectedId && selectedId === inspectId) { openRight(true); return; }
+    if (autoOpened.current && inspectorWRef.current !== 0) {
+      autoOpened.current = false;
+      inspectorWRef.current = 0;
+      setInspectorW(0);
+    }
+  }, [selectedId, inspectId, openRight]);
   const fileRef = useRef(null);
   // Live refs so keyboard handlers and the debounced save never read stale state.
   const stateRef = useRef({ nodes, edges, customVars: [] });
   // The drag-to-delete bin: only on screen while a node is actually moving,
   // so it is not a permanently armed delete button sitting over the canvas.
-  const binRef = useRef(null);
-  const [dragging, setDragging] = useState(false);
-  const [overBin, setOverBin] = useState(false);
   stateRef.current = { nodes, edges, customVars };
 
   const registry = meta?.registry || {};
   const editable = !!meta?.editable;
   const nodeTypes = useMemo(() => buildNodeTypes(registry), [registry]);
+  // The main guideline opens first, over the canvas: how a workflow is built,
+  // before the nodes. "Go to Workflow" closes it; the Guideline button under the
+  // palette search opens it again. A tick box in it keeps it from opening on load.
+  // The guideline is a card at the top of the right-hand column, always there; folded or open.
+  // First visit: open when page guides are on. After that, whatever was last chosen.
+  const [guideOpen, setGuideOpen] = useState(() => {
+    try {
+      const v = localStorage.getItem("workflow.guide.open");
+      if (v !== null) return v === "1";
+    } catch { /* private mode */ }
+    return guidesEnabled();
+  });
+  const setGuide = (on) => {
+    setGuideOpen(on);
+    try { localStorage.setItem("workflow.guide.open", on ? "1" : "0"); } catch { /* private mode */ }
+  };
+  // The eye on the canvas hides the whole guide card (and gives its column back to the
+  // properties), and brings it back.
+  const [guideHidden, setGuideHiddenState] = useState(() => {
+    try { return localStorage.getItem("workflow.guide.hidden") === "1"; } catch { return false; }
+  });
+  const setGuideHidden = (on) => {
+    setGuideHiddenState(on);
+    try { localStorage.setItem("workflow.guide.hidden", on ? "1" : "0"); } catch { /* private mode */ }
+  };
+  // The Guide button in the top bar: the guide card is right here, so it is opened and lit up
+  // for a moment so the eye finds it.
+  const [guideFlash, setGuideFlash] = useState(false);
+  useEffect(() => {
+    let t = null;
+    const ask = (e) => {
+      if (e.detail?.key !== "workflow") return;
+      openRight();
+      setGuideHidden(false);
+      setGuide(true);
+      setGuideFlash(true);
+      clearTimeout(t);
+      t = setTimeout(() => setGuideFlash(false), 1800);
+    };
+    window.addEventListener(GUIDE_REQUEST_EVENT, ask);
+    return () => { window.removeEventListener(GUIDE_REQUEST_EVENT, ask); clearTimeout(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // How much of the column the guide takes while a node's properties are also open (percent);
+  // dragged with the bar between them. Alone, the guide fills the whole column.
+  const [dockPct, setDockPct] = useState(50);
+  const colRef = useRef(null);
+  const dragDock = useRef(false);
+  const moveDockBar = (e) => {
+    if (!dragDock.current || !colRef.current) return;
+    // Only while the button is held: a drag that never saw its pointer-up (released outside the
+    // window, or the capture lost) must not keep following the pointer as it merely hovers.
+    if (e.buttons !== 1) { dragDock.current = false; return; }
+    const r = colRef.current.getBoundingClientRect();
+    const pct = ((e.clientY - r.top) / r.height) * 100;
+    setDockPct(Math.max(20, Math.min(80, pct)));
+  };
+  // The setup guide's Next opens this page with ?guide=main: the card is opened, even when this
+  // page is already showing.
+  const wfLocation = useLocation();
+  useEffect(() => {
+    if (new URLSearchParams(wfLocation.search).get("guide") === "main") { openRight(); setGuideHidden(false); setGuide(true); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wfLocation.search]);
 
   // -- load + poll -----------------------------------------------------------
   useEffect(() => {
@@ -2008,6 +2064,26 @@ function Editor() {
   }, [nodes, edges]);
 
   // -- add / duplicate / clipboard ------------------------------------------
+  // A Snapshot node owns a page in Footage under its name, so a new one asks
+  // for the name at once (it can be changed in the node's settings).
+  const askPage = useAsk();
+  const nameSnapshot = useCallback(async (id, type) => {
+    const clip = type === "output.record";
+    const name = await askPage({
+      title: clip ? "Name this Record Clip" : "Name this Snapshot",
+      description: clip
+        ? "The clips this node records get their own page in Footage under this "
+          + "name, so you can tell them from another Record Clip's."
+        : "The photos this node takes get their own page in Footage "
+          + "under this name, so you can tell them from another Snapshot's.",
+      label: "Page name", placeholder: clip ? "Crane approach" : "Handrail violations",
+      submitLabel: "Save name" });
+    const clean = String(name || "").split(/\s+/).join(" ").trim().slice(0, 60);
+    if (!clean) return;
+    setNodes((cur) => cur.map((n) => (n.id === id
+      ? { ...n, data: { ...n.data, page_name: clean } } : n)));
+  }, [askPage]);
+
   const addNode = useCallback((type, position, extraData) => {
     const spec = registry[type];
     if (!spec) return;
@@ -2042,7 +2118,9 @@ function Editor() {
     // configure it, so the double-click rule would only be a step in the way.
     setInspectId(id);
     scheduleSave();
-  }, [registry, history, scheduleSave]);
+    if (["output.snapshot", "output.record"].includes(type)
+        && !(extraData || {}).page_name) nameSnapshot(id, type);
+  }, [registry, history, scheduleSave, nameSnapshot]);
 
   // A SAVED query dropped from the palette: the Query node plus the wires
   // that make it read.
@@ -2559,19 +2637,28 @@ function Editor() {
   // -- palette resize --------------------------------------------------------
   const startPaletteResize = useCallback((evt) => {
     evt.preventDefault();
-    paletteDrag.current = { x0: evt.clientX, w0: paletteWRef.current };
+    paletteDrag.current = { x0: evt.clientX, w0: paletteWRef.current, moved: false };
     evt.currentTarget.setPointerCapture?.(evt.pointerId);
     document.body.style.userSelect = "none";
   }, []);
   const movePaletteResize = useCallback((evt) => {
     const drag = paletteDrag.current;
     if (!drag) return;
-    const w = Math.max(200, Math.min(480, drag.w0 + (evt.clientX - drag.x0)));
+    if (evt.buttons !== 1) { paletteDrag.current = null; document.body.style.userSelect = ""; return; }
+    if (Math.abs(evt.clientX - drag.x0) > 3) drag.moved = true;
+    // Dragged far enough left, the node list shuts (width 0); dragged back, it opens again.
+    const raw = drag.w0 + (evt.clientX - drag.x0);
+    const w = raw < 130 ? 0 : Math.max(200, Math.min(480, raw));
     paletteWRef.current = w;
     setPaletteW(w);
   }, []);
   const endPaletteResize = useCallback((evt) => {
     if (!paletteDrag.current) return;
+    // A click (no drag) on the handle of a closed node list opens it.
+    if (!paletteDrag.current.moved && paletteWRef.current === 0) {
+      paletteWRef.current = 240;
+      setPaletteW(240);
+    }
     paletteDrag.current = null;
     document.body.style.userSelect = "";
     evt.currentTarget.releasePointerCapture?.(evt.pointerId);
@@ -2582,24 +2669,33 @@ function Editor() {
   //    moving the handle left GROWS the panel) ------------------------------
   const startInspectorResize = useCallback((evt) => {
     evt.preventDefault();
-    inspectorDrag.current = { x0: evt.clientX, w0: inspectorWRef.current };
+    autoOpened.current = false;
+    inspectorDrag.current = { x0: evt.clientX, w0: inspectorWRef.current, moved: false };
     evt.currentTarget.setPointerCapture?.(evt.pointerId);
     document.body.style.userSelect = "none";
   }, []);
   const moveInspectorResize = useCallback((evt) => {
     const drag = inspectorDrag.current;
     if (!drag) return;
-    const w = Math.max(240, Math.min(560, drag.w0 - (evt.clientX - drag.x0)));
+    // Held button only: a drag that missed its pointer-up must not follow a hovering pointer.
+    if (evt.buttons !== 1) { inspectorDrag.current = null; document.body.style.userSelect = ""; return; }
+    if (Math.abs(evt.clientX - drag.x0) > 3) drag.moved = true;
+    const raw = drag.w0 - (evt.clientX - drag.x0);
+    const w = raw < 150 ? 0 : Math.max(240, Math.min(560, raw));
+    if (w) lastOpenW.current = w;
     inspectorWRef.current = w;
     setInspectorW(w);
   }, []);
   const endInspectorResize = useCallback((evt) => {
     if (!inspectorDrag.current) return;
+    // A click (no drag) on the handle of a closed column opens it.
+    const clicked = !inspectorDrag.current.moved && inspectorWRef.current === 0;
     inspectorDrag.current = null;
     document.body.style.userSelect = "";
     evt.currentTarget.releasePointerCapture?.(evt.pointerId);
+    if (clicked) { openRight(); return; }
     localStorage.setItem("wf.inspector.w", String(inspectorWRef.current));
-  }, []);
+  }, [openRight]);
 
   // -- search ----------------------------------------------------------------
   const searchLower = search.trim().toLowerCase();
@@ -2615,7 +2711,7 @@ function Editor() {
   }
 
   if (error) return <ErrorNote error={error} />;
-  if (!meta) return <SkelEditor />;
+  if (!meta) return <SkelWorkflow />;
 
   // SELECTED and INSPECTED are two different things. A single click picks a
   // node -- to move it, copy it, delete it, or just see what it is wired to --
@@ -2640,7 +2736,8 @@ function Editor() {
   // collapses to its tab.
   // Guideline hidden: no tab, so the column is 0px when nothing is selected.
   // Re-enable: selected || helpOpen ? inspectorW : 34
-  const rightW = selected || helpOpen ? inspectorW : 0;
+  // The guide card is always there, so the column is too.
+  const rightW = inspectorW;
   const zoneList = meta.variables?.zone_list || [];
   const modelList = meta.variables?.models || [];
   const selCount = nodes.filter((n) => n.selected).length
@@ -3255,9 +3352,27 @@ function Editor() {
         </div>
 
         <div className="wf-grid"
-             style={{ display: "grid",
+             style={{ display: "grid", position: "relative",
                       gridTemplateColumns: `${paletteW}px minmax(0,1fr) ${rightW}px`,
                       gap: 12, flex: 1, minHeight: 0 }}>
+          {/* The two vertical split handles sit in the gaps between the columns (not inside a
+              column, which would clip them). The palette one can drag the node list shut. */}
+          <div onPointerDown={startPaletteResize}
+               onPointerMove={movePaletteResize}
+               onPointerUp={endPaletteResize}
+               onPointerCancel={endPaletteResize}
+               className="wf-col-bar" data-wf-col-bar="palette"
+               title={paletteW ? "Drag to resize the node list, or all the way left to close it"
+                               : "Drag, or click, to open the node list"}
+               style={{ position: "absolute", top: 0, bottom: 0, left: paletteW - 5, width: 22,
+                        cursor: "col-resize", zIndex: 6, touchAction: "none" }} />
+          <div onPointerDown={startInspectorResize}
+               onPointerMove={moveInspectorResize}
+               onPointerUp={endInspectorResize}
+               onPointerCancel={endInspectorResize}
+               className="wf-col-bar" data-wf-col-bar="panel" title={inspectorW ? "Drag to resize the panel, or all the way right to close it" : "Drag, or click, to open the panel"}
+               style={{ position: "absolute", top: 0, bottom: 0, right: rightW - 5, width: 22,
+                        cursor: "col-resize", zIndex: 6, touchAction: "none" }} />
           {/* ---- palette (drag its right edge to resize) ----
               minHeight 0 overrides the grid item's min-height:auto, so a long
               node list scrolls INSIDE the palette instead of stretching the
@@ -3293,13 +3408,6 @@ function Editor() {
                        setNodes((cur) => cur.map((n) => ({ ...n, selected: n.id === id })));
                        rf.fitView({ nodes: [{ id }], duration: 300, maxZoom: 1.2 });
                      }} />
-            <div onPointerDown={startPaletteResize}
-                 onPointerMove={movePaletteResize}
-                 onPointerUp={endPaletteResize}
-                 onPointerCancel={endPaletteResize}
-                 title="Drag to resize the palette"
-                 style={{ position: "absolute", top: 0, bottom: 0, right: -4, width: 6,
-                          cursor: "col-resize", zIndex: 5, touchAction: "none" }} />
           </div>
 
           {/* ---- canvas ---- */}
@@ -3347,31 +3455,6 @@ function Editor() {
               // silently breaks the day the default moves.
               selectionKeyCode="Shift"
               multiSelectionKeyCode={["Shift", "Control"]}
-              onNodeDragStart={() => editable && setDragging(true)}
-              onNodeDrag={(e) => {
-                // Hover is decided from the POINTER, not from a mouseenter on
-                // the bin: while React Flow drags a node the pointer is
-                // captured, so the bin would never see an enter event and the
-                // lid would never open.
-                const r = binRef.current?.getBoundingClientRect();
-                setOverBin(!!r && e.clientX >= r.left && e.clientX <= r.right
-                           && e.clientY >= r.top && e.clientY <= r.bottom);
-              }}
-              onNodeDragStop={(e, node) => {
-                const r = binRef.current?.getBoundingClientRect();
-                const inBin = !!r && e.clientX >= r.left && e.clientX <= r.right
-                  && e.clientY >= r.top && e.clientY <= r.bottom;
-                setDragging(false);
-                setOverBin(false);
-                if (!inBin || !editable) return;
-                // Everything selected goes, not just the one under the
-                // pointer: dragging a selection to the bin means the
-                // selection, and deleting one of five would be a surprise.
-                const ids = new Set(
-                  stateRef.current.nodes.filter((n) => n.selected).map((n) => n.id));
-                ids.add(node.id);
-                deleteNodes([...ids]);
-              }}
               // Double click opens the settings. A Function block opens its
               // blueprint instead -- that IS its settings, one level down.
               onNodeDoubleClick={(e, n) => {
@@ -3418,6 +3501,15 @@ function Editor() {
                          return (CATEGORY_STYLE[spec.palette?.cat]
                                  || CATEGORY_STYLE[spec.category] || {}).color || "#888";
                        }} />
+              <Panel position="top-right">
+                <button type="button" className="wf-guide-eye" data-wf-guide-eye
+                        aria-pressed={!guideHidden}
+                        aria-label={guideHidden ? "Unhide the workflow guide" : "Hide the workflow guide"}
+                        title={guideHidden ? "Click to unhide the guide" : "Click to hide the guide"}
+                        onClick={() => { if (guideHidden) openRight(); setGuideHidden(!guideHidden); }}>
+                  {guideHidden ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
+                </button>
+              </Panel>
               <Controls showInteractive={false}>
                 {/* The workspace (palette, canvas, inspector) over the whole
                     screen, and back: with the zoom and fit buttons, where a
@@ -3434,34 +3526,6 @@ function Editor() {
                 </button>
               </Controls>
             </ReactFlow>
-
-            {/* Drag a node here to delete it. Appears only while something is
-                being dragged -- an always-present bin over the canvas is a
-                delete button one slip away from the thing you are arranging.
-                The lid opens on hover so the gesture confirms itself before
-                the operator lets go, which is the whole point of a bin over a
-                keystroke: you can still change your mind by dragging away. */}
-            {dragging && (
-              <div ref={binRef}
-                   style={{
-                     position: "absolute", left: 12, top: 12, zIndex: 6,
-                     width: 62, height: 62, borderRadius: 12,
-                     display: "grid", placeItems: "center",
-                     border: `2px dashed ${overBin ? "var(--alert)" : "rgba(128,128,128,.5)"}`,
-                     background: overBin ? "rgba(239,68,68,.16)"
-                                         : "rgba(128,128,128,.10)",
-                     backdropFilter: "blur(2px)",
-                     transform: overBin ? "scale(1.12)" : "none",
-                     transition: "transform .12s, background .12s, border-color .12s",
-                     pointerEvents: "none",
-                   }}>
-                <Trash2 size={24}
-                        style={{ color: overBin ? "var(--alert)" : "var(--muted, #6b6b6b)",
-                                 transformOrigin: "50% 80%",
-                                 transform: overBin ? "rotate(-18deg)" : "none",
-                                 transition: "transform .12s, color .12s" }} />
-              </div>
-            )}
 
             <VariablesPanel
               open={varsOpen} onClose={() => setVarsOpen(false)}
@@ -3563,6 +3627,9 @@ function Editor() {
                 const id = menu?.nodeId;
                 if (!id) return;
                 const { nodes: ns, edges: es } = stateRef.current;
+                // A node that is part of a selection of several goes with the rest of it.
+                const picked = ns.filter((n) => n.selected);
+                if (picked.length > 1 && picked.some((n) => n.id === id)) { deleteSelection(); return; }
                 history.push(ns, es);
                 setNodes((cur) => cur.filter((n) => n.id !== id));
                 setEdges((cur) => cur.filter((e) => e.source !== id && e.target !== id));
@@ -3592,17 +3659,32 @@ function Editor() {
               same width), or neither - in which case the column is a 34px tab
               and the canvas keeps the ~250px the prose used to hold. The
               resize handle only exists while there is something to resize. */}
-          <div className="wf-rail wf-rail-right"
+          <div ref={colRef} className="wf-rail wf-rail-right"
                style={{ position: "relative", minWidth: 0, minHeight: 0,
-                        display: "flex", overflow: "hidden" }}>
-            {(selected || helpOpen) && (
-              <div onPointerDown={startInspectorResize}
-                   onPointerMove={moveInspectorResize}
-                   onPointerUp={endInspectorResize}
-                   onPointerCancel={endInspectorResize}
-                   title="Drag to resize the panel"
-                   style={{ position: "absolute", top: 0, bottom: 0, left: -4, width: 6,
-                            cursor: "col-resize", zIndex: 5, touchAction: "none" }} />
+                        display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            {/* The guideline card: above the properties, never over them. Folded it is a header;
+                open and alone it fills the column; open with a node selected it shares it, and
+                the bar below sets the split, also while nothing is selected (the place below stays
+                empty until a node is). */}
+            {!guideHidden && (
+            <div className="wf-guide-slot"
+                 style={!guideOpen ? { flex: "none" } : { flex: `0 0 ${dockPct}%` }}>
+              <GuideDock open={guideOpen} flash={guideFlash} onToggle={() => setGuide(!guideOpen)}
+                         registry={registry} nodeTypes={nodeTypes} />
+            </div>
+            )}
+            {guideOpen && !guideHidden && (
+              <div role="separator" aria-orientation="horizontal" title="Drag to resize the guide"
+                   data-wf-dock-bar className="wf-dock-bar"
+                   onPointerDown={(e) => {
+                     if (e.button !== 0) return;
+                     dragDock.current = true;
+                     e.currentTarget.setPointerCapture(e.pointerId);
+                   }}
+                   onPointerMove={moveDockBar}
+                   onPointerUp={() => { dragDock.current = false; }}
+                   onPointerCancel={() => { dragDock.current = false; }}
+                   onLostPointerCapture={() => { dragDock.current = false; }} />
             )}
             {/* Guideline hidden until ready; uncomment to restore the "show guide" tab.
             {!selected && !helpOpen && (
@@ -3612,6 +3694,11 @@ function Editor() {
                 <span><ChevronsLeft size={15} /></span>
               </button>
             )} */}
+            {guideOpen && !guideHidden && !(selected || helpOpen) && (
+              <div className="wf-props-empty" data-wf-props-empty>
+                Select a node to see its properties here.
+              </div>
+            )}
             {(selected || helpOpen) && (
             <div className="panel-card wf-inspector rail-form"
                  style={{ overflowY: "auto", alignSelf: "stretch", flex: 1, minWidth: 0 }}>
@@ -4396,7 +4483,7 @@ function Palette({ registry, zoneList, models, editable, search, searchText,
                    // list them the way it lists the zones drawn on this box: a
                    // function you cannot find is a function nobody calls twice.
                    fnDefs = {},
-                   onSearch, onSearchEnter, functions, values, vars = {},
+                   onSearch, onSearchEnter, onGuide, functions, values, vars = {},
                    customVars, onCreateVar, onDeleteVar, nodeByFn, onShowNode,
                    // The canvas itself, for "is this variable used": a node
                    // may use a name without publishing one (see usedVarNames).
@@ -4592,6 +4679,13 @@ function Palette({ registry, zoneList, models, editable, search, searchText,
              style={{ flex: "none", marginBottom: 8 }}
              onChange={(e) => onSearch?.(e.target.value)}
              onKeyDown={(e) => e.key === "Enter" && onSearchEnter?.()} />
+      {/* Under the search box, where the nodes are: every node, what it
+          connects to and what each wire means. */}
+      <Link className="btn btn-sm btn-accent" data-node-guideline-link to="/workflow/guideline"
+            title="What every node does, what it connects to, and what each connection means"
+            style={{ flex: "none", marginBottom: 8, justifyContent: "center" }}>
+        Nodes Guideline
+      </Link>
       <div style={{ overflowY: "auto", flex: 1, minHeight: 0 }}>
       {(() => {
         // The stage last given a heading. A heading belongs to the first
@@ -5023,57 +5117,6 @@ function Palette({ registry, zoneList, models, editable, search, searchText,
   );
 }
 
-/** One collapsible palette section, headed by its category's colour.
- *
- *  Nine categories of node do not fit on a laptop screen at once, so the
- *  palette became a scroll with no landmarks. A drawer per category gives the
- *  operator a way to put away what they are not using, and the colour bar is
- *  the same one the node carries on the canvas -- so the palette and the graph
- *  agree about what kind of thing something is.
- */
-function Drawer({ title, color, count, open, onToggle, icon: Icon, children }) {
-  return (
-    <div style={{ marginBottom: 6 }}>
-      <button type="button" onClick={onToggle} className="wf-drawer"
-              aria-expanded={open}
-              style={{
-                display: "flex", alignItems: "center", gap: 8, width: "100%",
-                border: "1px solid transparent", borderRadius: 8,
-                background: open ? "rgba(128,128,128,.10)" : "transparent",
-                cursor: "pointer", color: "inherit", padding: "6px 8px",
-                font: "inherit", textAlign: "left",
-              }}>
-        {/* The category's own icon and colour, the same pair the node wears on
-            the canvas -- so the palette and the graph agree at a glance about
-            what kind of thing this is. A colour bar alone made nine rows of
-            identical text with a stripe. */}
-        <span style={{
-          width: 22, height: 22, borderRadius: 6, flexShrink: 0,
-          display: "grid", placeItems: "center",
-          background: `color-mix(in srgb, ${color} 20%, transparent)`,
-          color,
-        }}>
-          {Icon ? <Icon size={13} /> : null}
-        </span>
-        <span style={{ fontSize: 12, fontWeight: 650, flex: 1, minWidth: 0,
-                       overflow: "hidden", textOverflow: "ellipsis",
-                       whiteSpace: "nowrap" }}>
-          {title}
-        </span>
-        <span className="muted"
-              style={{ fontSize: 11, fontVariantNumeric: "tabular-nums",
-                       minWidth: 16, textAlign: "right" }}>
-          {count}
-        </span>
-        <ChevronRight size={13} className="muted"
-                      style={{ flexShrink: 0, transition: "transform .14s",
-                               transform: open ? "rotate(90deg)" : "none" }} />
-      </button>
-      {open && <div style={{ marginTop: 5, paddingLeft: 2 }}>{children}</div>}
-    </div>
-  );
-}
-
 /** A value you can drag onto the canvas: a live reading or a declared name.
  *
  *  Dropping it IS a Variable node already pointed at that value, which is the
@@ -5102,17 +5145,6 @@ function ParamList({ value, disabled, onChange }) {
       ))}
       <button className="btn btn-sm" disabled={disabled}
               onClick={() => onChange([...rows, ""])}>+ Parameter</button>
-    </div>
-  );
-}
-
-function SubHead({ children }) {
-  return (
-    <div className="muted" style={{ fontSize: 11, fontWeight: 700,
-                                    letterSpacing: ".05em",
-                                    textTransform: "uppercase",
-                                    margin: "6px 0 4px 3px" }}>
-      {children}
     </div>
   );
 }
@@ -5218,34 +5250,6 @@ function ValueRow({ label, value, keyName, editable, onClick, dim, onDelete,
                 style={{ padding: "0 5px", lineHeight: "16px", fontSize: 12 }}>
           ×
         </button>
-      )}
-    </div>
-  );
-}
-
-function PaletteItem({ color, label, sub, locked, ...drag }) {
-  // Name only. The description under every entry doubled the palette's
-  // height and read as noise once the names were known; it survives as the
-  // hover tooltip for whoever still wants it.
-  return (
-    <div {...drag} title={locked || sub || undefined}
-         style={{ border: "1px solid rgba(128,128,128,.25)",
-                  borderLeft: `3px solid ${color}`,
-                  borderRadius: 7, padding: "6px 8px", marginBottom: 6,
-                  cursor: locked ? "not-allowed" : "grab",
-                  opacity: locked ? 0.55 : 1,
-                  background: "var(--surface, transparent)" }}>
-      <div style={{ fontSize: 12, fontWeight: 600 }}>{label}</div>
-      {/* A locked item says WHY and where to go, in place. Greying it out and
-          leaving the operator to guess is how a palette entry reads as
-          broken rather than as not-ready-yet. */}
-      {locked && (
-        <div className="muted small" style={{ marginTop: 3 }}>
-          {locked}{" "}
-          <Link to="/database" style={{ textDecoration: "underline" }}>
-            Database page
-          </Link>
-        </div>
       )}
     </div>
   );
@@ -10462,6 +10466,23 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
               )}
             </>
           )}
+          {node.type === "output.record" && (
+            <>
+              {/* The page this node's clips go to in Footage. */}
+              <Field label="Page name"
+                     hint="Footage shows this node's clips on a page of this name, apart from every other Record Clip's.">
+                <input className="input" value={d.page_name || ""} maxLength={60}
+                       placeholder="Crane approach" disabled={!editable}
+                       data-page-name onChange={set("page_name")} />
+              </Field>
+              {!String(d.page_name || "").trim() && (
+                <p className="small c-warn" style={{ margin: "0 0 8px" }}>
+                  Give this Record Clip a name: its clips get their own page in
+                  Footage under it.
+                </p>
+              )}
+            </>
+          )}
           {["output.snapshot", "output.record"].includes(node.type) && (
             <>
               {/* WHICH camera. The engine has always honoured o.camera -- a
@@ -10518,6 +10539,19 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
                       kept either way.
                     </span>
                   </label>
+                  {/* The page this Snapshot's photos go to in Footage. */}
+                  <Field label="Page name"
+                         hint="Footage shows this node's photos on a page of this name, apart from every other Snapshot's.">
+                    <input className="input" value={d.page_name || ""} maxLength={60}
+                           placeholder="Handrail violations" disabled={!editable}
+                           data-page-name onChange={set("page_name")} />
+                  </Field>
+                  {!String(d.page_name || "").trim() && (
+                    <p className="small c-warn" style={{ margin: "0 0 8px" }}>
+                      Give this Snapshot a name: its photos get their own page in
+                      Footage under it.
+                    </p>
+                  )}
                   {/* The words the PDF notice prints. Blank prints "--" (or the
                       stock heading), never a guess. */}
                   <Field label="Notice title"

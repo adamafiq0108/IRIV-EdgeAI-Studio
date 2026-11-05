@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 workflow.py -- the visual pipeline editor's backend: graph storage + compiler.
 
@@ -1603,7 +1604,7 @@ REGISTRY = {
     "analytics.proximity": {
         "palette": {"cat": "zone", "group": "Objects"},
         "category": "analytics", "group": "Frames", "rank": 3, "label": "Object Distance",
-        "badge": "DIST",
+        "badge": "DIST", "hidden": True,
         "description": "Distance between two object classes, drawn as a link "
                        "line on the feed; alerts when they come too close. "
                        "Same class on both sides measures nearest neighbours.",
@@ -1619,7 +1620,7 @@ REGISTRY = {
         # graph moves: fn_type, data and every published key are untouched.
         "category": "analytics", "group": "Frames", "rank": 3,
         "label": "Safety Bubble",
-        "badge": "OSZ",
+        "badge": "OSZ", "hidden": True,
         "description": "A highlighted safety bubble that FOLLOWS each object "
                        "of the chosen classes; another object coming too close "
                        "counts as an intrusion - either its centre inside the "
@@ -1636,7 +1637,7 @@ REGISTRY = {
     "analytics.heatmap": {
         "palette": {"cat": "zone", "group": "Objects"},
         "category": "analytics", "group": "Frames", "rank": 3,
-        "label": "Heatmap", "badge": "HEAT",
+        "label": "Heatmap", "badge": "HEAT", "hidden": True,
         "description": "Where objects actually go. Builds a map of the view, "
                        "cell by cell, from where each object is STANDING. "
                        "Wire a Zone to map that area only. Put it on a "
@@ -1665,7 +1666,7 @@ REGISTRY = {
         # is a label, so no graph anywhere needs migrating.
         "category": "analytics", "group": "Frames", "rank": 3,
         "label": "Object Motion Tracking",
-        "badge": "TRK",
+        "badge": "TRK", "hidden": True,
         "description": "Follows each tracked object and leaves a dotted "
                        "trail of its movement on the feed. Choose which "
                        "classes leave a trail and how many seconds of "
@@ -2843,7 +2844,7 @@ REGISTRY = {
         "palette": {"cat": "output", "group": "Footage"},
         "category": "output", "rank": 4, "label": "Snapshot",
         "badge": "SNAP",
-        "description": "Save a photo of the annotated frame when a decision fires: a Condition or Compare in front of it, or a Formula straight in. Needs the Snapshot switch ON in System Control.",
+        "description": "Save a photo of the annotated frame when a decision fires: a Condition or Compare in front of it, or a Formula straight in. Needs the Snapshots button ON in Camera Setup.",
         "output_type": "snapshot",
         # `oid_tag` burns the object id of whatever caused THIS firing into the
         # picture and its filename. A soft no-op where the chain cannot say
@@ -2860,9 +2861,13 @@ REGISTRY = {
         # Blank prints "--" or the default, never an invented value. All of it
         # is only about the Snapshot output; none of it changes the photo.
         #
+        # `page_name` is what the Footage page calls this Snapshot's photos:
+        # every Snapshot node has a page of its own under that name, so the
+        # photos of different nodes can be told apart. Asked for when the node
+        # is dropped on the canvas; compile warns when it is blank.
         "data": {"mode": "once", "interval_s": 5, "camera": "",
                  "oid_tag": False, "crop": False, "location": "",
-                 "violation": "", "notice_title": ""}},
+                 "violation": "", "notice_title": "", "page_name": ""}},
     "output.record": {
         # Both write FOOTAGE to the disk the Footage page reads. Grouped, so
         # they read as the pair they are rather than as two of five unrelated
@@ -2870,7 +2875,7 @@ REGISTRY = {
         "palette": {"cat": "output", "group": "Footage"},
         "category": "output", "rank": 4, "label": "Record Clip",
         "badge": "REC",
-        "description": "Record a short video clip when a decision fires: a Condition or Compare in front of it, or a Formula straight in. Records up to 5s BEFORE the moment and 5s after. Needs the Record switch ON in System Control.",
+        "description": "Record a short video clip when a decision fires: a Condition or Compare in front of it, or a Formula straight in. Records up to 5s BEFORE the moment and 5s after. Needs the Clips button ON in Camera Setup.",
         "output_type": "record",
         # BEFORE and AFTER, not one duration. What an operator wants to see is
         # the run-up -- how the forklift got there -- and a clip that starts at
@@ -2880,9 +2885,11 @@ REGISTRY = {
         # buffer of rendered frames per camera, kept whether or not anything
         # ever fires (see systems/demo/app/capture.py). 0 keeps the old
         # behaviour exactly -- no buffer, no cost.
+        # `page_name`: the Footage page this node's clips go to, as on a
+        # Snapshot: one page per named Record Clip node.
         "data": {"before_s": 0, "after_s": 5, "duration_s": 5,
                  "mode": "once", "interval_s": 10, "camera": "",
-                 "oid_tag": False}},
+                 "oid_tag": False, "page_name": ""}},
     # GPIO and Modbus used to be nodes here. They are gone on purpose: wiring
     # this box directly to a pin or a register meant owning a driver, its
     # timing and its failure modes for every board a customer might use. The
@@ -6726,6 +6733,17 @@ def _hold_blocker(fn, functions):
     return ""
 
 
+def page_slug(name):
+    """The short, file-name-safe form of a Snapshot's page name: lower-case
+    letters and digits, at most 16. Photos carry it in their file name
+    (`pg<slug>`), so Footage can group them without opening any. A name with
+    no Latin letters or digits still gets a stable slug."""
+    slug = "".join(c for c in str(name or "").lower() if c.isascii() and c.isalnum())[:16]
+    if not slug and str(name or "").strip():
+        slug = "p" + hashlib.md5(str(name).strip().encode("utf-8")).hexdigest()[:8]
+    return slug
+
+
 def compile_graph(graph, zones, classes=None, active_classes=None, capture=None,
                   tables=None, cameras=None):
     """Compile a cleaned graph into artifacts.
@@ -8919,6 +8937,7 @@ def compile_graph(graph, zones, classes=None, active_classes=None, capture=None,
     #: name. A rule carries ONE trigger, so a second Trigger on the same
     #: moment is a conflict to report rather than an overwrite to perform.
     trigger_owner = {}
+    page_slugs = {"snapshot": {}, "record": {}}   # per media: slug -> the name that owns it
     wait_nodes = {}         # function id -> the Trigger node that waits for its timer
     pending = [n for n in graph["nodes"]
                if n["type"] in ("logic.when", "output.alert", "logic.delay",
@@ -12057,7 +12076,7 @@ def compile_graph(graph, zones, classes=None, active_classes=None, capture=None,
             warn(n["id"],
                  f"{spec['label']} is switched off - turn "
                  f"{'Snapshots' if kind == 'snapshot' else 'Clips'} on in "
-                 "System Control to arm it")
+                 "Camera Setup to arm it")
             off_nodes.add(n["id"])
             continue
 
@@ -12186,6 +12205,28 @@ def compile_graph(graph, zones, classes=None, active_classes=None, capture=None,
                    "function": fn["id"],
                    "enabled": True}
             doc.update({k: d[k] for k in spec["data"] if k in d})
+            if kind in ("snapshot", "record"):
+                pname = " ".join(str(d.get("page_name") or "").split())[:60]
+                doc.pop("page_name", None)
+                taken = page_slugs[kind]
+                if not pname:
+                    warn(n["id"], "Name this " + ("Snapshot: its photos" if kind == "snapshot"
+                                                  else "Record Clip: its clips")
+                                  + " get their own page in Footage under that name")
+                else:
+                    slug = page_slug(pname)
+                    # Two nodes with the SAME name share a page on purpose; two
+                    # different names that boil down to one slug must not.
+                    # The number goes INSIDE the 16 characters: appended and
+                    # then cut, a 16-character short form never changed and this
+                    # looped for ever (two names sharing their first 16 letters).
+                    base, tick = slug, 1
+                    while taken.get(slug, pname) != pname:
+                        tick += 1
+                        slug = base[:16 - len(str(tick))] + str(tick)
+                    taken[slug] = pname
+                    doc["page_name"] = pname
+                    doc["page"] = slug
             # "Follow the rule" is not a runtime guess. A capture node left blank
             # is resolved HERE, to the camera its rule already reads -- the one
             # named on the Detection Stream (or implied by the rule's zone), which
@@ -13172,8 +13213,11 @@ def apply_artifacts(systems_dir, config_dir, slug, compiled):
     # CELLS are carried across too: recompiling a graph must not rearrange a
     # layout someone spent an afternoon on.
     layout = builder_service.load(config_dir, slug)
+    # ...except the Analytics pages the operator added: those are theirs and
+    # stay (builder_service.is_analytics_page).
     pages = [p for p in layout["pages"]
-             if p["id"] in (builder_service.MAIN_PAGE_ID, "overview")]
+             if p["id"] in (builder_service.MAIN_PAGE_ID, "overview")
+             or builder_service.is_analytics_page(p["id"])]
     compiled_widgets = [w for wp in compiled.get("pages") or [] for w in wp["widgets"]]
 
     overview = next((p for p in pages if p["id"] == "overview"), None)

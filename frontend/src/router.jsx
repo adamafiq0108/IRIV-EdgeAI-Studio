@@ -1,10 +1,11 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Route table. Public auth views render standalone; everything else renders
 // inside <AppShell> (which enforces the session and provides shell context).
 // Client routes map 1:1 to the nav page ids (state/app.jsx PAGE_PATHS).
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import AppShell from "./components/AppShell.jsx";
-import { SkelEditor, SkelPage } from "./components/Loading.jsx";
+import { SkelDatabase, SkelEditor, SkelGuideline, SkelPage, SkelWorkflow } from "./components/Loading.jsx";
 import { BASE } from "./lib/base.js";
 
 import Login from "./pages/Login.jsx";
@@ -21,6 +22,7 @@ import NotFound from "./pages/NotFound.jsx";
 // open. Each is fetched the first time it is needed and cached by the
 // browser after that; `lazy` keeps them out of the main chunk entirely.
 const Workflow = lazy(() => import("./pages/Workflow.jsx"));
+const NodeGuideline = lazy(() => import("./pages/NodeGuideline.jsx"));
 const Analytics = lazy(() => import("./pages/Analytics.jsx"));
 const AnalyticsBuilder = lazy(() => import("./pages/AnalyticsBuilder.jsx"));
 const EventTable = lazy(() => import("./pages/EventTable.jsx"));
@@ -65,7 +67,10 @@ export const router = createBrowserRouter([
       // Zones are drawn ON Camera Setup now (one page); the old address
       // still answers so bookmarks and older links keep working.
       { path: "/zones", element: L(<Detection />, "Camera Setup", CAMERA_SKEL) },
-      { path: "/workflow", element: L(<Workflow />, "Workflow") },
+      { path: "/workflow", element: L(<Workflow />, "Workflow", <SkelWorkflow />) },
+      // Every node, what it connects to and what each wire means: opened by the
+      // Guideline button on the Workflow page.
+      { path: "/workflow/guideline", element: L(<NodeGuideline />, "Nodes Guideline", <SkelGuideline />) },
       { path: "/analytics", element: L(<Analytics />, "Analytics") },
       // The Overview's composer. A page of its own, not a mode of the Analytics
       // page: arranging a dashboard needs the whole window.
@@ -73,7 +78,7 @@ export const router = createBrowserRouter([
       { path: "/events", element: L(<EventTable />, "Events") },
       // This system's own tables: their shape and their rows, one tool.
       // Distinct from /dataset, which captures training photos and clips.
-      { path: "/database", element: L(<Database />, "Database") },
+      { path: "/database", element: L(<Database />, "Database", <SkelDatabase />) },
       // The rows used to live on their own page. Kept as a redirect so old
       // links, bookmarks and the workflow's "view rows" still land somewhere.
       { path: "/tables", element: <Navigate to="/database" replace /> },

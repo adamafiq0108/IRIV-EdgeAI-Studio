@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // HubShell - the admin surface at the hub (port 5100). The hub serves the same
 // SPA as the masters but in "hub" mode: no single system, so instead of a
 // master's device sidebar it gets THIS admin sidebar, from which an operator
@@ -13,14 +14,9 @@ import { usePoll } from "../api/hooks.js";
 import { useApp } from "../state/app.jsx";
 import { useTheme } from "../hooks/use-theme.js";
 import CreateSystemWizard from "./CreateSystemWizard.jsx";
-import ControlPanel from "./ControlPanel.jsx";
-import LiveWallPanel from "./LiveWallPanel.jsx";
 import {
-  SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter,
-  SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton,
-  SidebarInset, SidebarTrigger, SidebarRail,
+  SidebarProvider, SidebarInset,
 } from "./ui/sidebar.jsx";
-import { Separator } from "./ui/separator.jsx";
 import { TooltipProvider } from "./ui/tooltip.jsx";
 // Split (perf item L6): the systems grid is HubShell's first screen, but
 // keeping it out of the entry chunk lets the shell and the login paint first.
@@ -34,67 +30,28 @@ import NewStoragePrompt from "./NewStoragePrompt.jsx";
 // Split for the same reason the router splits it: the Log Hub is a page an
 // admin opens occasionally, and its chunk has no business in the bundle that
 // has to parse before the Systems grid paints.
-const LogHub = lazy(() => import("../pages/Logs.jsx"));
 import { Button } from "./ui/button.jsx";
 import FullscreenButton from "./FullscreenButton.jsx";
-import SessionMenu from "./SessionMenu.jsx";
+import UserMenu from "./UserMenu.jsx";
 import {
-  LayoutGrid, LogOut, Moon, Sun,
-  SlidersHorizontal, MonitorPlay, Activity, Users, ScrollText,
-  Settings as SettingsIcon,
+  LogOut, Moon, Sun,
+  Users, Library,
   Database, CircuitBoard, Home, TriangleAlert,
 } from "lucide-react";
 
 const NAV = [
   { group: "Run", items: [
-    { id: "systems", label: "Systems", icon: LayoutGrid, hint: "Your systems - create and open them here" },
-    { id: "control", label: "System Control", icon: SlidersHorizontal, hint: "Run, restart or stop each system" },
-    { id: "health",  label: "Performance",    icon: Activity, hint: "Board + Hailo performance" },
-    { id: "wall",    label: "Live Preview",   icon: MonitorPlay, hint: "Up to 4 live camera feeds" },
+    { id: "systems", label: "Home", icon: Home, hint: "Your systems - create and open them here" },
   ]},
-  // Settings - the box-wide decisions, managed ONCE here for every system on
-  // it: who may sign in, how long data is kept, and which board terminals
-  // this platform owns. Called Settings rather than Administration because
-  // that is the word people look for when they want to change how the box
-  // behaves; "Administration" reads as a place accounts live and nothing
-  // else, which is where Board I/O and Data Retention went unfound.
-  // Settings - the box-wide decisions, made ONCE for every system on the
-  // box. ONE rail entry, with the choice inside it (SettingsHub.jsx).
-  //
-  // Accounts, Data Retention and Board I/O used to be three siblings here.
-  // They are the same KIND of thing, and as three rail items they competed
-  // for attention with Systems and Live Preview -- the two entries anyone
-  // actually looks at constantly. The choice between them is made after you
-  // have decided you are changing a setting, which is one level in.
-  // `siteAdmin` rather than `adminOnly`: a site admin has settings of their
-  // own (their staff, retention, mail), just fewer of them. What they may
-  // open inside is decided server-side -- see SettingsHub's `tabs`.
-  // Diagnostics - the hub's own event log. It existed all along and was
-  // reachable only by TYPING /logs, because the hub switches sections in
-  // local state rather than by route: the route resolves to this shell, and
-  // this shell had no section to show for it. A page nobody can navigate to
-  // is a page nobody opens when something breaks.
-  // Admin only, matching the API: log lines carry paths, hostnames and stack
-  // traces (core/routes/logs.py enforces the same thing, so hiding the item
-  // hides the button, not the URL).
-  { group: "Diagnostics", adminOnly: true, items: [
-    { id: "logs", label: "Logs", icon: ScrollText,
-      hint: "What this hub has been doing, and what failed" },
-  ]},
-  { group: "Settings", siteAdmin: true, items: [
-    { id: "settings", label: "Settings", icon: SettingsIcon,
-      hint: "Accounts, data retention and the board's terminals" },
-  ]},
+  // Settings and About are not in the rail: they live in the account menu at the top right
+  // (UserMenu), next to Sign out. Logs is gone from the hub.
 ];
 
 const TITLES = {
-  systems: "Systems",
-  control: "System Control",
-  health: "Performance",
-  wall: "Live Preview",
+  systems: "Home",
+  health: "About",
   vision: "New AI Vision system",
   accounts: "Account Management",
-  logs: "Logs",
   settings: "Settings",
 };
 
@@ -116,7 +73,9 @@ export default function HubShell() {
       try { localStorage.setItem("hub.settings.tab", tab); } catch { /* private mode */ }
       setGoto((n) => n + 1);
     }
-    setSection(page);
+    // The two pages that were folded into the system cards (run / stop / autostart)
+    // and dropped (live preview): anything still pointing at them lands on Systems.
+    setSection(page === "control" || page === "wall" ? "systems" : page);
   }
   // ...and from a dialog that has no `go` to call: Edit system and the
   // create wizard's "Settings > Network > Software port" link
@@ -144,97 +103,33 @@ export default function HubShell() {
       {/* .cy-app re-asserts the shadcn design tokens for this subtree - the
           legacy theme.css redefines some of the same names (see index.css). */}
       <SidebarProvider className="cy-app">
-        <Sidebar collapsible="icon">
-          <SidebarHeader>
-            <div className="flex items-center gap-2 px-1 py-1.5">
-              {/* The deployment's vendor mark, same asset the masters show in
-                  their top bar. Read from brand.toml so a rebranded deployment
-                  swaps it with no code change; the path is stored without a
-                  leading slash there. */}
-              <img
-                src={"/" + String(brand?.logo || "static/img/cytron.png").replace(/^\/+/, "")}
-                alt=""
-                className="size-8 shrink-0 rounded-lg object-contain"
-              />
-              <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate text-sm font-semibold">{brand?.product_name || "IRIV EdgeAI Studio"}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {cards.length
-                    ? `${running} of ${cards.length} running`
-                    : "no systems yet"}
-                </span>
-              </div>
-              {/* Home. The brand is a LINK back to the systems grid on a
-                  master, but on the hub it was nothing at all -- so getting
-                  back from Settings meant finding "Systems" in the rail. The
-                  icon is the same door on every shell. Hidden with the rest of
-                  the header when the rail collapses to icons, where the nav
-                  itself is one click away. */}
-              <Button variant="ghost" size="icon" title="Home"
-                      className="size-7 shrink-0 group-data-[collapsible=icon]:hidden"
-                      onClick={() => setSection("systems")}>
-                <Home className="size-4" />
-              </Button>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            {NAV.filter((grp) => (!grp.adminOnly || user?.is_admin)
-                              && (!grp.siteAdmin || user?.is_site_admin)).map((grp) => (
-              <SidebarGroup key={grp.group}>
-                <SidebarGroupLabel>{grp.group}</SidebarGroupLabel>
-                <SidebarMenu>
-                  {grp.items
-                    .filter((it) => !it.adminOnly || user?.is_admin)
-                    .map((it) => (
-                    <SidebarMenuItem key={it.id}>
-                      <SidebarMenuButton
-                        isActive={section === it.id}
-                        tooltip={it.hint}
-                        onClick={() => {
-                          // Clicking Settings always opens Accounts first (Tok
-                          // Aba, 2026-10-21): the remembered tab is for coming
-                          // back from a notice's link, not for the rail.
-                          if (it.id === "settings") {
-                            try { localStorage.setItem("hub.settings.tab", "accounts"); }
-                            catch { /* private mode */ }
-                            setGoto((n) => n + 1);
-                          }
-                          setSection(it.id);
-                        }}
-                      >
-                        <it.icon />
-                        <span>{it.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroup>
-            ))}
-          </SidebarContent>
-          <SidebarFooter>
-            <SessionMenu />
-            {/* The running platform version. Small, quiet, and always the
-                same place: a box in the field is supported by asking what it
-                is running, and "check the About page" is a phone call. Hidden
-                when the sidebar collapses to icons. */}
-            {data?.version ? (
-              <div className="px-2 pb-1 text-[10px] leading-none text-muted-foreground group-data-[collapsible=icon]:hidden">
-                v{data.version}
-              </div>
-            ) : null}
-          </SidebarFooter>
-          <SidebarRail />
-        </Sidebar>
-
         <SidebarInset className="bg-muted/40">
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b bg-background/70 px-4 backdrop-blur-md">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-1 h-4" />
+            {/* The deployment's logo at the left of the top bar, where the rail's header used to
+                be: also the way back Home from Settings or About. Read from brand.toml so a
+                rebranded deployment swaps it with no code change. */}
+            <button type="button" onClick={() => setSection("systems")} data-hub-brand
+                    title={brand?.product_name || "IRIV EdgeAI Studio"}
+                    className="flex shrink-0 items-center rounded-lg p-1 outline-none transition-colors
+                               hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+              <img src={"/" + String(brand?.logo || "static/img/cytron.png").replace(/^\/+/, "")}
+                   alt="" className="h-9 w-auto max-w-40 object-contain" />
+              <span className="ml-2.5 whitespace-nowrap text-base font-semibold tracking-tight">
+                {brand?.product_name || "IRIV EdgeAI Studio"}
+              </span>
+            </button>
             {/* Title only. The subtitle repeated what the page itself says the
                 moment you look at it, on every page, forever -- a sentence you
                 have read a hundred times is furniture, not information. */}
-            <div className="min-w-0 flex-1">
-              <h1 className="truncate text-sm font-semibold leading-tight">{head}</h1>
+            <div className="ml-8 min-w-0 flex-1">
+              <h1 className="truncate text-sm font-semibold leading-tight">
+                {head}
+                {section === "systems" && cards.length ? (
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    {running} of {cards.length} running
+                  </span>
+                ) : null}
+              </h1>
             </div>
             {/* What this box has left: systems and running cameras, against
                 the caps the server actually enforces. In the header because
@@ -262,6 +157,8 @@ export default function HubShell() {
             >
               {dark ? <Sun /> : <Moon />}
             </Button>
+            {/* The account: Settings, About, Sign out, Reboot and Shut down. */}
+            <UserMenu version={data?.version} onSettings={() => go("settings", "accounts")} onAbout={() => go("health")} />
           </header>
           {/* The NVMe drive the box expects is not mounted (core/services/
               storage_watch.py). On every page, not only Settings: new data is
@@ -289,24 +186,7 @@ export default function HubShell() {
                 }} />
               </Suspense>
             )}
-            {section === "control"   && <ControlPanel />}
             {section === "health"    && <HealthPanel />}
-            {section === "wall"      && <LiveWallPanel />}
-            {/* .cy-legacy: the Log Hub is a legacy-styled page (theme.css),
-                so it needs the legacy meanings of --muted and --accent back
-                inside this shadcn shell - exactly as MasterShell wraps its
-                routed pages. Without it the page's secondary text is painted
-                with a BACKGROUND colour and reads dark-on-dark.
-                Performance is LINKED, not embedded: HealthPanel is one
-                section away and one reading of CPU, RAM, FPS, Hailo and
-                temperature is enough for the box. */}
-            {section === "logs" && user?.is_admin && (
-              <div className="cy-legacy">
-                <Suspense fallback={<div className="p-6 text-muted-foreground">Loading…</div>}>
-                  <LogHub hub onPerformance={() => setSection("health")} />
-                </Suspense>
-              </div>
-            )}
             {/* Creating a system is reached from the Systems grid's "New
                 system" card or a template card - it is not a nav
                 destination of its own. */}

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Dashboard - the screen an operator watches all day.
 //
 // It renders a BUILDER PAGE ("main"), not a fixed layout: the live feed, the
@@ -15,6 +16,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
 import { usePoll } from "../api/hooks.js";
 import { useApp } from "../state/app.jsx";
+import PageGuideHost from "../workflow/PageGuides.jsx";
 import WidgetGrid from "../components/widgets/WidgetGrid.jsx";
 import NextPageButton from "../components/NextPageButton.jsx";
 import { useToast } from "../components/ui/Toast.jsx";
@@ -151,6 +153,7 @@ export default function Main() {
             here stacked four badges down the left of every dashboard. */}
         <div className="page-title">Dashboard</div>
         <div className="page-actions">
+          <PageGuideHost guide="dashboard" />
           {/* A system that is SET UP does not need to be sent to another
               page to press a button: detection is a thing it has, so the
               control is here -- ONE button that says what it will do,

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 builder.py -- declarative analytics widgets, composed in the UI.
 
@@ -181,6 +182,16 @@ VALUE_FORMATS = ("yesno", "onoff", "truefalse", "text")
 #: whether the video feed shows at all. Reserved: it cannot be renamed or
 #: deleted, because the Dashboard would then have nothing to render.
 MAIN_PAGE_ID = "main"
+
+#: An ANALYTICS page the operator added ("New page" on the Analytics page) has
+#: an id that starts with this. Analytics shows each as a page of its own, and
+#: the workflow's sweep of builder pages leaves them alone; every other page
+#: that is not the Dashboard or the Overview is still folded into the Overview.
+ANALYTICS_PAGE_PREFIX = "an_"
+
+
+def is_analytics_page(page_id):
+    return str(page_id or "").startswith(ANALYTICS_PAGE_PREFIX)
 MAIN_PAGE_NAME = "Dashboard"
 
 #: The verdict widget's default binding. `compliance` is published by
@@ -649,9 +660,19 @@ def merge_partial(stored, incoming):
     state the editor does own, so they replace wholesale. Pages the request does
     not mention are untouched.
     """
-    pages = {p["id"]: p for p in _as_pages(incoming)}
+    # No `pages` at all (a request that only deletes a page, say) names no page:
+    # _as_pages would otherwise answer with a blank Dashboard to merge in.
+    pages = ({p["id"]: p for p in _as_pages(incoming)}
+             if (incoming.get("pages") or incoming.get("widgets")) else {})
+    # An Analytics page the operator deleted. Only their own pages can be named
+    # here: the Dashboard and the Overview are not theirs to remove.
+    gone = {str(i) for i in (incoming.get("delete_pages") or [])
+            if is_analytics_page(i)}
     out = []
     for p in stored.get("pages") or []:
+        if p["id"] in gone:
+            pages.pop(p["id"], None)
+            continue
         sent = pages.pop(p["id"], None)
         if sent is None:
             out.append(p)
@@ -670,6 +691,8 @@ def merge_partial(stored, incoming):
     for p in pages.values():
         out.append({**p, "widgets": [w for w in (p.get("widgets") or [])
                                      if not str((w or {}).get("id", "")).startswith("wf_")]})
+    if len(out) > MAX_PAGES:
+        raise ValueError(f"a layout holds at most {MAX_PAGES} pages")
     return {"slug": stored.get("slug"),
             "title": incoming.get("title", stored.get("title") or ""),
             "pages": out,

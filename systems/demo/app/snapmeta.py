@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 snapmeta.py -- what a snapshot knows about itself.
 
@@ -165,7 +166,8 @@ def finish_timer(meta, total_s):
 def view_timer(timer):
     """What the page and the report show of a timer, calculated here once so
     they cannot disagree: {threshold_s, total_s, exceeded_s, ended, elapsed_s}
-    with exceeded_s = max(0, total - threshold), or None when the stay is still
+    with exceeded_s = max(0, total - threshold - tolerance) (the tolerance is
+    time the object was allowed, so it is not violation), or None when the stay is still
     running (the total is not known, so neither is the excess)."""
     if not isinstance(timer, dict) or not timer.get("threshold_s"):
         return None
@@ -178,12 +180,13 @@ def view_timer(timer):
     if (_num(timer.get("tolerance_s")) or 0) > 0:
         out["tolerance_s"] = _num(timer["tolerance_s"])
     if total is not None:
-        out["exceeded_s"] = round(max(0.0, float(total) - thr), 2)
+        out["exceeded_s"] = round(max(0.0, float(total) - thr
+                                      - (_num(timer.get("tolerance_s")) or 0.0)), 2)
     return out
 
 
 def build_meta(sid, ts, camera_id, camera_name, label, oid, event, location,
-               crops, timer, violation="", notice_title=""):
+               crops, timer, violation="", notice_title="", page_name=""):
     """The sidecar record. Every field is something that was known at the time
     of the photo; the optional ones are absent, not blank."""
     detail = (event or {}).get("detail") or {}
@@ -207,6 +210,8 @@ def build_meta(sid, ts, camera_id, camera_name, label, oid, event, location,
         meta["violation"] = str(violation)[:120]
     if notice_title:
         meta["notice_title"] = str(notice_title)[:60]
+    if page_name:
+        meta["page_name"] = str(page_name)[:60]
     if crops:
         meta["crops"] = [dict(c) for c in crops]
     if timer:

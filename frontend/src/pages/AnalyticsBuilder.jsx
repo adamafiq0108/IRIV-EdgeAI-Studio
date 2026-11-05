@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Analytics Builder - the full-width composer for the Analytics Overview.
 //
 // The same machinery as the Dashboard Builder (palette, grid canvas, live
@@ -21,7 +22,7 @@
 // wf_* widgets a workflow recompile puts on this same page survive
 // (core/services/builder.py merge_partial is the other half of that contract).
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client.js";
 import { ErrorNote, SkelEditor } from "../components/Loading.jsx";
 import GridCanvas, { autoPlace, notePaletteDrag, placedAt } from "../components/widgets/GridCanvas.jsx";
@@ -36,8 +37,9 @@ import { useToast } from "../components/ui/Toast.jsx";
 import { useConfirm } from "../components/ui/ask.jsx";
 import ViewSettings from "../components/ui/ViewSettings.jsx";
 import { LayoutGrid } from "lucide-react";
+import PageGuideHost from "../workflow/PageGuides.jsx";
 
-const PAGE_ID = "overview";   // the one page Analytics computes; edits land here
+const PAGE_ID = "overview";   // the Overview, which Analytics always has; ?page= names another
 const SIZES = ["small", "medium", "big"];
 
 /** A package card as a draggable canvas widget. The layout owns WHERE it sits;
@@ -51,9 +53,16 @@ const pkgDraft = (w) => ({
   source: "stat", key: "", grid: w.grid || {}, pkg: true,
 });
 
-export default function AnalyticsBuilder() {
+function AnalyticsBuilderPage() {
   const toast = useToast();
   const confirm = useConfirm();
+  // WHICH page is being composed: the Overview, or one the operator added
+  // ("New Page" on Analytics, ids starting "an_"). Edits land on it alone.
+  const [sp] = useSearchParams();
+  const navigate = useNavigate();
+  const pageId = sp.get("page") || PAGE_ID;
+  const isOverview = pageId === PAGE_ID;
+  const [pageName, setPageName] = useState("");
   const [range, setRange] = useState("month");
   const [meta, setMeta] = useState(null);        // /api/builder
   const [data, setData] = useState(null);        // /api/analytics
@@ -84,7 +93,14 @@ export default function AnalyticsBuilder() {
         if (!alive) return;
         setMeta(m);
         setData(d);
-        const saved = ((m.layout || {}).pages || []).find((p) => p.id === PAGE_ID);
+        const saved = ((m.layout || {}).pages || []).find((p) => p.id === pageId);
+        // An address naming a page that is not there would otherwise save a
+        // blank page under that name.
+        if (!isOverview && !saved) {
+          setError(new Error("That Analytics page does not exist (it may have been deleted)."));
+          return;
+        }
+        setPageName(saved?.name || "");
         // Medium is what every page was built at, so a layout that says
         // nothing looks exactly as it did before this setting existed.
         setSize(SIZES.includes(saved?.size) ? saved.size : "medium");
@@ -94,9 +110,11 @@ export default function AnalyticsBuilder() {
         // A wf_* row's stored grid is compiler-owned and stale by design (the
         // partial merge keeps it as-is); WHERE the operator put the card lives
         // in placements. Overlay them or every reload snaps the cards back.
-        const placed = ((m.layout || {}).placements || {})[PAGE_ID] || {};
+        const placed = ((m.layout || {}).placements || {})[pageId] || {};
         const page = (d.pages || [])[0] || { widgets: d.widgets || [] };
-        const pkg = (page.widgets || []).filter((w) => !w.builder).map(pkgDraft);
+        // The package's own cards belong to the Overview alone.
+        const pkg = isOverview
+          ? (page.widgets || []).filter((w) => !w.builder).map(pkgDraft) : [];
         const own = (saved?.widgets || [])
           .filter((w) => !hidden.has(w.id))
           .map((w) => (placed[w.id] ? { ...w, grid: placed[w.id] } : w));
@@ -127,14 +145,16 @@ export default function AnalyticsBuilder() {
   // Package cards are previewed by the Analytics payload itself, which is the
   // very renderer the finished page uses.
   const preview = useMemo(() => {
+    if (!isOverview) return ownPreview;
     const page = (data?.pages || [])[0] || { widgets: data?.widgets || [] };
     return [...(page.widgets || []), ...ownPreview];
-  }, [data, ownPreview]);
+  }, [data, ownPreview, isOverview]);
 
   const sources = meta?.sources || { stat: [], bucket: [], events: [] };
   const editable = !!meta?.editable;
   const catalog = data?.catalog || [];
-  const removed = data?.hidden || [];
+  // Package cards that were taken off belong to the Overview.
+  const removed = isOverview ? (data?.hidden || []) : [];
   const current = useMemo(() => widgets.find((w) => w.id === selected) || null,
                           [widgets, selected]);
 
@@ -216,9 +236,9 @@ export default function AnalyticsBuilder() {
       let draft = back ? pkgDraft(back) : null;
       if (!draft) {
         const layout = (await api.get("/api/builder")).layout || {};
-        const saved = (layout.pages || []).find((p) => p.id === PAGE_ID);
+        const saved = (layout.pages || []).find((p) => p.id === pageId);
         draft = (saved?.widgets || []).find((w) => w.id === widgetId) || null;
-        const grid = ((layout.placements || {})[PAGE_ID] || {})[widgetId];
+        const grid = ((layout.placements || {})[pageId] || {})[widgetId];
         if (draft && grid) draft = { ...draft, grid };
       }
       if (draft) {
@@ -392,13 +412,14 @@ export default function AnalyticsBuilder() {
           setFont(fonts, w.id, w);
         }
       }
-      // Everything the operator added belongs to "overview" - the only page
-      // Analytics has. A second page would be invisible here forever, and
-      // workflow.apply_artifacts would sweep it away.
-      const idx = pages.findIndex((p) => p.id === PAGE_ID);
+      // Everything the operator added belongs to THIS page: the Overview, or
+      // one they added (the server keeps those, builder.is_analytics_page).
+      const idx = pages.findIndex((p) => p.id === pageId);
+      const label = !isOverview && pageName.trim() ? pageName.trim() : null;
       const next = idx >= 0
-        ? pages.map((p, i) => (i === idx ? { ...p, size, widgets: mine } : p))
-        : [...pages, { id: PAGE_ID, name: "Overview", size, widgets: mine }];
+        ? pages.map((p, i) => (i === idx
+          ? { ...p, ...(label ? { name: label } : {}), size, widgets: mine } : p))
+        : [...pages, { id: pageId, name: "Overview", size, widgets: mine }];
       // partial: merge only what the operator owns. A workflow recompile
       // running concurrently rewrites the wf_* widgets; a full write here would
       // put back the copy we read a moment ago and lose them.
@@ -451,7 +472,7 @@ export default function AnalyticsBuilder() {
       }
       await api.put("/api/builder", {
         ...layout, partial: true, pages: next,
-        placements: { ...(layout.placements || {}), [PAGE_ID]: placed },
+        placements: { ...(layout.placements || {}), [pageId]: placed },
         templates: dressed, colors: coloured, accents: accented, fonts,
         names: named,
       });
@@ -469,13 +490,43 @@ export default function AnalyticsBuilder() {
   if (!meta || !data) return <SkelEditor />;
 
   const ranges = (data.ranges || ["today", "week", "month"]).filter((r) => r !== "custom");
+  const layoutPages = (meta.layout || {}).pages || [];
+  const tabPages = layoutPages.filter((p) => p.id === PAGE_ID || String(p.id).startsWith("an_"));
+
+  // Delete the page being edited, with everything on it. Only a page the
+  // operator added; the Overview is always there.
+  async function deletePage() {
+    if (isOverview) return;
+    if (!await confirm({
+      title: `Delete the page "${pageName || pageId}"?`,
+      description: "The widgets on it go with it. Cards from your workflow stay on "
+        + "the canvas and can be put somewhere else.",
+      destructive: true, confirmLabel: "Delete page" })) return;
+    setBusy(true);
+    try {
+      await api.put("/api/builder", { partial: true, delete_pages: [pageId] });
+      toast.success("Page deleted");
+      navigate("/analytics");
+    } catch (e) { toast.error("Could not delete the page", e.message); }
+    finally { setBusy(false); }
+  }
 
   return (
     <section className="page active">
       <div className="page-head">
-        <div className="page-title">Analytics Builder</div>
+        {/* The way out, at the left where a Back button is expected. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+          <Link className="btn btn-sm"
+                to={isOverview ? "/analytics" : `/analytics?page=${pageId}`}>
+            &larr; Back to Analytics
+          </Link>
+          <div className="page-title">
+            Analytics Builder{!isOverview && pageName ? ` - ${pageName}` : ""}
+          </div>
+        </div>
         <div className="page-actions" style={{ display: "flex", gap: 8,
                                                alignItems: "center", flexWrap: "wrap" }}>
+          <PageGuideHost guide="analyticsBuilder" />
           {ranges.map((r) => (
             <button key={r} className={"range-btn" + (r === range ? " active" : "")}
                     onClick={() => setRange(r)}>
@@ -485,9 +536,47 @@ export default function AnalyticsBuilder() {
           {dirty ? <Badge tone="warn">unsaved</Badge> : <Badge tone="ok">saved</Badge>}
           <button className="btn btn-accent" disabled={!editable || !dirty || busy}
                   onClick={save}>Save</button>
-          <Link className="btn btn-sm" to="/analytics">Back to Analytics</Link>
         </div>
       </div>
+
+      {/* Which page is being composed. A page's name and its removal live
+          here; pages are added from the Analytics page itself. */}
+      {(tabPages.length > 1 || !isOverview) && (
+        <div className="filter-bar" style={{ marginBottom: 8, flexWrap: "wrap",
+                                             alignItems: "center" }}
+             data-builder-pages>
+          {tabPages.map((p) => (
+            <Link key={p.id} data-page={p.id}
+                  className={"btn btn-sm" + (p.id === pageId ? " btn-accent" : "")}
+                  to={p.id === PAGE_ID ? "/analytics/builder"
+                    : `/analytics/builder?page=${p.id}`}
+                  onClick={async (e) => {
+                    if (!dirty || p.id === pageId) return;
+                    e.preventDefault();
+                    if (await confirm({
+                      title: "Leave this page without saving?",
+                      description: "Your changes to this page are not saved yet.",
+                      confirmLabel: "Leave without saving" })) {
+                      navigate(p.id === PAGE_ID ? "/analytics/builder"
+                        : `/analytics/builder?page=${p.id}`);
+                    }
+                  }}>
+              {p.name}
+            </Link>
+          ))}
+          {!isOverview && (
+            <>
+              <span style={{ width: 8 }} />
+              <input className="input" style={{ width: 200 }} maxLength={60}
+                     value={pageName} disabled={!editable} data-page-rename
+                     aria-label="Page name"
+                     onChange={(e) => { setPageName(e.target.value); setDirty(true); }} />
+              <button className="btn btn-sm btn-danger" disabled={!editable || busy}
+                      onClick={deletePage}>Delete page</button>
+            </>
+          )}
+        </div>
+      )}
 
       {!editable && (
         <div className="note-card">Read-only: composing a layout is an admin action.</div>
@@ -609,4 +698,13 @@ export default function AnalyticsBuilder() {
 
     </section>
   );
+}
+
+/** The page being composed is the KEY: moving to another page starts the editor
+ *  afresh. The editor loads once, so without this a click on another page's tab
+ *  changed the address and left the first page's widgets, name and unsaved
+ *  state in place -- and a Save would have written them onto the other page. */
+export default function AnalyticsBuilder() {
+  const [sp] = useSearchParams();
+  return <AnalyticsBuilderPage key={sp.get("page") || PAGE_ID} />;
 }

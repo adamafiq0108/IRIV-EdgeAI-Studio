@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 models.py -- bring-your-own-model API: upload weights, describe them, deploy.
 
@@ -1169,6 +1170,7 @@ def detector_snapshots(request: Request, limit: int = Query(0)):
             # What the viewer may DO with these, so Delete and Export are
             # drawn from the same answer that enforces them.
             "caps": perm.held(request),
+            "pages": detector_control_service.snapshot_pages(systems_dir, slug),
             "snapshots": detector_control_service.list_snapshots(
                 systems_dir, slug, limit=max(0, limit))}
 
@@ -1558,6 +1560,8 @@ def detector_clips(request: Request, limit: int = Query(0)):
     systems_dir, slug = _system_context(request)
     return {"ok": True,
             "caps": perm.held(request),
+            "pages": detector_control_service.snapshot_pages(
+                systems_dir, slug, "record"),
             "clips": detector_control_service.list_clips(
                 systems_dir, slug, limit=max(0, limit))}
 

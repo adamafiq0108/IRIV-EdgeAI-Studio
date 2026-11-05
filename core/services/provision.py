@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 provision.py -- create a new AI-vision system from the hub, no code.
 
@@ -19,6 +20,7 @@ import pathlib
 import re
 import shutil
 import socket
+import signal
 import subprocess
 import threading
 import sys
@@ -1098,8 +1100,10 @@ def _scaffold_app(src_systems_dir, dst_root, slug, display, stream_port=5102,
         return                                             # no reference to copy
 
     if not os.path.isdir(os.path.join(dst, "app")):
+        # A compiled install ships app/*.pyc with no .py beside it, so *.pyc
+        # is the code and has to come along; only __pycache__ is skipped.
         shutil.copytree(os.path.join(src, "app"), os.path.join(dst, "app"),
-                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+                        ignore=shutil.ignore_patterns("__pycache__"))
     for name in ("models.toml",):
         s, d = os.path.join(src, name), os.path.join(dst, name)
         if os.path.exists(s) and not os.path.exists(d):
@@ -1372,7 +1376,7 @@ def repair_store_apps(systems_dir):
                     if os.path.isdir(dst):
                         shutil.rmtree(dst)
                     shutil.copytree(src, dst,
-                                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+                                    ignore=shutil.ignore_patterns("__pycache__"))
                     if stash is not None:
                         shutil.move(stash, keep)
                 else:
@@ -1585,6 +1589,41 @@ def removed_reason(slug, systems_cfg, generated_dir):
             "- re-enable it before starting its master")
 
 
+def _kill_app_leftovers(pkg_root, slug):
+    """End any `python -m app.run` whose working folder is this system's package.
+    Linux only (/proc); anywhere else there is nothing to scan. SIGKILL after a
+    short wait for SIGTERM."""
+    if not os.path.isdir("/proc"):
+        return
+    target = os.path.normpath(os.path.join(pkg_root, slug))
+    mine = []
+    for name in os.listdir("/proc"):
+        if not name.isdigit() or int(name) == os.getpid():
+            continue
+        try:
+            cwd = os.path.normpath(os.readlink(f"/proc/{name}/cwd"))
+            with open(f"/proc/{name}/cmdline", "rb") as f:
+                cmd = f.read().replace(b"\x00", b" ").decode("utf-8", "replace")
+        except OSError:
+            continue
+        if cwd == target and "app.run" in cmd:
+            mine.append(int(name))
+    for pid in mine:
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except OSError:
+            pass
+    deadline = time.time() + 5
+    while time.time() < deadline and any(os.path.exists(f"/proc/{p}") for p in mine):
+        time.sleep(0.2)
+    for pid in mine:
+        if os.path.exists(f"/proc/{pid}"):
+            try:
+                os.kill(pid, getattr(signal, "SIGKILL", signal.SIGTERM))
+            except OSError:
+                pass
+
+
 def remove_system(systems_dir, slug, all_slugs, config_dir=None):
     """The inverse of create_vision_system: stop the master, disable the
     system, and -- for a system this tool generated -- delete everything it
@@ -1634,6 +1673,10 @@ def remove_system(systems_dir, slug, all_slugs, config_dir=None):
         dc.stop_app(systems_dir, slug)
     except Exception:                                       # noqa: BLE001
         pass                    # no app, or already stopped -- both fine
+    # Whatever app of this system is still alive after that is ended now, while
+    # its folder still exists to be matched by: a deleted system's app used to
+    # keep running, holding a Hailo slot and crashing the next system's start.
+    _kill_app_leftovers(_pkg_root(systems_dir, slug), slug)
     cfg = config.systems(config_dir)
     url = ((cfg.get("masters") or {}).get(slug) or {}).get("url")
     stopped = stop_master(url) if url else False
@@ -2144,8 +2187,12 @@ def spawn_master(repo_dir, slug, port):
         kwargs["creationflags"] = 0x00000008 | 0x00000200
     else:
         kwargs["start_new_session"] = True
+    # A compiled install ships master_server.pyc and no source.
+    script = os.path.join(repo_dir, "master_server.py")
+    if not os.path.exists(script):
+        script += "c"
     proc = subprocess.Popen(
-        [sys.executable, os.path.join(repo_dir, "master_server.py"),
+        [sys.executable, script,
          "--system", slug, "--port", str(port)],
         cwd=repo_dir, stdout=out, stderr=out, stdin=subprocess.DEVNULL, **kwargs)
     # Nobody calls .wait() on this Popen -- every caller fires it and moves

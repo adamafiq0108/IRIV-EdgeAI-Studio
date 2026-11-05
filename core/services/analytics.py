@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 analytics.py -- Running a system's widget data_fns.
 
@@ -134,12 +135,14 @@ def compute_pages(widgets, events, stats, config_dir, slug, capabilities=(),
     # cards -- filtering only the package set is how "I removed that card"
     # bounced back and "I moved that card" showed the editor one layout and
     # the live page another.
-    placed = layout.get("placements", {}).get("overview", {})
+    def placed_on(page_id):
+        return layout.get("placements", {}).get(page_id, {})
 
     def _builder_widgets(page_id):
         p = extra.get(page_id)
         if not p:
             return []
+        placed = placed_on(page_id)
         rows = builder_service.compute(p.get("widgets"), events, stats,
                                        capabilities, config_dir, slug,
                                        systems_dir=systems_dir,
@@ -163,6 +166,7 @@ def compute_pages(widgets, events, stats, config_dir, slug, capabilities=(),
     accented = layout.get("accents") or {}
     fonts = layout.get("fonts") or {}
     named = layout.get("names") or {}
+    placed = placed_on("overview")
     for w in pkg:
         if w["id"] in placed:
             w["grid"] = placed[w["id"]]
@@ -191,6 +195,9 @@ def compute_pages(widgets, events, stats, config_dir, slug, capabilities=(),
     for p in layout.get("pages", []):
         if p["id"] in (builder_service.MAIN_PAGE_ID, "overview"):
             continue
+        # A page the operator added is a page of its own, below.
+        if builder_service.is_analytics_page(p["id"]):
+            continue
         for w in _builder_widgets(p["id"]):
             if w["id"] in hidden or w["id"] in seen:
                 continue
@@ -203,6 +210,16 @@ def compute_pages(widgets, events, stats, config_dir, slug, capabilities=(),
     pages.append({"id": "overview", "name": "Overview",
                   "size": builder_service._as_size(saved.get("size")),
                   "widgets": overview})
+    # The pages the operator added: each its own tab, its own widgets, its own
+    # row height. Their widget ids are theirs (a card dragged from the workflow
+    # is a copy with an id of its own), so nothing is shown twice.
+    for p in layout.get("pages", []):
+        if builder_service.is_analytics_page(p["id"]):
+            pages.append({"id": p["id"], "name": p.get("name") or p["id"],
+                          "size": builder_service._as_size(p.get("size")),
+                          "user": True,
+                          "widgets": [w for w in _builder_widgets(p["id"])
+                                      if w["id"] not in seen]})
     return pages
 
 

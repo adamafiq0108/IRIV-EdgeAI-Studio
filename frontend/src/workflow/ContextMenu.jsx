@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The canvas context menu - Node-RED's, not the browser's.
 //
 // Right-click is the only place an operator looks for "what can I do here",
@@ -110,6 +111,7 @@ export default function ContextMenu({
   const rootRef = useRef(null);
   const [insertOpen, setInsertOpen] = useState(false);
   const [flip, setFlip] = useState(false);
+  const [find, setFind] = useState("");
 
   // Escape, or a click anywhere that is not this menu, closes it.
   useEffect(() => {
@@ -126,12 +128,17 @@ export default function ContextMenu({
     };
   }, [menu, onClose]);
 
-  useEffect(() => { setInsertOpen(false); }, [menu]);
+  useEffect(() => { setInsertOpen(false); setFind(""); }, [menu]);
 
   if (!menu) return null;
 
   const run = (fn) => () => { onClose?.(); fn?.(); };
-  const groups = insertGroups(registry, order, zoneList, models, fnDefs);
+  // The search box at the top of Insert narrows every drawer to the nodes whose name matches.
+  const q = find.trim().toLowerCase();
+  const groups = insertGroups(registry, order, zoneList, models, fnDefs)
+    .map((g) => (q ? { ...g, items: g.items.filter((it) =>
+      `${it.label} ${it.sub || ""} ${g.title}`.toLowerCase().includes(q)) } : g))
+    .filter((g) => g.items.length);
 
   return (
     <div ref={rootRef}
@@ -147,10 +154,21 @@ export default function ContextMenu({
            }}
            onMouseLeave={() => setInsertOpen(false)}>
         <Row submenu disabled={!editable}>Insert</Row>
-        {insertOpen && editable && groups.length > 0 && (
+        {insertOpen && editable && (
           <div style={{ ...PANEL, position: "absolute", top: -4, zIndex: 21,
                         minWidth: 210, maxHeight: 340, overflowY: "auto",
                         ...(flip ? { right: "100%" } : { left: "100%" }) }}>
+            <div style={{ position: "sticky", top: -4, zIndex: 1, padding: "4px 4px 6px",
+                          margin: "-4px -4px 2px", background: "var(--surface2, #1d2026)" }}>
+              <input className="input" autoFocus value={find} placeholder="Search nodes"
+                     aria-label="Search nodes to insert" data-insert-search
+                     onChange={(e) => setFind(e.target.value)}
+                     onKeyDown={(e) => { if (e.key !== "Escape") e.stopPropagation(); }}
+                     style={{ width: "100%", height: 30, fontSize: 13 }} />
+            </div>
+            {groups.length === 0 && (
+              <div className="muted small" style={{ padding: "8px 10px" }}>No node matches.</div>
+            )}
             {groups.map((g) => (
               <div key={g.cat}>
                 <div className="muted small"
@@ -187,15 +205,19 @@ export default function ContextMenu({
            onClick={run(onCopy)}>Copy</Row>
       <Row shortcut="Ctrl+V" disabled={!editable || !hasClipboard}
            onClick={run(onPaste)}>Paste</Row>
-      <Row shortcut="Del" danger disabled={!editable || !hasSelection}
-           onClick={run(onDelete)}>Delete selection</Row>
+      {/* One Delete: on a node it removes that node (or the whole selection when the node is
+          part of one); elsewhere it removes the selection. */}
+      {menu.variant !== "node" && (
+        <Row shortcut="Del" danger disabled={!editable || !hasSelection}
+             onClick={run(onDelete)}>Delete</Row>
+      )}
 
       {menu.variant === "node" && (
         <>
           <Sep />
           <Row disabled={!editable} onClick={run(onDuplicate)}>Duplicate</Row>
           <Row disabled={!editable} onClick={run(onDisconnect)}>Disconnect wires</Row>
-          <Row danger disabled={!editable} onClick={run(onDeleteNode)}>Delete</Row>
+          <Row shortcut="Del" danger disabled={!editable} onClick={run(onDeleteNode)}>Delete</Row>
         </>
       )}
 

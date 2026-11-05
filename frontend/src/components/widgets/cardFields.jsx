@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // ONE definition of a card's properties, for both places a card is edited:
 // the workflow node's inspector (pages/Workflow.jsx, dashboard.card and
 // dashboard.graph) and the Builders' widget panel (builderShared.jsx
@@ -88,12 +89,15 @@ export const CHART_SHAPES = [
 export const CARD_SHAPES = [
   ["tile", "stat tile - one value (number or text)"],
   ["gauge", "gauge - a dial"],
-  ["verdict", "verdict - a state"],
-  ["status", "status - an OK / ALERT pill"],
+  // "status" is the verdict card (a big state with colours and a word): the old OK / ALERT pill is
+  // gone from the picker, because a card does not decide anything -- the rule belongs on the node
+  // in front of it (If / Else if, Trigger). Cards already saved as a pill keep drawing.
+  ["verdict", "status - a state"],
   ["table", "table - the latest rows"],
 ];
 //: Every other shape a hand-made Builder card can take, named the same way.
 const OTHER_SHAPES = [
+  ["status", "status pill (old)"],
   ["heatmap", "heatmap"], ["timeline", "timeline"], ["video", "live video"], ["snap_gallery", "camera snaps"],
   ["button", "button"], ["ai_classes", "AI classes"],
   ["class_filters", "class filters"],
@@ -114,7 +118,7 @@ const OTHER_SHAPES = [
 export const SHAPE_GROUPS = [
   ["Charts - compare categories and values", ["bar", "pie", "donut", "radar"]],
   ["Time-series graphs - change over time", ["line", "spline", "area"]],
-  ["Single value", ["tile", "gauge", "status", "verdict"]],
+  ["Single value", ["tile", "gauge", "verdict"]],
   ["Lists, events and media", ["table", "timeline", "heatmap", "video"]],
 ];
 const SHAPE_LABELS = Object.fromEntries([...CHART_SHAPES, ...CARD_SHAPES,
@@ -332,8 +336,11 @@ function Pick({ field: F = UiField, name, hint, value, options, onChange,
  *  the list (the node's "as saved" for a shape its source no longer offers). */
 export function ShapeField({ field: F = UiField, chart = false, shapes, extra = [],
                             value, onChange, disabled, hint }) {
-  const list = [...extra, ...(shapes || (chart ? CHART_SHAPES : CARD_SHAPES))];
   const v = value ?? "";
+  // The OK / ALERT pill is no longer offered (a card does not hold a rule); a card already saved as
+  // one still shows it, so its shape is not silently replaced.
+  const list = [...extra, ...(shapes || (chart ? CHART_SHAPES : CARD_SHAPES))]
+    .filter(([k]) => k !== "status" || v === "status");
   if (!list.some(([k]) => k === v)) list.push([v, shapeLabel(v)]);
   const spec = CARD_FIELDS.shape;
   // In SHAPE_GROUPS order, each group holding only the shapes this panel
@@ -832,8 +839,8 @@ export const CARD_RANGES = [
 //: ...of a card showing a LIVE RULE's value: the counters a rule keeps.
 //: Stored in `window` (workflow.CARD_WINDOWS); "page" is its "follow".
 export const LIVE_RANGES = [
-  ["live", "Live value (now)"], ["page", "Follow the Analytics date picker"],
-  ["today", "Today"], ["week", "This week"], ["month", "This month"],
+  ["live", "Live value"], ["page", "Date Selection"],
+  ["today", "Today"], ["week", "Weekly"], ["month", "Monthly"],
 ];
 const WINDOW_OF_RANGE = { live: "live", page: "follow", today: "today", week: "week",
                           month: "month" };
@@ -896,7 +903,7 @@ export function CardDateRange({ field: F = UiField, source, value, from, to, not
     <>
       <F label="Date range"
          hint={source === "live"
-           ? "Live value is the number right now; the others read the rule's counter for that period. Follow the Analytics date picker lets that page decide."
+           ? "Live value is the number right now; the others read the rule's counter for that period. Date Selection lets the Analytics page's date picker decide."
            : "Which recorded rows this card covers. Follow the Analytics date picker lets that page decide."}>
         <select className="input" value={v} disabled={disabled} aria-label="Date range"
                 onChange={(e) => write({ value: e.target.value })}>

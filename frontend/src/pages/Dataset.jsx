@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Dataset - capture training material from this system's camera: named photos
 // and short clips, written to the NVMe drive (/mnt/nvme/dataset_image and
 // /mnt/nvme/dataset_rec).
@@ -22,6 +23,7 @@ import { InfoHint } from "../components/ui/InfoHint.jsx";
 import { ErrorNote, SkelEditor } from "../components/Loading.jsx";
 import { Badge } from "../components/ui/primitives.jsx";
 import NextPageButton from "../components/NextPageButton.jsx";
+import PageGuideHost from "../workflow/PageGuides.jsx";
 import { useToast } from "../components/ui/Toast.jsx";
 import NoStorage from "../components/NoStorage.jsx";
 import DatasetCameraPicker from "../components/DatasetCameraPicker.jsx";
@@ -170,6 +172,7 @@ export default function Dataset() {
       <div className="page-head">
         <div className="page-title">Dataset</div>
         <div className="page-actions">
+          <PageGuideHost guide="dataset" />
           <Badge tone="ok">NVMe ready</Badge>
           <NextPageButton />
         </div>

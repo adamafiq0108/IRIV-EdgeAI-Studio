@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Root route. The same SPA serves both the hub and every master; bootstrap's
 // `mode` decides what "/" is: the systems grid (hub) or the system's Main
 // overview (master).
@@ -8,7 +9,7 @@
 // page, the login included, had to download and parse first.
 import { lazy, Suspense } from "react";
 import { useApp } from "../state/app.jsx";
-import { SkelPage } from "../components/Loading.jsx";
+import { SkelHome, SkelPage } from "../components/Loading.jsx";
 
 const Hub = lazy(() => import("./Hub.jsx"));
 const Main = lazy(() => import("./Main.jsx"));
@@ -16,8 +17,8 @@ const Main = lazy(() => import("./Main.jsx"));
 export default function Home() {
   const { mode } = useApp();
   return (
-    <Suspense fallback={<SkelPage title={mode === "hub" ? "Systems" : "Dashboard"}
-                                  cards={2} rows={4} />}>
+    <Suspense fallback={mode === "hub" ? <SkelHome />
+                                       : <SkelPage title="Dashboard" cards={2} rows={4} />}>
       {mode === "hub" ? <Hub /> : <Main />}
     </Suspense>
   );

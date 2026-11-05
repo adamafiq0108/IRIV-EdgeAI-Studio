@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Builder machinery shared by the two composers: the Dashboard Builder
 // (pages/Builder.jsx) and the Analytics Builder (pages/AnalyticsBuilder.jsx).
 //
@@ -1100,7 +1101,7 @@ export function catalogWidget(c) {
 //: the chart type picker reads it (chartTypes.chartTypeOf). Only headings
 //: with a card are drawn; a kind nobody named lands under "Other".
 export const CARD_CATEGORIES = [
-  ["status", "Status / verdict"], ["tile", "Number tile"], ["gauge", "Gauge"],
+  ["status", "Status"], ["tile", "Number tile"], ["gauge", "Gauge"],
   ["line", "Line chart"], ["area", "Area chart"], ["time_bar", "Time-based bar"],
   ["compare_bar", "Comparison bar"], ["pie", "Pie chart"], ["donut", "Donut chart"],
   ["radar", "Radar chart"], ["table", "Table"], ["events", "Event table"],

@@ -1,3 +1,4 @@
+/* Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved. */
 /* =====================================================================
    IRIV EdgeAI Studio -- core styles.
    Ported from the storyboard mockup. Accent colours are injected per
@@ -2399,17 +2400,17 @@ button.palette-item:focus-visible { outline: 2px solid #2f8fff; outline-offset: 
    button fills and reads differently per theme, and this has to say DANGER
    identically in both. */
 .cap-meter.is-full {
-  border-color: rgba(220, 38, 38, .55);
-  background: rgba(220, 38, 38, .10);
+  border-color: rgba(249, 115, 22, .6);
+  background: rgba(249, 115, 22, .12);
 }
 .cap-meter.is-full .cap-meter-count,
 .cap-meter.is-full .cap-meter-label,
-.cap-meter.is-full .cap-meter-icon { color: var(--alert-text); }
-.cap-meter.is-full .cap-meter-fill { background: #dc2626; }
+.cap-meter.is-full .cap-meter-icon { color: #ea580c; }
+.cap-meter.is-full .cap-meter-fill { background: #f97316; }
 .cap-meter-max-tag {
   flex: none; font-size: 9.5px; font-weight: 800; letter-spacing: .06em;
   padding: 2px 6px; border-radius: 999px; color: #fff;
-  background: #dc2626;
+  background: #f97316;
 }
 /* Never hidden, at any width: these are a glance-check an operator makes
    while doing something else, and a meter that disappears on a laptop is a
@@ -5394,7 +5395,94 @@ body.wf-fs-on .topbar { visibility: hidden; }
    chart's own svg. Charts are picked by clicking a line, not by keyboard focus. */
 .chart-wrap, .chart-wrap *, .recharts-wrapper, .recharts-wrapper *, .recharts-surface { outline: none !important; }
 
-/* ===========================================================================
+/* Node Guideline page: pick a node, see it with its rules, step through its
+   connections. One column on a narrow screen, three from 1100px up. */
+.ng-grid { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+.ng-col { background: var(--card, #fff); border: 1px solid var(--border, rgba(128,128,128,.25));
+          border-radius: 12px; padding: 12px; min-width: 0; }
+.ng-title { font-weight: 700; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase;
+            margin-bottom: 8px; }
+.ng-stage { font-weight: 700; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase;
+            margin: 12px 0 2px; }
+.ng-cat { font-size: .72rem; color: var(--muted-foreground, #64748b); margin: 6px 0 3px; }
+.ng-group { font-size: .68rem; color: var(--muted-foreground, #64748b); margin: 6px 0 2px 2px; }
+.ng-item { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+           padding: 6px 8px; margin-bottom: 3px; border-radius: 8px; cursor: pointer;
+           border: 1px solid transparent; border-left: 3px solid #94a3b8;
+           background: var(--muted, rgba(128,128,128,.1)); color: inherit; font-size: .85rem; }
+.ng-item em { margin-left: auto; font-style: normal; font-size: .65rem; opacity: .65; }
+.ng-item.on { border-color: var(--primary, #04bade); background: var(--card, #fff);
+              box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary, #04bade) 25%, transparent); }
+.ng-list { max-height: 78vh; overflow: auto; }
+.ng-list .input { margin-bottom: 6px; }
+.ng-mini { border-radius: 10px; background: transparent;
+           border: 1px solid var(--border, rgba(128,128,128,.2)); overflow: hidden; }
+.ng-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.ng-card p { margin: 0 0 8px; }
+.ng-sub { font-weight: 700; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase;
+          margin: 10px 0 4px; color: var(--muted-foreground, #64748b); }
+.ng-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
+.ng-chip { padding: 2px 9px; border-radius: 999px; font-size: .78rem; cursor: pointer;
+           border: 1px solid var(--border, rgba(128,128,128,.3)); background: transparent;
+           color: inherit; }
+.ng-chip:hover { border-color: var(--primary, #04bade); }
+.ng-step { border: 1px solid var(--border, rgba(128,128,128,.25)); border-radius: 12px;
+           padding: 10px; margin-bottom: 12px; background: rgba(128,128,128,.10); }
+.ng-step-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ng-tag { padding: 1px 9px; border-radius: 999px; font-size: .7rem; font-weight: 600; background: color-mix(in srgb, var(--primary, #04bade) 18%, transparent); color: var(--primary, #04bade); white-space: nowrap; }
+.ng-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.ng-side { min-width: 0; border: 1px solid var(--border, rgba(128,128,128,.25)); border-radius: 10px;
+           padding: 8px; }
+.ng-side-head { display: flex; align-items: center; justify-content: space-between;
+                font-weight: 700; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase;
+                margin-bottom: 6px; }
+.ng-side-head em { font-style: normal; font-weight: 600; opacity: .7; }
+.ng-rows { display: flex; flex-direction: column; gap: 4px; max-height: 320px; overflow: auto; }
+.ng-row { text-align: left; padding: 5px 9px; border-radius: 7px; font-size: .82rem; cursor: pointer;
+          border: 1px solid var(--border, rgba(128,128,128,.3)); background: transparent;
+          color: inherit; }
+.ng-row:hover { border-color: var(--primary, #04bade); }
+.ng-row.on { background: color-mix(in srgb, var(--primary, #04bade) 20%, transparent);
+             border-color: var(--primary, #04bade); font-weight: 600; }
+.ng-row-all { font-weight: 600; }
+.ng-popup { width: min(1100px, 96vw); max-height: 92vh; }
+.ng-popup .ui-dialog-body { display: block; }
+.ng-bare { border: 0; padding: 0; background: transparent; }
+.ng-popup-foot { align-items: center; flex-wrap: wrap; }
+.ng-new { outline: 3px solid #e11d48; outline-offset: 4px; border-radius: 12px; }
+.ng-home { grid-column: 1 / -1; }
+.ng-slider-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 1.05rem; }
+.ng-slide-body { margin: 12px 0 6px; font-size: .95rem; line-height: 1.5; }
+.ng-slider-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ng-dots { display: flex; gap: 8px; }
+.ng-dot { width: 10px; height: 10px; border-radius: 999px; padding: 0; cursor: pointer;
+          border: 1px solid var(--border, rgba(128,128,128,.5)); background: transparent; }
+.ng-dot.on { background: var(--primary, #04bade); border-color: var(--primary, #04bade); }
+.ng-snap { border: 1px solid var(--border, rgba(128,128,128,.25)); border-radius: 10px;
+           min-height: 300px; background: var(--background, transparent); }
+.ng-snap-builder { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 12px; padding: 12px; }
+.ng-snap-palette { background: var(--card, #fff); border: 1px solid var(--border, rgba(128,128,128,.25));
+                   border-radius: 10px; padding: 10px; max-height: 330px; overflow: hidden; }
+.ng-hl-first .palette-cat-list .palette-item:first-child { box-shadow: 0 0 0 3px #e11d48; border-radius: 10px; }
+.ng-snap-canvas { position: relative; border: 2px dashed var(--border, rgba(128,128,128,.4));
+                  border-radius: 10px; min-height: 280px; padding: 14px; display: flex;
+                  align-items: flex-start; gap: 14px; }
+.ng-snap-hint { position: absolute; right: 14px; bottom: 12px; font-weight: 600; color: #e11d48; }
+.ng-snap-card { width: 200px; min-height: 110px; }
+.ng-snap-page { padding: 14px; }
+.ng-snap-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.ng-snap-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.ng-chip.on { background: color-mix(in srgb, var(--primary, #04bade) 20%, transparent);
+              border-color: var(--primary, #04bade); font-weight: 600; }
+.ng-chip-all { font-weight: 600; }
+.ng-focus { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            flex-wrap: wrap; margin-bottom: 10px; font-size: .85rem; font-weight: 600; }
+.ng-open { border: 0; background: transparent; color: var(--primary, #04bade); cursor: pointer;
+           font-size: .75rem; text-decoration: underline; padding: 0; }
+@media screen and (min-width: 1100px) {
+  .ng-grid { grid-template-columns: 250px minmax(0, 1fr) minmax(0, 1.2fr); }
+  .ng-home { grid-column: 2 / -1; }
+}
    Small-screen hardening (phones, portrait tablets).
    Appended last on purpose: one place that says what changes below 900px.
    =========================================================================== */
@@ -5430,3 +5518,450 @@ body.wf-fs-on .topbar { visibility: hidden; }
   .modal-backdrop, .ui-dialog-backdrop, .db-modal-back { padding: 10px; }
   .modal-card, .db-modal { padding: 16px; }
 }
+=======
+/* A numbered red ring: the number in a circle above the node, on a short line. */
+.ng-num::before { position: absolute; left: 50%; top: -44px; width: 26px; height: 26px;
+                  margin-left: -13px; border: 2px solid #e11d48; border-radius: 50%;
+                  background: var(--background, #fff); color: #e11d48; font-weight: 700;
+                  font-size: 14px; line-height: 22px; text-align: center; }
+.ng-num::after { content: ""; position: absolute; left: 50%; top: -18px; height: 18px;
+                 width: 2px; margin-left: -1px; background: #e11d48; }
+.ng-num-1::before { content: "1"; }
+.ng-num-2::before { content: "2"; }
+.ng-num-3::before { content: "3"; }
+.ng-num-4::before { content: "4"; }
+.ng-num-5::before { content: "5"; }
+.ng-num-6::before { content: "6"; }
+.ng-num-7::before { content: "7"; }
+.ng-num-8::before { content: "8"; }
+.ng-num-9::before { content: "9"; }
+.ng-ex-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.ng-ex-title { font-weight: 700; font-size: 1.05rem; margin: 4px 0 6px; }
+.ng-menu { display: flex; flex-direction: column; gap: 8px; width: 280px; padding: 16px; }
+.ng-menu-brand { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border, rgba(128,128,128,.25)); }
+.ng-menu-logo { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+                border-radius: 50%; background: var(--primary, #04bade); color: #fff; font-weight: 700; }
+.ng-menu-system { display: flex; align-items: center; gap: 8px; padding: 6px 4px; }
+.ng-menu-group { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+.ng-menu-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-weight: 600; width: fit-content; min-width: 190px; }
+.ng-bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; padding: 14px; }
+/* The app's own side panel, not the workflow canvas: a plain panel, no dots. */
+.ng-snap-menu { background: var(--panel, var(--background)); min-height: 0; width: fit-content; max-width: 100%; }
+.ng-snap-menu .ng-menu { width: 250px; padding: 14px 10px; }
+.ng-snap-menu, .ng-snap-bar, .ng-snap-dropped { min-height: 150px; }
+.ng-mk { margin: 14px 0 18px; }
+.ng-mk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 8px; }
+.ng-mk-step { border: 1px solid var(--border, rgba(128,128,128,.3)); border-radius: 10px; padding: 10px; }
+.ng-mk-step p { margin: 4px 0 8px; font-size: .85rem; line-height: 1.45; }
+.ng-mk-shot { display: flex; flex-direction: column; gap: 5px; padding: 10px; border-radius: 8px;
+              background: var(--background, transparent); border: 1px dashed var(--border, rgba(128,128,128,.3)); }
+.ng-mk-shot .input { padding: 4px 8px; font-size: .8rem; }
+.ng-mk-center { align-items: center; text-align: center; padding: 18px 10px; }
+.ng-mk-row { display: flex; gap: 6px; }
+.ng-mk-row > * { flex: 1; min-width: 0; text-align: center; overflow: hidden; }
+.ng-ex-list { margin: 12px 0 0; padding-left: 22px; line-height: 1.7; }
+.ng-mk-big { max-width: 460px; margin: 0 auto 8px; }
+.ng-mk-big .ng-mk-shot { padding: 16px; }
+.ng-bar-note { padding: 10px 14px 0; text-align: right; }
+.ng-pg-pic { max-width: 560px; margin: 0 auto 8px; }
+.ng-pg-shot { display: flex; flex-direction: column; gap: 8px; padding: 16px; min-height: 0; }
+.ng-pg-title { font-weight: 700; }
+.ng-pg-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px;
+             border: 1px solid var(--border, rgba(128,128,128,.25)); }
+.ng-pg-tick { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+              border-radius: 50%; background: var(--primary, #04bade); color: #fff; font-size: 12px; flex: none; }
+.ng-snap-chart { width: 240px; }
+.ng-btn-ico { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.ng-dash-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.ng-dash-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.ng-dash-video { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; }
+.ng-dash-feed { background: #000; color: #8a8f98; border-radius: 8px; height: 90px; display: flex;
+                align-items: center; justify-content: center; font-size: .8rem; text-align: center; padding: 0 8px; }
+.ng-model-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ng-model-active { padding: 2px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700;
+                   background: color-mix(in srgb, #16a34a 18%, transparent); color: #15803d; }
+.ng-model-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.ng-model-tags span { padding: 1px 8px; border: 1px solid var(--border, rgba(128,128,128,.3));
+                      border-radius: 999px; font-size: .75rem; }
+.ng-model-tags .ng-model-tag-on { border-color: var(--primary, #04bade); }
+.ng-model-chevron { text-align: center; font-size: 1.2rem; line-height: 1; padding: 4px 0; border-radius: 8px; }
+.ng-model-conf, .ng-model-classes { display: flex; gap: 8px; padding: 8px; border-radius: 10px; }
+.ng-model-conf { align-items: center; }
+.ng-model-classes { flex-direction: column; }
+.ng-model-chip { width: fit-content; padding: 2px 10px; border-radius: 999px; font-size: .8rem;
+                 border: 1px solid var(--primary, #04bade); color: var(--primary, #04bade); }
+.ng-toggle { display: inline-flex; align-items: center; width: 38px; height: 22px; border-radius: 999px; padding: 2px;
+              background: var(--primary, #04bade); justify-content: flex-end; flex: none; }
+.ng-toggle i { width: 18px; height: 18px; border-radius: 50%; background: #fff; display: block; }
+.ng-cam-quality .ng-toggle, .ng-cam-quality + * .ng-toggle { background: rgba(128,128,128,.4); justify-content: flex-start; }
+.ng-x { display: inline-flex; width: 20px; height: 20px; border-radius: 50%; align-items: center; justify-content: center;
+        border: 1px solid var(--border, rgba(128,128,128,.3)); }
+.ng-dashed { border-style: dashed; }
+.ng-cam-kinds { display: flex; gap: 6px; flex-wrap: wrap; padding: 6px; border-radius: 10px; }
+.ng-cam-device, .ng-cam-quality, .ng-cam-boxes { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 10px; }
+.ng-seg { display: inline-flex; border: 1px solid var(--border, rgba(128,128,128,.3)); border-radius: 8px; overflow: hidden; font-size: .8rem; }
+.ng-seg b, .ng-seg i { padding: 4px 10px; font-style: normal; }
+.ng-seg i { background: rgba(128,128,128,.15); color: #6b7280; }
+.ng-seg-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ng-pill-green { border-color: #16a34a; color: #15803d; }
+.ng-pill-blue { border-color: var(--primary, #04bade); color: #0e7490; }
+.ng-cp-body { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 10px; }
+.ng-cp-main { display: flex; flex-direction: column; gap: 6px; }
+.ng-cp-side { display: flex; flex-direction: column; gap: 6px; }
+.ng-welcome { align-items: center; text-align: center; gap: 6px; padding: 22px 16px; }
+.ng-welcome-title { font-size: 1.25rem; font-weight: 700; }
+.ng-welcome-list { text-align: left; margin-top: 8px; width: 100%; display: flex; flex-direction: column; gap: 6px; }
+/* The first-time setup guide: a roomy card, one clear next action. */
+.sw-card { background: var(--card, #fff); color: var(--foreground, inherit); border-radius: 20px; padding: 22px 24px 20px;
+           border: 1px solid var(--border, rgba(128,128,128,.25));
+           box-shadow: 0 24px 70px rgba(0,0,0,.32), 0 0 0 1px rgba(4,186,222,.10); }
+.sw-top { display: flex; align-items: center; gap: 12px; }
+.sw-badge { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary, #04bade), color-mix(in srgb, var(--primary, #04bade) 55%, #6366f1));
+            color: #fff; flex: none; }
+.sw-step { flex: 1; font-weight: 700; font-size: 1.05rem; }
+.sw-try { padding: 8px 16px; border-radius: 999px; border: 0; cursor: pointer; font-weight: 700; font-size: .9rem;
+          background: var(--primary, #04bade); color: #fff; }
+.sw-try:hover { filter: brightness(1.06); }
+.sw-x { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%;
+        border: 1px solid var(--border, rgba(128,128,128,.3)); background: transparent; color: inherit; cursor: pointer; }
+.sw-x:hover { background: rgba(128,128,128,.12); }
+.sw-progress { display: flex; gap: 6px; margin: 16px 0 4px; }
+.sw-progress span { flex: 1; height: 5px; border-radius: 999px; background: rgba(128,128,128,.25); }
+.sw-progress span.done { background: color-mix(in srgb, var(--primary, #04bade) 55%, transparent); }
+.sw-progress span.now { background: var(--primary, #04bade); }
+.sw-title { font-size: 1.35rem; font-weight: 700; margin: 14px 0 6px; line-height: 1.25; }
+.sw-hint { margin: 0 0 18px; font-size: 1rem; line-height: 1.55; color: var(--muted-foreground, #6b7280); }
+.sw-list { list-style: none; margin: 0 0 20px; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+.sw-list li { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.sw-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%;
+          background: color-mix(in srgb, var(--primary, #04bade) 18%, transparent); color: var(--primary, #04bade);
+          font-size: .8rem; font-weight: 700; flex: none; }
+.sw-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sw-primary { display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 12px; border: 0; cursor: pointer;
+              background: var(--primary, #04bade); color: #fff; font-weight: 700; font-size: 1rem; }
+.sw-primary:hover { filter: brightness(1.06); }
+.sw-second { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 12px; cursor: pointer;
+             border: 1px solid var(--border, rgba(128,128,128,.35)); background: transparent; color: inherit; font-weight: 600; }
+.sw-second:hover { background: rgba(128,128,128,.1); }
+.sw-link { margin-left: auto; background: transparent; border: 0; cursor: pointer; color: var(--muted-foreground, #6b7280);
+           font-weight: 600; padding: 8px 6px; }
+.sw-link:hover { text-decoration: underline; }
+.sw-mini { position: fixed; right: 20px; bottom: 20px; z-index: 70; display: flex; align-items: center; gap: 12px;
+           padding: 12px 20px 12px 16px; border: 0; border-radius: 16px; cursor: pointer; text-align: left;
+           background: var(--primary, #04bade); color: #fff; box-shadow: 0 14px 40px rgba(0,0,0,.32); }
+.sw-mini:hover { filter: brightness(1.06); }
+.sw-mini strong { display: block; font-size: 1rem; }
+.sw-mini small { display: block; font-size: .8rem; opacity: .92; margin-top: 1px; }
+.ui-dialog-head .toast-close[data-guide-minimize] { margin-left: auto; margin-right: 6px; }
+.sw-side { display: flex; flex-direction: column; gap: 8px; width: 100%; margin: 4px 0; padding: 8px 10px; text-align: left;
+           border-radius: 12px; border: 1px solid var(--border, rgba(128,128,128,.25)); background: transparent; color: inherit; cursor: pointer; }
+.sw-side.on { border-color: color-mix(in srgb, var(--primary, #04bade) 55%, transparent);
+              background: color-mix(in srgb, var(--primary, #04bade) 8%, transparent); cursor: default; }
+.sw-side-head { display: flex; align-items: center; gap: 10px; background: transparent; border: 0; padding: 0; color: inherit;
+                text-align: left; cursor: pointer; width: 100%; }
+.sw-side-head strong { display: block; font-size: .9rem; }
+.sw-side-head small { display: block; font-size: .75rem; opacity: .7; margin-top: 1px; }
+.sw-side-next { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border: 0; border-radius: 10px;
+                cursor: pointer; background: var(--primary, #04bade); color: #fff; font-weight: 700; font-size: .85rem; }
+.sw-side-next:hover { filter: brightness(1.06); }
+.sw-side-next:disabled { opacity: .6; cursor: default; }
+.sw-pulse { animation: sw-pulse 1.6s ease-out 1; }
+@keyframes sw-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary, #04bade) 70%, transparent); transform: scale(.94); }
+  35% { transform: scale(1.04); }
+  100% { box-shadow: 0 0 0 18px transparent; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .sw-pulse { animation: none; } }
+/* A minimised guide: a smaller copy of the guide at the bottom right, the page free behind it. */
+.ng-dock { position: fixed; right: 20px; bottom: 20px; z-index: 70; pointer-events: none; }
+.ng-dock .ui-dialog { pointer-events: auto; width: 400px !important; max-width: calc(100vw - 40px);
+                      max-height: 72vh; overflow: auto; box-shadow: 0 18px 50px rgba(0,0,0,.35); }
+.ng-minicard .ng-pg-pic, .ng-minicard .ng-mk-big, .ng-minicard .ng-mini,
+.ng-minicard .ng-snap { zoom: .6; }
+.ng-minicard .ng-slide-body { font-size: .88rem; }
+.ng-minicard .ui-dialog-head h3 { font-size: 1rem; }
+.ui-dialog-head .ng-minbtn { margin-left: auto; margin-right: 8px; font-weight: 600; padding: 4px 12px; }
+.ui-dialog-head .toast-close { font-size: 1.5rem; width: 34px; height: 34px; }
+.ui-dialog.ng-popup .ui-dialog-head .toast-close { font-size: 2rem !important; width: 42px !important; height: 42px !important; line-height: 1 !important;
+  display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }
+.ui-dialog.ng-popup .ui-dialog-head .ng-minbtn { height: 36px; padding: 0 16px; font-size: .95rem; }
+.sw-note { margin: 14px 0 0; font-size: .82rem; line-height: 1.45; color: var(--muted-foreground, #6b7280); }
+.sw-side-skip { align-self: center; background: transparent; border: 0; cursor: pointer; padding: 2px 6px; font-size: .78rem;
+                font-weight: 600; color: var(--muted-foreground, #6b7280); }
+.sw-side-skip:hover { text-decoration: underline; }
+.sw-side-skip:disabled { opacity: .6; cursor: default; }
+/* A long "In this guide" list goes into two columns, and the picture is allowed to be wider. */
+.ng-welcome-list.two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+.ng-welcome-list.two > .small { grid-column: 1 / -1; }
+.ng-welcome-list.two .ng-pg-row { padding: 6px 10px; font-size: .88rem; }
+.ng-pg-pic:has(.ng-welcome) { max-width: 700px; }
+@media screen and (max-width: 560px) { .ng-welcome-list.two { grid-template-columns: 1fr; } }
+/* Advanced - object tracking: the sliders in two columns, in a wider dialog. */
+.ui-dialog:has(.tracker-grid) { width: min(980px, 96vw); max-width: 96vw; }
+.tracker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 22px; align-items: start; }
+@media screen and (max-width: 760px) { .tracker-grid { grid-template-columns: 1fr; } }
+/* A minimised guide docked in the Workflow's right-hand column, above the node properties:
+   it fills the column (or its share of it) and scrolls inside. */
+.wf-guide-dock { min-height: 0; max-height: none; overflow: hidden; display: flex; flex-direction: column; padding: 8px 8px 6px; }
+.ng-docked { position: static; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.ng-docked .ui-dialog { position: static; flex: 1; min-height: 0; display: flex; flex-direction: column;
+                        width: 100% !important; max-width: 100%; max-height: none; overflow: hidden;
+                        box-shadow: none; border: 1px solid var(--border, rgba(128,128,128,.3)); border-radius: 14px; }
+.ng-docked .ui-dialog-body { flex: 1; min-height: 0; overflow-y: auto; }
+.ng-docked .ui-dialog-head h3 { font-size: .95rem; }
+/* The column is narrow: pictures fill its width at their own size (a zoom would push them past it). */
+.ng-docked .ng-minicard .ng-pg-pic, .ng-docked .ng-minicard .ng-mini, .ng-docked .ng-minicard .ng-snap,
+.ng-docked .ng-mini, .ng-docked .ng-snap, .ng-docked .ng-pg-pic { zoom: 1; max-width: 100%; }
+.ng-docked .ng-snap-builder { grid-template-columns: minmax(0, 1fr); }
+.ng-docked .ng-slider-nav { flex-wrap: wrap; row-gap: 8px; }
+.ng-docked .ng-minbtn { white-space: nowrap; }
+.wf-dock-bar { flex: none; height: 8px; cursor: row-resize; touch-action: none; position: relative; }
+.wf-dock-bar::after { content: ""; position: absolute; left: 50%; top: 2px; width: 36px; height: 4px; margin-left: -18px;
+                      border-radius: 999px; background: rgba(128,128,128,.45); }
+.wf-dock-bar:hover::after { background: var(--primary, #04bade); }
+/* The docked guide, tidied: a compact header, no repeated heading, and Back / Next that stay in view. */
+.ng-docked .ui-dialog { box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.ng-docked .ui-dialog-head { padding: 9px 10px 9px 14px; gap: 8px; flex-wrap: nowrap; }
+.ng-docked .ui-dialog-head h3 { flex: 1; min-width: 0; margin: 0; font-size: .92rem; font-weight: 700;
+                                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ng-docked .ui-dialog.ng-popup .ui-dialog-head .ng-minbtn { margin: 0; height: 28px; padding: 0 12px; font-size: .8rem; }
+.ng-docked .ui-dialog.ng-popup .ui-dialog-head .toast-close { font-size: 1.4rem !important; width: 30px !important; height: 30px !important; }
+.ng-docked .ui-dialog-body { padding: 10px 14px 0; }
+.ng-docked .ng-home > .ng-title, .ng-docked .ng-home > .ng-title + p { display: none; }
+.ng-docked .ng-slider-head { margin-bottom: 8px; }
+.ng-docked .ng-slide-body { font-size: .86rem; line-height: 1.5; }
+.ng-docked .ng-slider-nav { position: sticky; bottom: 0; z-index: 2; margin: 8px -14px 0; padding: 10px 14px;
+                            background: var(--card, var(--background, #fff));
+                            border-top: 1px solid var(--border, rgba(128,128,128,.25)); }
+.wf-dock-bar { height: 12px; }
+.wf-dock-bar::after { top: 4px; width: 44px; height: 4px; margin-left: -22px; }
+/* Docked: Back and Next share a line; the step dots are left out (the step tag says where you are). */
+.ng-docked .ng-dots { display: none; }
+.ng-docked .ng-slider-nav { flex-wrap: nowrap; justify-content: space-between; }
+/* The Workflow's guideline card: the right-hand column's top card, as wide as the properties card. */
+.wf-guide-slot { min-height: 0; display: flex; flex-direction: column; }
+.wf-guide-card { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.wf-guide-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 11px 14px; border: 0; background: transparent;
+                 color: inherit; font-weight: 700; font-size: .92rem; text-align: left; cursor: pointer; }
+.wf-guide-head > span { flex: 1; }
+.wf-guide-head:hover { background: rgba(128,128,128,.08); }
+.wf-guide-chev { transition: transform .15s; }
+.wf-guide-card[data-open="1"] .wf-guide-chev { transform: rotate(180deg); }
+.wf-guide-card[data-open="1"] .wf-guide-head { border-bottom: 1px solid var(--border, rgba(128,128,128,.25)); }
+.wf-guide-body { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 14px 0; }
+.wf-guide-card:not([data-open="1"]) { flex: none; }
+.wf-props-empty { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; text-align: center;
+                  padding: 16px; margin-top: 2px; border: 1px dashed var(--border, rgba(128,128,128,.3)); border-radius: 12px;
+                  color: var(--muted-foreground, #6b7280); font-size: .85rem; }
+/* The Guide button was pressed on the Workflow: the guide card pulses so the eye finds it. */
+.wf-guide-flash { animation: wf-guide-flash 1.8s ease-out 1; }
+@keyframes wf-guide-flash {
+  0%, 60% { box-shadow: 0 0 0 3px var(--primary, #04bade), 0 0 22px color-mix(in srgb, var(--primary, #04bade) 55%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .wf-guide-flash { animation: none; box-shadow: 0 0 0 3px var(--primary, #04bade); } }
+/* A node's name in the guide's text: bold and marked, so it is clear which nodes to use. */
+.ng-slide-body mark.ng-node-name { font-weight: 700; color: inherit; padding: 0 5px; border-radius: 5px;
+                                   background: color-mix(in srgb, var(--primary, #04bade) 24%, transparent); }
+.ng-num-10::before { content: "10"; }
+.ng-num-11::before { content: "11"; }
+.ng-num-12::before { content: "12"; }
+.ng-num-13::before { content: "13"; }
+.ng-num-14::before { content: "14"; }
+.ng-num-15::before { content: "15"; }
+.ng-num-16::before { content: "16"; }
+.ng-num-17::before { content: "17"; }
+.ng-num-18::before { content: "18"; }
+.ng-num-19::before { content: "19"; }
+.ng-num-20::before { content: "20"; }
+/* A step's "Nodes used" and "Setup" labels. */
+.ng-use { display: flex; flex-direction: column; gap: 6px; margin: 0 0 10px; padding: 9px 11px; font-size: .85rem;
+          border: 1px solid var(--border, rgba(128,128,128,.3)); border-left: 3px solid #e11d48; border-radius: 8px; }
+.ng-use-chip { display: inline-flex; gap: 5px; align-items: center; margin-left: 6px; padding: 1px 8px; border-radius: 999px;
+               background: rgba(225,29,72,.1); font-weight: 600; }
+.ng-use-chip b { color: #e11d48; }
+/* The guide card's header: the fold button and the expand button side by side. */
+.wf-guide-bar { display: flex; align-items: center; }
+.wf-guide-bar .wf-guide-head { flex: 1; width: auto; min-width: 0; }
+.wf-guide-card[data-open="1"] .wf-guide-bar { border-bottom: 1px solid var(--border, rgba(128,128,128,.25)); }
+.wf-guide-card[data-open="1"] .wf-guide-bar .wf-guide-head { border-bottom: 0; }
+.wf-guide-expand { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px;
+                   margin-right: 8px; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer;
+                   transition: background .15s, transform .15s; }
+.wf-guide-expand:hover { background: rgba(128,128,128,.16); transform: scale(1.08); }
+.wf-guide-away { padding: 14px; }
+/* The large view: the backdrop fades in, the panel grows from the card's corner and settles. */
+.wf-guide-big { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;
+                padding: 24px; background: rgba(0,0,0,.5); backdrop-filter: blur(2px); }
+.wf-guide-big.in { animation: wf-big-fade .22s ease-out both; }
+.wf-guide-big.out { animation: wf-big-fade .22s ease-in reverse both; }
+.wf-guide-big-panel { width: min(1200px, 100%); max-height: 100%; display: flex; flex-direction: column; padding: 0;
+                      overflow: hidden; transform-origin: 85% 15%; margin: 0; }
+.wf-guide-big.in .wf-guide-big-panel { animation: wf-big-pop .26s cubic-bezier(.2,.8,.2,1) both; }
+.wf-guide-big.out .wf-guide-big-panel { animation: wf-big-pop .22s ease-in reverse both; }
+.wf-guide-big-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 22px 4px; }
+@keyframes wf-big-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wf-big-pop { from { opacity: 0; transform: translate(14px, -10px) scale(.55); } to { opacity: 1; transform: none; } }
+/* A step's text eases in when the step changes. */
+.wf-guide-card .ng-slide-body, .wf-guide-big .ng-slide-body { animation: wf-step-in .25s ease-out both; }
+@keyframes wf-step-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .wf-guide-big.in, .wf-guide-big.out, .wf-guide-big-panel, .ng-slide-body { animation: none !important; }
+}
+/* The eye on the canvas's top right: hides and shows the guide card. */
+.wf-guide-eye { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px;
+                border: 1px solid var(--border, rgba(128,128,128,.3)); border-radius: 9px; cursor: pointer;
+                background: var(--surface, #fff); color: inherit; box-shadow: var(--card-shadow, none);
+                transition: background .15s, transform .15s; }
+.wf-guide-eye:hover { background: rgba(128,128,128,.16); transform: scale(1.06); }
+.wf-guide-eye[aria-pressed="false"] { color: var(--primary, #04bade); }
+.ng-use-tip { padding-top: 6px; border-top: 1px dashed var(--border, rgba(128,128,128,.35)); }
+.ng-use a[data-ng-more] { color: var(--primary, #04bade); font-weight: 600; text-decoration: underline; }
+/* The guide's picture slides: the bars are always drawn, so it is plain that it can be moved. */
+.ng-mini { scrollbar-width: auto; scrollbar-color: var(--primary, #04bade) rgba(128,128,128,.22); }
+.ng-mini::-webkit-scrollbar { width: 12px; height: 12px; }
+.ng-mini::-webkit-scrollbar-track { background: rgba(128,128,128,.18); border-radius: 8px; }
+.ng-mini::-webkit-scrollbar-thumb { background: var(--primary, #04bade); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+.ng-slide-hint { margin: 4px 0 8px; font-size: .78rem; color: var(--muted, #888); text-align: center; }
+/* The guide's picture can be dragged: a grab hand, and a chip saying so until it is used. */
+.ng-mini { position: relative; }
+.ng-mini .react-flow__pane { cursor: grab; }
+.ng-mini .react-flow__pane.dragging { cursor: grabbing; }
+.ng-mini .react-flow__node { cursor: default; }
+.ng-drag-hint { position: sticky; top: 8px; left: 8px; z-index: 5; display: flex; width: fit-content; align-items: center; gap: 6px;
+                margin: 8px 0 -34px 8px; padding: 4px 10px; border-radius: 999px; font-size: .75rem; font-weight: 600;
+                background: var(--primary, #04bade); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.3); pointer-events: none;
+                transition: opacity .4s, transform .4s; animation: ng-hint-nudge 1.6s ease-in-out 2; }
+.ng-drag-hint.gone { opacity: 0; transform: translateY(-6px); }
+@keyframes ng-hint-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
+@media (prefers-reduced-motion: reduce) { .ng-drag-hint { animation: none; } }
+/* The split bar under the guide card: a dashed line with a grey grip pill, so it reads as draggable. */
+.wf-dock-bar { height: 18px; margin: 2px 0; display: flex; align-items: center; }
+.wf-dock-bar::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px dashed var(--border, rgba(128,128,128,.4)); }
+.wf-dock-bar::after { top: 50%; width: 56px; height: 6px; margin: -3px 0 0 -28px; background: #9a9a9a;
+                      box-shadow: 0 0 0 4px var(--background, #fff); transition: background .15s, width .15s, margin .15s; }
+.wf-dock-bar:hover::after, .wf-dock-bar:active::after { background: var(--primary, #04bade); width: 72px; margin-left: -36px; }
+/* The vertical splits (palette | canvas | right column): a dashed line with a grey grip pill in the gap. */
+.wf-col-bar { width: 14px !important; display: flex; align-items: center; justify-content: center; }
+.wf-col-bar::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; border-left: 1px dashed transparent; transition: border-color .15s; }
+.wf-col-bar::after { content: ""; position: relative; width: 6px; height: 56px; border-radius: 999px; background: #9a9a9a;
+                     transition: background .15s, height .15s; }
+.wf-col-bar:hover::before, .wf-col-bar:active::before { border-left-color: var(--primary, #04bade); }
+.wf-col-bar:hover::after, .wf-col-bar:active::after { background: var(--primary, #04bade); height: 72px; }
+/* Grip: a grey pill inside a white capsule, on a dashed line, so it plainly reads as draggable. */
+.wf-dock-bar { height: 26px; }
+.wf-dock-bar::after { width: 64px; height: 8px; margin: -4px 0 0 -32px; background: #8e8e8e;
+                      box-shadow: 0 0 0 7px var(--background, #fff), 0 0 0 8px rgba(128,128,128,.18); }
+.wf-dock-bar:hover::after, .wf-dock-bar:active::after { width: 80px; margin-left: -40px; }
+.wf-col-bar { width: 22px !important; }
+.wf-col-bar::before { border-left: 1px dashed rgba(128,128,128,.4); }
+.wf-col-bar::after { width: 8px; height: 64px; background: #8e8e8e;
+                     box-shadow: 0 0 0 7px var(--background, #fff), 0 0 0 8px rgba(128,128,128,.18); }
+.wf-col-bar:hover::after, .wf-col-bar:active::after { height: 80px; }
+/* The node's properties guide: one line per setting, name over its explanation. */
+.ng-props { margin: 0 0 10px; display: flex; flex-direction: column; gap: 10px; }
+.ng-prop { padding: 8px 10px; border: 1px solid var(--border, rgba(128,128,128,.3)); border-left: 3px solid var(--primary, #04bade); border-radius: 8px; }
+.ng-prop dt { font-weight: 700; font-size: .9rem; margin: 0 0 2px; }
+.ng-prop dd { margin: 0; font-size: .85rem; line-height: 1.45; }
+/* The picture of a node's properties panel: scrolls when the panel is tall. */
+.ng-shot { max-height: 440px; overflow: auto; margin: 0 0 12px; border: 1px solid var(--border, rgba(128,128,128,.3)); border-radius: 10px; background: #f6f6f6; }
+.ng-shot img { display: block; width: 100%; max-width: 380px; height: auto; margin: 0 auto; }
+/* ---- GuideMoves: short looping pictures of how to work the canvas ---- */
+.gm { position: relative; height: 190px; overflow: hidden; border-radius: 10px; margin: 0 0 8px;
+      border: 1px solid var(--border, rgba(128,128,128,.3)); background-color: var(--background, #fff);
+      background-image: radial-gradient(rgba(128,128,128,.35) 1px, transparent 1px); background-size: 16px 16px; }
+.gm * { box-sizing: border-box; }
+.gm-node { position: absolute; display: flex; align-items: center; gap: 8px; width: 150px; padding: 8px 10px; border-radius: 9px;
+           background: #e8f1ff; border: 1.5px solid #8fb4f0; color: #111; font-size: 11px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.gm-node b { flex: 1; font-weight: 700; } .gm-node i { font-style: normal; font-size: 9px; padding: 1px 5px; border-radius: 5px; background: #fff; border: 1px solid #8fb4f0; }
+.gm-cursor { position: absolute; z-index: 5; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
+.gm-ripple { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; border: 2px solid var(--primary, #04bade); opacity: 0; z-index: 4; }
+.gm-say { position: absolute; left: 10px; bottom: 8px; font-size: 11px; font-weight: 700; color: var(--primary, #04bade); }
+.gm-mouse { position: absolute; left: 10px; top: 8px; width: 34px; height: 44px; color: var(--muted, #666); }
+.gm-mouse svg { display: block; }
+.gm-rbtn { position: absolute; right: 3px; top: 3px; width: 13px; height: 15px; border-radius: 0 12px 0 0; background: #e11d48; opacity: 0; }
+
+/* 1. drag a node in from the list */
+.gm-list { position: absolute; left: 0; top: 0; bottom: 0; width: 30%; display: flex; flex-direction: column; gap: 6px; padding: 10px;
+           border-right: 1px solid var(--border, rgba(128,128,128,.3)); background: rgba(128,128,128,.08); }
+.gm-list span { padding: 6px 8px; border-radius: 7px; border: 1px solid rgba(128,128,128,.35); font-size: 11px; font-weight: 600; background: var(--background, #fff); }
+.gm-list span:first-child { border-left: 3px solid #3b82f6; }
+.gm-drag-ghost { opacity: 0; animation: gm-drag-mv 3.2s ease-in-out infinite, gm-drag-show 3.2s linear infinite; }
+.gm-drag-cur { animation: gm-drag-mv 3.2s ease-in-out infinite, gm-fade 3.2s linear infinite; margin: 8px 0 0 70px; }
+.gm-drag-ghost { margin: 0; }
+@keyframes gm-drag-mv { 0%, 12% { left: 6%; top: 14%; } 62%, 100% { left: 52%; top: 46%; } }
+@keyframes gm-drag-show { 0%, 11% { opacity: 0; } 14% { opacity: .75; } 62%, 86% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes gm-fade { 0% { opacity: 0; } 6%, 86% { opacity: 1; } 100% { opacity: 0; } }
+
+/* 2. double-click a node: its properties open on the right */
+.gm-dbl-node { left: 8%; top: 38%; }
+.gm-dbl-cur { animation: gm-dbl-mv 3.2s ease-in-out infinite; }
+@keyframes gm-dbl-mv { 0% { left: 40%; top: 85%; opacity: 0; } 8% { opacity: 1; } 28%, 86% { left: 18%; top: 54%; opacity: 1; } 100% { left: 18%; top: 54%; opacity: 0; } }
+.gm-dbl-r1, .gm-dbl-r2 { left: 18%; top: 54%; }
+.gm-dbl-r1 { animation: gm-ping 3.2s linear infinite; animation-delay: .9s; }
+.gm-dbl-r2 { animation: gm-ping 3.2s linear infinite; animation-delay: 1.15s; }
+@keyframes gm-ping { 0% { opacity: .9; transform: scale(.6); } 12% { opacity: 0; transform: scale(3.2); } 100% { opacity: 0; transform: scale(3.2); } }
+.gm-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 38%; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+            background: var(--background, #fff); border-left: 1px solid var(--border, rgba(128,128,128,.4)); box-shadow: -4px 0 14px rgba(0,0,0,.12);
+            transform: translateX(105%); animation: gm-panel 3.2s ease-in-out infinite; }
+.gm-panel b { font-size: 12px; } .gm-panel span { height: 16px; border-radius: 6px; background: rgba(128,128,128,.25); } .gm-panel .short { width: 60%; }
+@keyframes gm-panel { 0%, 38% { transform: translateX(105%); } 50%, 88% { transform: translateX(0); } 100% { transform: translateX(105%); } }
+
+/* 3. right-drag moves the canvas */
+.gm-world { position: absolute; inset: -40px; background-image: radial-gradient(rgba(128,128,128,.45) 1px, transparent 1px); background-size: 16px 16px;
+            animation: gm-world 3.2s ease-in-out infinite; }
+.gm-pan-a { left: 70px; top: 80px; } .gm-pan-b { left: 280px; top: 120px; }
+@keyframes gm-world { 0%, 15% { transform: translate(0, 0); } 65%, 100% { transform: translate(-90px, -26px); } }
+.gm-pan-cur { animation: gm-pan-mv 3.2s ease-in-out infinite; }
+@keyframes gm-pan-mv { 0%, 15% { left: 70%; top: 60%; } 65%, 100% { left: 42%; top: 46%; } }
+.gm-s-pan .gm-rbtn { animation: gm-blink 3.2s linear infinite; }
+@keyframes gm-blink { 0%, 12% { opacity: 0; } 16%, 66% { opacity: 1; } 72%, 100% { opacity: 0; } }
+
+/* 4. the wheel and the + / - buttons zoom */
+.gm-zoom-node { left: 34%; top: 38%; animation: gm-zoom 3.2s ease-in-out infinite; transform-origin: 50% 50%; }
+@keyframes gm-zoom { 0%, 14% { transform: scale(1); } 34%, 48% { transform: scale(1.5); } 70%, 86% { transform: scale(.75); } 100% { transform: scale(1); } }
+.gm-wheel-up, .gm-wheel-down { position: absolute; left: 50%; font-size: 10px; color: var(--primary, #04bade); opacity: 0; margin-left: -5px; }
+.gm-wheel-up { top: -12px; animation: gm-wheel-a 3.2s linear infinite; } .gm-wheel-down { bottom: -12px; animation: gm-wheel-b 3.2s linear infinite; }
+@keyframes gm-wheel-a { 0%, 14% { opacity: 0; } 20%, 46% { opacity: 1; } 52%, 100% { opacity: 0; } }
+@keyframes gm-wheel-b { 0%, 52% { opacity: 0; } 58%, 84% { opacity: 1; } 90%, 100% { opacity: 0; } }
+.gm-zbtns { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+.gm-zbtns span { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 6px; border: 1px solid rgba(128,128,128,.5); background: var(--background, #fff); color: var(--foreground, #111); }
+.gm-zin { animation: gm-zin 3.2s linear infinite; } .gm-zout { animation: gm-zout 3.2s linear infinite; }
+@keyframes gm-zin { 0%, 18% { background: var(--background, #fff); } 24%, 44% { background: var(--primary, #04bade); color: #fff; } 50%, 100% { background: var(--background, #fff); } }
+@keyframes gm-zout { 0%, 56% { background: var(--background, #fff); } 62%, 82% { background: var(--primary, #04bade); color: #fff; } 88%, 100% { background: var(--background, #fff); } }
+
+/* 5. right-click: the menu */
+.gm-menu-node { left: 8%; top: 8%; }
+.gm-menu-cur { animation: gm-menu-mv 3.2s ease-in-out infinite; }
+@keyframes gm-menu-mv { 0% { left: 40%; top: 80%; opacity: 0; } 8% { opacity: 1; } 26%, 88% { left: 20%; top: 22%; opacity: 1; } 100% { left: 20%; top: 22%; opacity: 0; } }
+.gm-menu-r { left: 20%; top: 22%; animation: gm-ping 3.2s linear infinite; animation-delay: .85s; border-color: #e11d48; }
+.gm-menu { position: absolute; left: 24%; top: 26%; width: 150px; padding: 5px; display: flex; flex-direction: column; border-radius: 9px;
+           background: var(--background, #fff); border: 1px solid rgba(128,128,128,.45); box-shadow: 0 6px 18px rgba(0,0,0,.25);
+           transform-origin: 0 0; opacity: 0; transform: scale(.8); animation: gm-menu 3.2s ease-out infinite; }
+.gm-menu span { padding: 3px 8px; font-size: 11px; border-radius: 5px; }
+.gm-menu-del { color: #e11d48; animation: gm-menu-hi 3.2s linear infinite; }
+@keyframes gm-menu { 0%, 30% { opacity: 0; transform: scale(.8); } 38%, 88% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1); } }
+@keyframes gm-menu-hi { 0%, 62% { background: transparent; } 68%, 88% { background: rgba(225,29,72,.16); } 100% { background: transparent; } }
+
+/* 6. delete a node */
+.gm-del-node { left: 14%; top: 40%; box-shadow: 0 0 0 2px #e11d48, 0 2px 8px rgba(0,0,0,.12); animation: gm-del 3.2s ease-in-out infinite; }
+@keyframes gm-del { 0%, 48% { opacity: 1; transform: scale(1); } 60% { opacity: 0; transform: scale(.6); } 88% { opacity: 0; transform: scale(.6); } 100% { opacity: 1; transform: scale(1); } }
+.gm-key { position: absolute; right: 12%; top: 38%; }
+.gm-key kbd { display: inline-block; padding: 8px 16px; border-radius: 8px; font: 700 13px system-ui; color: #111; background: #f1f1f1;
+              border: 1px solid #bbb; border-bottom-width: 4px; animation: gm-key 3.2s linear infinite; }
+@keyframes gm-key { 0%, 38% { transform: none; border-bottom-width: 4px; background: #f1f1f1; } 42%, 52% { transform: translateY(3px); border-bottom-width: 1px; background: #fecdd3; } 58%, 100% { transform: none; border-bottom-width: 4px; background: #f1f1f1; } }
+@media (prefers-reduced-motion: reduce) {
+  .gm *, .gm-world { animation: none !important; }
+  .gm-drag-ghost { opacity: 1; left: 52%; top: 46%; } .gm-panel { transform: none; } .gm-menu { opacity: 1; transform: none; }
+}
+/* Back / Next stay at the foot of the guide card, whatever the step's length: only the content
+   above them scrolls, and the split bar is what changes how tall the card is. */
+.wf-guide-body, .wf-guide-big-body { display: flex; flex-direction: column; overflow: hidden; padding: 10px 14px 0; }
+.wf-guide-big-body { padding: 14px 22px 0; }
+.ng-bare { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.ng-bare .ng-flow-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 8px; }
+.ng-docked .ng-bare .ng-slider-nav, .ng-bare .ng-slider-nav { position: static; flex: none; margin: 0 -14px; padding: 10px 14px;
+  background: var(--card, var(--background, #fff)); border-top: 1px solid var(--border, rgba(128,128,128,.25)); }
+.wf-guide-big-body .ng-bare .ng-slider-nav { margin: 0 -22px; padding: 10px 22px; }
+.wf-col-bar::before { border-left: 1px dashed rgba(128,128,128,.4) !important; }
