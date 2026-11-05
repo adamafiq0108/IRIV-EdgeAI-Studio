@@ -35,6 +35,9 @@
   --muted2:    #a3a3a3;
   /* accent -- overridden inline from brand.toml */
   --accent:    #04bade;
+  /* The text colour on the accent: dark ink, 7:1 on the default teal (white
+     is 2.3:1). applyBrand() recomputes it for a rebranded accent. */
+  --brand-accent-ink: #04222b;
   --accent-bg: rgba(4, 186, 222, 0.10);
   /* status. Two families, because a status colour is asked to do two jobs
      that want opposite things. --ok/--alert/--warn FILL a shape (a dot, a
@@ -176,7 +179,7 @@ a { color: inherit; text-decoration: none; }
 .user-btn:hover { border-color: var(--accent); }
 .avatar {
   width: 28px; height: 28px; border-radius: 50%;
-  background: var(--accent); color: #fff;
+  background: var(--accent); color: var(--brand-accent-ink, #04222b);
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 700;
 }
@@ -386,7 +389,7 @@ a { color: inherit; text-decoration: none; }
 @keyframes bg-ring { 50% { opacity: .35; } }
 
 .btn-hover-blue:enabled:hover { background: var(--brand-accent, #04bade);
-                                border-color: var(--brand-accent, #04bade); color: #fff; }
+                                border-color: var(--brand-accent, #04bade); color: var(--brand-accent-ink, #04222b); }
 /* --brand-accent, NOT --accent, for the same reason as .switch-on below: this
    button sits inside the hub's shadcn subtree (.cy-app) on the Network page,
    where --accent is a near-white surface -- so a Join button with the name
@@ -394,7 +397,7 @@ a { color: inherit; text-decoration: none; }
 .btn-accent {
   background: var(--brand-accent, #04bade);
   border-color: var(--brand-accent, #04bade);
-  color: #fff;
+  color: var(--brand-accent-ink, #04222b);
 }
 .btn-danger { color: var(--alert); border-color: currentColor; background: transparent; }
 
@@ -1176,7 +1179,7 @@ html, body { overflow-x: clip; }
 .footage-card.incident-card.selected::after {
   content: "\2713"; position: absolute; top: 8px; right: 8px;
   width: 22px; height: 22px; border-radius: 50%;
-  background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
+  background: var(--accent); color: var(--brand-accent-ink, #04222b); font-size: 12px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; z-index: 2;
 }
 .incident-imgs { display: flex; gap: 2px; background: var(--surface2); }
@@ -3235,7 +3238,7 @@ body.wf-fs-on .topbar { visibility: hidden; }
 .models-preset-step {
   display: inline-flex; align-items: center; justify-content: center;
   width: 15px; height: 15px; border-radius: 999px;
-  background: var(--accent); color: #fff;
+  background: var(--accent); color: var(--brand-accent-ink, #04222b);
   font-size: 10px; font-weight: 700; margin-right: 4px;
 }
 /* A brief pulse on open, so the eye lands here first -- not a permanent
@@ -3300,7 +3303,7 @@ body.wf-fs-on .topbar { visibility: hidden; }
   background: transparent; color: var(--muted-text); cursor: pointer;
   transition: background .12s, color .12s; }
 .cam-seg > button:hover { color: var(--text); }
-.cam-seg > button.is-on { background: var(--accent); color: #fff; }
+.cam-seg > button.is-on { background: var(--accent); color: var(--brand-accent-ink, #04222b); }
 .cam-group { border: 1px solid var(--line); border-radius: 12px; padding: 12px 13px;
   margin-bottom: 12px; background: color-mix(in srgb, var(--muted-text) 4%, transparent); }
 .cam-group-title { display: flex; align-items: center; gap: 8px; font-weight: 650;
@@ -3575,7 +3578,7 @@ body.wf-fs-on .topbar { visibility: hidden; }
 .ft-play:hover {
   background: var(--accent, #04bade);
   border-color: var(--accent, #04bade);
-  color: #fff; transform: scale(1.06);
+  color: var(--brand-accent-ink, #04222b); transform: scale(1.06);
 }
 .ft-play:active { transform: scale(.96); }
 .ft-play:focus-visible {

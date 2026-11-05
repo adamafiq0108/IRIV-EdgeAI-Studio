@@ -41,32 +41,32 @@ const GROUPS = ["Access", "Data", "Connectivity", "Notifications", "Hardware"];
 
 export default function SettingsHub({ tabs: allowed = null }) {
   const all = [
-    { id: "accounts", color: "#007aff", group: "Access", label: "Accounts", icon: Users, Panel: AccountsPanel,
+    { id: "accounts", group: "Access", label: "Accounts", icon: Users, Panel: AccountsPanel,
       hint: "Who can sign in and what they open" },
     // The BOX's own switches -- what this appliance may do at all, as
     // against what one system measures or one account may open. Beside
     // Accounts: the two answer the same question from either end.
-    { id: "system", color: "#8e8e93", group: "Access", label: "System", icon: SlidersHorizontal, Panel: SystemPanel,
+    { id: "system", group: "Access", label: "System", icon: SlidersHorizontal, Panel: SystemPanel,
       hint: "What this box may do" },
-    { id: "retention", color: "#34c759", group: "Data", label: "Data Retention", icon: Database, Panel: RetentionPanel,
+    { id: "retention", group: "Data", label: "Data Retention", icon: Database, Panel: RetentionPanel,
       hint: "How long recordings and events are kept" },
     // Both belong to the BOX rather than to any system: one network, one
     // broker, however many systems run on top of them.
-    { id: "network", color: "#0a84ff", group: "Connectivity", label: "Network", icon: Network, Panel: NetworkPanel,
+    { id: "network", group: "Connectivity", label: "Network", icon: Network, Panel: NetworkPanel,
       hint: "Ethernet, Wi-Fi and the hotspot" },
-    { id: "mqtt", color: "#ff9500", group: "Connectivity", label: "MQTT Broker", icon: RadioTower, Panel: BrokerPanel,
+    { id: "mqtt", group: "Connectivity", label: "MQTT Broker", icon: RadioTower, Panel: BrokerPanel,
       hint: "The box's own broker on the plant LAN" },
     // Box-wide on purpose: one mailbox serves every system's Email nodes and
     // Footage sends, so it is declared here rather than four times over.
-    { id: "mail", color: "#30b0c7", group: "Notifications", label: "Email", icon: Mail, Panel: MailPanel,
+    { id: "mail", group: "Notifications", label: "Email", icon: Mail, Panel: MailPanel,
       hint: "The mailbox alerts are sent from" },
     // Same reasoning, same shape: a bot token belongs to the box, not to each
     // of the twelve nodes that message the same operations group.
-    { id: "telegram", color: "#32ade6", group: "Notifications", label: "Telegram", icon: Send, Panel: TelegramPanel,
+    { id: "telegram", group: "Notifications", label: "Telegram", icon: Send, Panel: TelegramPanel,
       hint: "The bot alerts are sent with" },
-    { id: "board", color: "#af52de", group: "Hardware", label: "Board I/O", icon: CircuitBoard, Panel: BoardPanel,
+    { id: "board", group: "Hardware", label: "Board I/O", icon: CircuitBoard, Panel: BoardPanel,
       hint: "Which terminals the platform drives" },
-    { id: "panel", color: "#5856d6", group: "Hardware", label: "Front Panel", icon: MonitorSmartphone, Panel: PanelSettings,
+    { id: "panel", group: "Hardware", label: "Front Panel", icon: MonitorSmartphone, Panel: PanelSettings,
       hint: "The OLED display and its button" },
   ];
 
@@ -133,8 +133,8 @@ export default function SettingsHub({ tabs: allowed = null }) {
             <button key={x.id} type="button" onClick={() => setTab(x.id)}
                     aria-current={on ? "page" : undefined}
                     className={"inline-flex shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-medium transition-colors "
-                      + (on ? "text-white" : "bg-card text-foreground hover:bg-muted")}
-                    style={on ? { background: "#007aff" } : undefined}>
+                      + (on ? "" : "bg-card text-foreground hover:bg-muted")}
+                    style={on ? { background: "var(--brand-accent, #04bade)", color: "var(--brand-accent-ink, #04222b)" } : undefined}>
               <IconTile icon={x.icon} size={22} active={on} /> {x.label}
             </button>
           );
@@ -149,7 +149,7 @@ export default function SettingsHub({ tabs: allowed = null }) {
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <input type="search" value={query} onChange={(e) => setQuery(e.target.value)}
                    placeholder="Search" aria-label="Search settings"
-                   className="h-8 w-full rounded-lg border-0 bg-black/[.05] pl-8 pr-2 text-sm outline-none ring-0 placeholder:text-muted-foreground focus:bg-black/[.07] focus:ring-2 focus:ring-[#007aff]/40 dark:bg-white/[.08]" />
+                   className="h-8 w-full rounded-lg border-0 bg-black/[.05] pl-8 pr-2 text-sm outline-none ring-0 placeholder:text-muted-foreground focus:bg-black/[.07] focus:ring-2 focus:ring-primary/40 dark:bg-white/[.08]" />
           </div>
           {groups.length === 0 && (
             <p className="px-2 text-sm text-muted-foreground">No setting matches "{query}".</p>
@@ -163,8 +163,8 @@ export default function SettingsHub({ tabs: allowed = null }) {
                     <button type="button" onClick={() => setTab(x.id)} title={x.hint}
                             aria-current={on ? "page" : undefined}
                             className={"flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors "
-                              + (on ? "font-medium text-white" : "text-foreground hover:bg-black/[.05] dark:hover:bg-white/[.06]")}
-                            style={on ? { background: "#007aff" } : undefined}>
+                              + (on ? "font-medium" : "text-foreground hover:bg-black/[.05] dark:hover:bg-white/[.06]")}
+                            style={on ? { background: "var(--brand-accent, #04bade)", color: "var(--brand-accent-ink, #04222b)" } : undefined}>
                       <IconTile icon={x.icon} size={26} active={on} />
                       <span className="truncate">{x.label}</span>
                     </button>

@@ -666,7 +666,7 @@ export default function RetentionPanel() {
 
         <div className="mt-4 flex items-start gap-3 rounded-lg border
                         border-sky-500/30 bg-sky-500/5 p-3">
-          <Info className="mt-0.5 size-4 shrink-0 text-sky-500" />
+          <Info className="mt-0.5 size-4 shrink-0 text-primary" />
           {/* Only the values sweep_status really returns: next_at exists
               once a pass has run in this hub process (the first one ~5 min
               after start, then every interval_s), last_at/last_deleted the

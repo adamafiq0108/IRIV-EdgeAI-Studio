@@ -107,6 +107,17 @@ export function hostsInScope(sidebar, scope) {
   return set;
 }
 
+//: The text colour that reads on an accent: white when it reaches 4.5:1,
+//: else a dark ink. The default teal gets the ink (white is 2.3:1 on it).
+function accentInk(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
+  if (!m) return "#04222b";
+  const lin = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  const [r, g, b] = [0, 2, 4].map((i) => lin(parseInt(m[1].slice(i, i + 2), 16) / 255));
+  const L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return 1.05 / (L + 0.05) >= 4.5 ? "#ffffff" : "#04222b";
+}
+
 // Apply the deployment's brand accent (config/brand.toml) as CSS vars, the way
 // the old _base.html injected them inline. Called once bootstrap arrives.
 export function applyBrand(brand) {
@@ -117,6 +128,13 @@ export function applyBrand(brand) {
     // .cy-legacy re-declares --accent (see index.css), which would shadow this
     // inline value; it reads the rebrand back through --brand-accent instead.
     root.style.setProperty("--brand-accent", brand.accent);
+    // ONE accent: the shadcn tokens follow the brand too, so a rebranded box
+    // does not end up with legacy pages in its colour and the rest in teal.
+    for (const v of ["--primary", "--ring", "--sidebar-primary", "--sidebar-ring"]) {
+      root.style.setProperty(v, brand.accent);
+    }
+    // ONE ink on it: dark unless the accent is dark enough for white to read.
+    root.style.setProperty("--brand-accent-ink", accentInk(brand.accent));
   }
   if (brand.accent_alt) root.style.setProperty("--accent-alt", brand.accent_alt);
   if (brand.product_name) document.title = brand.product_name;

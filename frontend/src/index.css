@@ -144,10 +144,10 @@
    applyBrand() still overrides --accent at runtime for a rebranded deployment. */
 :root {
   --primary: #04badE;
-  --primary-foreground: #04222b;
+  --primary-foreground: var(--brand-accent-ink, #04222b);
   --ring: #04badE;
   --sidebar-primary: #04badE;
-  --sidebar-primary-foreground: #04222b;
+  --sidebar-primary-foreground: var(--brand-accent-ink, #04222b);
   --sidebar-ring: #04badE;
   --chart-1: #04badE;
   --chart-2: #0e7490;
@@ -158,10 +158,10 @@
 
 .dark {
   --primary: #04badE;
-  --primary-foreground: #04222b;
+  --primary-foreground: var(--brand-accent-ink, #04222b);
   --ring: #04badE;
   --sidebar-primary: #04badE;
-  --sidebar-primary-foreground: #04222b;
+  --sidebar-primary-foreground: var(--brand-accent-ink, #04222b);
 }
 
 /* theme.css (the legacy master styles) sets an unlayered `body { background;

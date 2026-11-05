@@ -24,12 +24,12 @@ export const SettingsTone = createContext("#8e8e93");
 
 /** The neutral icon tile the rest of the product uses (the About page's
  *  section headers): a light grey square, the icon drawn in muted ink. On a
- *  selected (blue) row it turns translucent white, so it still reads. `color`
- *  is accepted for callers that pass one and deliberately not used. */
+ *  selected (accent) row it darkens slightly and takes the row's ink, so it
+ *  still reads. */
 export function IconTile({ icon: Icon, size = 28, active = false }) {
   return (
     <span className={"grid shrink-0 place-items-center rounded-md "
-                     + (active ? "bg-white/20 text-white" : "bg-muted text-muted-foreground")}
+                     + (active ? "bg-black/10" : "bg-muted text-muted-foreground")}
           style={{ width: size, height: size }}>
       <Icon style={{ width: size * 0.56, height: size * 0.56 }} strokeWidth={1.9} aria-hidden="true" />
     </span>
