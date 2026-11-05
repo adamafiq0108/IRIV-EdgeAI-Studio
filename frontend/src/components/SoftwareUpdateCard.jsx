@@ -120,7 +120,7 @@ export default function SoftwareUpdateCard() {
   const staged = st?.staged;
   const ready = st?.ready;
   return (
-    <section className="rounded-xl border bg-card p-4" data-software-update>
+    <section className="flex h-full flex-col rounded-xl border bg-card p-4" data-software-update>
       <div className="mb-3 flex items-start gap-2.5">
         <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
           <Package size={15} aria-hidden="true" />
@@ -171,7 +171,7 @@ export default function SoftwareUpdateCard() {
           {!(staged && !staged.error) && (
             <div role="button" tabIndex={0} aria-label="Choose an update file"
                  aria-disabled={!!busy}
-                 className="mt-3 flex cursor-pointer flex-col items-center gap-1 rounded-lg border-2 border-dashed px-4 py-5 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+                 className="mt-3 flex min-h-36 flex-1 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed px-4 py-5 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                  style={{ borderColor: over ? "var(--primary, #04bade)" : undefined,
                           background: over ? "color-mix(in srgb, var(--primary, #04bade) 8%, transparent)" : undefined,
                           opacity: busy ? 0.6 : 1 }}
@@ -193,7 +193,7 @@ export default function SoftwareUpdateCard() {
             </div>
           )}
 
-          <div className="mt-3 grid gap-2">
+          <div className="mt-auto grid gap-2 pt-3">
             {staged && !staged.error ? (
               <>
                 <button type="button" className="btn btn-accent" disabled={!!busy}

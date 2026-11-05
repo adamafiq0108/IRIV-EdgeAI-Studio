@@ -65,9 +65,9 @@ function Tile({ label, value, sub, fmt = pct, warn = 75, crit = 90, bar = true }
 }
 
 /** A section: an icon and a heading, what it covers, and its tiles. */
-function Section({ icon: Icon, title, sub, right, children }) {
+function Section({ icon: Icon, title, sub, right, className = "", children }) {
   return (
-    <section className="rounded-xl border bg-card p-4">
+    <section className={"rounded-xl border bg-card p-4 " + className}>
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2.5">
           <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
@@ -200,7 +200,7 @@ function HailoCard({ npu = {}, pipelines, arch }) {
 /** What is actually loaded on the chip, one row per system. */
 function LoadedNetworks({ pipelines }) {
   return (
-    <Section icon={HardDrive} title="Loaded networks"
+    <Section icon={HardDrive} title="Loaded networks" className="h-full"
              sub="every system's model, and what it is achieving right now">
       {pipelines.length ? (
         <ul className="divide-y">
@@ -248,7 +248,7 @@ export default function HealthPanel() {
       {/* Wide: the board and the accelerator, then the loaded networks, then the
           software update, side by side. Medium: the board on the left, the other
           two stacked on the right. Narrow: one column. */}
-      <div className="grid items-start gap-5 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid items-stretch gap-5 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-5 lg:row-span-2 xl:row-span-1">
           {data.host && <BoardCard host={data.host} />}
           <HailoCard npu={data.host?.npu} pipelines={pipelines} arch={pipes?.arch} />
