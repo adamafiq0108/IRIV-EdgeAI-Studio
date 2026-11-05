@@ -379,6 +379,7 @@ a { color: inherit; text-decoration: none; }
 /* A neutral button that turns the brand blue under the pointer (a disabled one stays as it is). */
 .btn-hover-blue { transition: background-color .15s, border-color .15s, color .15s, opacity .2s; }
 /* Board guide: the dots on the product photo. */
+.bg-live-dot { animation: bg-ring 1.6s ease-in-out infinite; }
 .bg-spot { cursor: pointer; outline: none; }
 .bg-spot:focus-visible circle:first-of-type { stroke: #04bade; }
 .bg-spot-ring { animation: bg-ring 1.2s ease-in-out infinite; }

@@ -255,7 +255,7 @@ export default function HealthPanel() {
   const { data, error } = usePoll("/api/hub/health", 10000);
   const { data: pipes } = usePoll("/api/hub/pipelines", 5000);
   // The box's wired address for the headline: the first jack with one.
-  const { data: board } = usePoll("/api/hub/board", 15000);
+  const { data: board } = usePoll("/api/hub/board/live", 15000);
   if (error) return <ErrorNote error={error} />;
   if (!data) return <SkelAbout />;
   const pipelines = pipes?.pipelines || [];

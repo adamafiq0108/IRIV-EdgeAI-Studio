@@ -3,7 +3,7 @@
 """
 board_hub.py -- the board's ports with their live state, for the About page.
 
-  GET /api/hub/board    every connector on the IRIV Edge AI CM5 and what is on
+  GET /api/hub/board/live   every connector on the IRIV Edge AI CM5 and what is on
                         it right now: the screw terminals (inputs read back,
                         outputs energised, LED drivers on, RS485 answering),
                         the two ethernet jacks (link, speed, address), the USB
@@ -14,6 +14,9 @@ The hub-wide twin of the master's /api/board/io + /api/board/ports: no system
 in context, so a terminal held by any of our own apps is ours, not a
 stranger's (board_io.ports with slug=None). Any signed-in account may read it;
 nothing here changes the box.
+
+NOT /api/hub/board: that path is the Settings -> Board I/O panel's
+(core/routes/hub.py), mounted first, and a second GET on it is never reached.
 """
 import asyncio
 
@@ -56,7 +59,7 @@ def _read(systems_dir):
             "wifi": _wifi()}
 
 
-@router.get("/api/hub/board", name="hub.board")
+@router.get("/api/hub/board/live", name="hub.board_live")
 async def hub_board(request: Request):
     systems_dir = getattr(request.app.state, "systems_dir", None)
     return {"ok": True, **await asyncio.to_thread(_read, systems_dir)}

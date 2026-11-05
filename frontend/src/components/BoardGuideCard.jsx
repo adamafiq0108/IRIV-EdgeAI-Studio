@@ -7,7 +7,7 @@
 // the board layout under it are the page's too. Each port is a dot drawn over
 // the picture at the connector, in the picture's own pixel coordinates (an SVG
 // viewBox crops it to one view, so the numbers never need converting). The
-// dot's colour is the port's state, read from GET /api/hub/board every two
+// dot's colour is the port's state, read from GET /api/hub/board/live every two
 // seconds while the card is on screen:
 //
 //   green   something is on it and active: a link with a cable, a camera, a
@@ -22,7 +22,7 @@
 // in it, so for the terminals the honest words are "reads high", "energised",
 // "on", "answering" - never "connected".
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown, Cpu } from "lucide-react";
+import { ChevronDown, Cpu, FileText } from "lucide-react";
 import { api } from "../api/client.js";
 import { useVisibleInterval } from "../api/hooks.js";
 
@@ -184,30 +184,30 @@ function View({ view, states, selected, onSelect, label }) {
   );
 }
 
-function Legend() {
-  const words = { ok: "active / connected", idle: "quiet / empty", warn: "warning", crit: "held elsewhere" };
+//: What each state is called, for the counts in the header and the pills.
+const WORDS = { ok: "active", idle: "quiet", warn: "warning", crit: "held elsewhere", unknown: "cannot read" };
+
+/** A port's status as a pill: the words in ink, the colour as a tinted
+ *  background and a dot, so the state never rests on colour alone. */
+function Pill({ tone, children }) {
+  const c = TONE[tone] || TONE.unknown;
   return (
-    <div className="flex flex-wrap gap-1.5 text-xs">
-      {Object.keys(words).map((t) => (
-        <span key={t} className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5">
-          <span className="size-2 rounded-full" style={{ background: TONE[t] }} />{words[t]}
-        </span>
-      ))}
-      <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5">
-        <span className="size-2 rounded-full" style={{ background: TONE.unknown }} />cannot read
-      </span>
-    </div>
+    <span className="inline-flex max-w-full items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+          style={{ background: `color-mix(in srgb, ${c} 14%, transparent)` }}>
+      <span className="size-1.5 shrink-0 rounded-full" style={{ background: c }} />
+      <span className="truncate">{children}</span>
+    </span>
   );
 }
 
 export default function BoardGuideCard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
-  const [selected, setSelected] = useState("ETH0");
+  const [selected, setSelected] = useState("ETH1");
   const [inside, setInside] = useState(false);
   const [readAt, setReadAt] = useState(0);
   const load = useCallback(async () => {
-    try { setData(await api.get("/api/hub/board")); setError(""); setReadAt(Date.now()); }
+    try { setData(await api.get("/api/hub/board/live")); setError(""); setReadAt(Date.now()); }
     catch (e) { setError(e.message || "cannot read the board"); }
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -216,71 +216,89 @@ export default function BoardGuideCard() {
   const states = useMemo(() => describe(data), [data]);
   const sel = states.find((s) => s.id === selected);
   const panels = ["Front", "Left", "Right", "Inside"];
+  const counts = states.reduce((m, s) => ({ ...m, [s.tone]: (m[s.tone] || 0) + 1 }), {});
+  const live = !!readAt && !error;
 
   return (
-    <section className="rounded-xl border bg-card p-4" data-board-guide>
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-2.5">
-          <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
-            <Cpu size={15} aria-hidden="true" />
+    <section className="rounded-xl border bg-card" data-board-guide>
+      {/* Header: what this is, whether it is live, the counts, and the guide. */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="grid size-8 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
+            <Cpu size={16} aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold leading-tight">IRIV Edge AI CM5 board</h2>
-            <div className="mt-0.5 text-xs text-muted-foreground">
-              Every port the box can read, and what is on it right now. Hover a part or a row.
-              {data?.model ? ` · ${data.model}` : ""}
-              {" · "}{readAt ? "live, read every 2 s" : error ? "not read" : "reading…"}
-              {data && data.detected === false ? " · this box is not an IRIV board, so the terminals cannot be read" : ""}
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-sm font-semibold leading-tight">IRIV Edge AI CM5</h2>
+              <span className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium">
+                <span className={"size-1.5 rounded-full" + (live ? " bg-live-dot" : "")}
+                      style={{ background: live ? TONE.ok : TONE.unknown }} />
+                {live ? "Live" : error ? "Not read" : "Reading…"}
+              </span>
+            </div>
+            <div className="mt-0.5 truncate text-xs text-muted-foreground">
+              {data?.model || "Ports and what is on them"}
+              {data && data.detected === false ? " · not an IRIV board: the terminals cannot be read" : ""}
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {["ok", "warn", "crit", "unknown", "idle"].filter((k) => counts[k]).map((k) => (
+            <Pill key={k} tone={k}>{counts[k]} {WORDS[k]}</Pill>
+          ))}
           <a href={IMG.guide} target="_blank" rel="noopener noreferrer"
-             className="text-xs font-medium underline-offset-2 hover:underline">
-            Printable guide: what each port can do and what to plug in
+             className="btn btn-hover-blue inline-flex items-center gap-1.5">
+            <FileText size={13} aria-hidden="true" /> Printable guide
           </a>
-          <Legend />
         </div>
       </div>
-      {error && <p className="mb-2 text-xs text-destructive">{error}</p>}
+      {error && <p className="px-4 pt-3 text-xs text-destructive">{error}</p>}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 p-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-3">
           <View view={FRONT} states={states} selected={selected} onSelect={setSelected} label="Front" />
           <div className="grid gap-3 sm:grid-cols-2">
             <View view={LEFT} states={states} selected={selected} onSelect={setSelected} label="Left side" />
             <View view={RIGHT} states={states} selected={selected} onSelect={setSelected} label="Right side" />
           </div>
+          {/* The part under the pointer, in full: no truncation here. */}
           {sel && (
-            <div className="rounded-lg border px-3 py-2 text-sm" aria-live="polite">
-              <span className="inline-block size-2.5 rounded-full align-middle" style={{ background: TONE[sel.tone] }} />
-              <strong className="ml-2">{sel.label}</strong>
-              {sel.status ? <span className="ml-2">{sel.status}</span> : null}
-              <div className="mt-0.5 text-xs text-muted-foreground">
-                {sel.can}{sel.detail ? ` · ${sel.detail}` : ""}
+            <div className="rounded-lg border p-3" aria-live="polite"
+                 style={{ borderLeft: `4px solid ${TONE[sel.tone] || TONE.unknown}` }}>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-semibold">{sel.label}</span>
+                <Pill tone={sel.tone}>{sel.status || WORDS[sel.tone]}</Pill>
+                <span className="text-xs text-muted-foreground">{sel.panel}</span>
               </div>
+              <dl className="mt-2 grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2">
+                <div><dt className="text-muted-foreground">What it is</dt><dd className="mt-0.5">{sel.can}</dd></div>
+                {sel.detail && <div><dt className="text-muted-foreground">Right now</dt><dd className="mt-0.5">{sel.detail}</dd></div>}
+              </dl>
             </div>
           )}
         </div>
 
+        {/* Every readable port: name and a status pill, nothing truncated
+            mid-sentence. The full detail is in the panel on the left. */}
         <div className="min-w-0 overflow-hidden rounded-lg border">
-          <div className="max-h-[720px] overflow-y-auto">
+          <div className="max-h-[560px] overflow-y-auto">
             {panels.map((panel) => (
               <div key={panel}>
-                <div className="sticky top-0 bg-muted/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
+                <div className="sticky top-0 z-10 border-b bg-card/95 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur">
                   {panel}
                 </div>
-                <ul className="divide-y">
+                <ul>
                   {states.filter((s) => s.panel === panel).map((s) => (
-                    <li key={s.id}
-                        className={"flex cursor-pointer items-center gap-2.5 px-3 py-1.5 text-sm " + (selected === s.id ? "bg-primary/10" : "hover:bg-muted/60")}
-                        onMouseEnter={() => setSelected(s.id)} onClick={() => setSelected(s.id)}>
-                      <span className="size-2.5 shrink-0 rounded-full" style={{ background: TONE[s.tone] }} />
-                      <span className="w-36 shrink-0 truncate font-medium">{s.label}</span>
-                      <span className="min-w-0 flex-1 truncate text-muted-foreground" title={s.detail}>
-                        {s.status || <span className="opacity-60">-</span>}
-                        {s.detail && s.status ? <span className="opacity-70"> · {s.detail}</span> : null}
-                      </span>
+                    <li key={s.id}>
+                      <button type="button"
+                              className={"flex w-full items-center justify-between gap-3 border-l-2 px-3 py-2 text-left text-sm transition-colors "
+                                + (selected === s.id ? "bg-muted" : "border-transparent hover:bg-muted/50")}
+                              style={selected === s.id ? { borderLeftColor: HIGHLIGHT } : undefined}
+                              onMouseEnter={() => setSelected(s.id)} onFocus={() => setSelected(s.id)}
+                              onClick={() => setSelected(s.id)}>
+                        <span className="min-w-0 truncate font-medium">{s.label}</span>
+                        <Pill tone={s.tone}>{s.status || WORDS[s.tone]}</Pill>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -291,23 +309,26 @@ export default function BoardGuideCard() {
       </div>
 
       {/* How it is wired inside, from the product page: the block diagram and the board. */}
-      <button type="button" className="mt-4 flex items-center gap-1.5 text-sm font-medium"
-              aria-expanded={inside} onClick={() => setInside((v) => !v)}>
-        <ChevronDown size={15} style={{ transition: "transform .15s", transform: inside ? "rotate(180deg)" : "none" }} />
-        Inside the box: block diagram and board layout
-      </button>
-      {inside && (
-        <div className="mt-3 grid gap-3 lg:grid-cols-2">
-          <a href={IMG.block} target="_blank" rel="noopener noreferrer" className="block">
-            <img src={IMG.block} loading="lazy" decoding="async" className="w-full rounded-lg border bg-white"
-                 alt="Block diagram: what each port is connected to on the Compute Module 5" />
-          </a>
-          <a href={IMG.internal} target="_blank" rel="noopener noreferrer" className="block">
-            <img src={IMG.internal} loading="lazy" decoding="async" className="w-full rounded-lg border bg-white"
-                 alt="Internal board layout: the M.2 socket, mPCIe socket, GPIO header for the AI HAT+, RTC battery, fuses and buzzer" />
-          </a>
-        </div>
-      )}
+      <div className="border-t">
+        <button type="button" className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium hover:bg-muted/50"
+                aria-expanded={inside} onClick={() => setInside((v) => !v)}>
+          <span>Inside the box: block diagram and board layout</span>
+          <ChevronDown size={16} className="text-muted-foreground"
+                       style={{ transition: "transform .15s", transform: inside ? "rotate(180deg)" : "none" }} />
+        </button>
+        {inside && (
+          <div className="grid gap-3 px-4 pb-4 lg:grid-cols-2">
+            <a href={IMG.block} target="_blank" rel="noopener noreferrer" className="block">
+              <img src={IMG.block} loading="lazy" decoding="async" className="w-full rounded-lg border bg-white"
+                   alt="Block diagram: what each port is connected to on the Compute Module 5" />
+            </a>
+            <a href={IMG.internal} target="_blank" rel="noopener noreferrer" className="block">
+              <img src={IMG.internal} loading="lazy" decoding="async" className="w-full rounded-lg border bg-white"
+                   alt="Internal board layout: the M.2 socket, mPCIe socket, GPIO header for the AI HAT+, RTC battery, fuses and buzzer" />
+            </a>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
