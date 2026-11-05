@@ -305,13 +305,6 @@ export function SkelAbout() {
       <div style={{ display: "flex", gap: 8 }}>
         {[110, 70, 86].map((w, i) => <SkelLine key={i} w={w} h={26} style={{ borderRadius: 999 }} />)}
       </div>
-      <div className="panel-card">
-        <SkelLine w="28%" h={14} style={{ marginBottom: 14 }} />
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <SkelFeed height={300} />
-          <SkelFeed height={300} />
-        </div>
-      </div>
       <div className="grid items-stretch gap-5 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-5 lg:row-span-2 xl:row-span-1">
           <div className="panel-card"><SkelLine w="24%" h={14} style={{ marginBottom: 14 }} />{tiles(5)}</div>
@@ -319,6 +312,13 @@ export function SkelAbout() {
         </div>
         <SkelCard rows={3} />
         <SkelCard rows={3} />
+      </div>
+      <div className="panel-card">
+        <SkelLine w="28%" h={14} style={{ marginBottom: 14 }} />
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          <SkelFeed height={300} />
+          <SkelFeed height={300} />
+        </div>
       </div>
     </div>
   );

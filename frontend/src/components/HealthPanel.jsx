@@ -246,9 +246,9 @@ function LoadedNetworks({ pipelines }) {
 //: The page's sections, in reading order, for the bar under the headline:
 //: one click lands on each, and the order says what matters first.
 const SECTIONS = [
-  { id: "about-board", label: "Board and ports" },
   { id: "about-health", label: "Health" },
   { id: "about-software", label: "Software" },
+  { id: "about-board", label: "Board and ports" },
 ];
 
 export default function HealthPanel() {
@@ -276,14 +276,9 @@ export default function HealthPanel() {
         ))}
       </nav>
 
-      {/* First: the box itself, as a picture, with what is on every port.
-          It is the one thing on this page nothing else on the product shows. */}
-      <div id="about-board" className="scroll-mt-20">
-        <BoardGuideCard />
-      </div>
-
-      {/* Then the readings and the software, side by side. Wide: the board and
-          the accelerator, then the loaded networks, then the software update.
+      {/* First what someone opening About wants to know: how the box is doing
+          and which software it runs, side by side. Wide: the board and the
+          accelerator, then the loaded networks, then the software update.
           Medium: the readings on the left, the other two stacked on the right.
           Narrow: one column. */}
       <div id="about-health" className="scroll-mt-20 grid items-stretch gap-5 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
@@ -297,6 +292,11 @@ export default function HealthPanel() {
         <div id="about-software" className="min-w-0 scroll-mt-20">
           <SoftwareUpdateCard />
         </div>
+      </div>
+
+      {/* Then the box itself, as a picture, with what is on every port. */}
+      <div id="about-board" className="scroll-mt-20">
+        <BoardGuideCard />
       </div>
 
       <p className="px-1 pb-2 text-center text-xs text-muted-foreground">
