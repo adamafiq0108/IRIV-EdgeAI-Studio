@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 #
 # run.sh -- bring the whole stack up on this board, in the foreground.
 #

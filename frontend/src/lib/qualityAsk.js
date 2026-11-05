@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The camera Quality panel's single "Ask the camera" gate. The resolution and
 // frame-rate controls used to sit there with a button each, offering common
 // values the camera might refuse; now neither control (nor the size/rate in

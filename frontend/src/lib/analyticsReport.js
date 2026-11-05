@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // analyticsReport.js - the Analytics page as a PDF report.
 //
 // The report is the page the operator is looking at, card by card, on A4 pages

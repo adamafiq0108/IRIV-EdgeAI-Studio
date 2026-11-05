@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // ViewSettings - the builder canvas's own display preferences.
 //
 // These are preferences about the EDITOR, not about the dashboard being

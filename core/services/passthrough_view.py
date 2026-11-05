@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """passthrough_view.py -- the master's half of [video] feed = "passthrough".
 
 The app does the work (systems/demo/app/passthrough.py): for an RTSP camera

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 pollcache.py -- compute an expensive READ once, hand the answer to every
 request entitled to it that arrives within a short TTL.

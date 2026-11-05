@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The off-the-happy-path guard: leaving an editor with unsaved edits asks
 // first, instead of silently throwing the work away.
 //

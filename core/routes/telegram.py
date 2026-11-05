@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 telegram.py -- the box's Telegram bots: list, add, update, delete, test.
 

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Set a new master password from an emailed link.
 // The token in the URL is validated up front; a bad/expired token disables the form.
 import { useEffect, useState } from "react";

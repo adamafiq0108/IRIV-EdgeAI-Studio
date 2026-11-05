@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """What the Hub home's template cards and their preview show.
 
 Tok Aba, 2026-10-22: the built-in templates sit on the Hub home as picture

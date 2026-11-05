@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 cameras.py -- fleet camera-usage map (v2.0): which camera IP is assigned to
 which slave, so the master can warn when the same physical camera is about to

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Blueprint editor - the Function Block's nested canvas. Double-clicking a
 // Function Block on the main workflow opens this full-screen modal: a second
 // ReactFlow where the block's LOGIC is wired from primitive nodes (values,

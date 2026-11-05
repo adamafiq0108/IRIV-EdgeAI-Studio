@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The one read-only line under the Detection page's video that says who
 // carries the live view when a system asks for [video] feed = "passthrough"
 // (systems/demo/app/passthrough.py): the video gateway pulling the camera's

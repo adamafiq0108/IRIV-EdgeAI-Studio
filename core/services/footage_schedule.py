@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """A recurring footage export: the same dialog, saved and left to run.
 
 Emailing evidence was a manual act -- pick a range, press Send. That is right

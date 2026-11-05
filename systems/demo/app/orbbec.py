@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """The Orbbec depth camera, wearing the shape of a cv2.VideoCapture.
 
 An Orbbec Gemini is not a UVC camera the capture path can open. It has its own

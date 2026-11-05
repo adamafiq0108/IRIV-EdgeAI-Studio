@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Clear events on the Events Log: the words and the one round trip, kept out
 // of the page so they can be checked without a browser (tests/
 // check_eventsclear.mjs) and so EventTable.jsx stays the table it is.

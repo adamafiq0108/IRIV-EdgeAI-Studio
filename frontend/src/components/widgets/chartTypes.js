@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // THE CHART TYPES the picker offers, defined once for the workflow node
 // inspector (pages/Workflow.jsx) and both Builders (builderShared.jsx). The
 // picker itself is ChartTypePicker.jsx; the model it writes is chartModel.js.

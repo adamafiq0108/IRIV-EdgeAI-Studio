@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """The chart builder's ONE model: X axis, Y axis, time interval, date range.
 
 WHY THIS MODULE. A chart used to be configured through six overlapping

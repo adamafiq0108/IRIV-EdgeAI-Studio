@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Small shared UI primitives: Badge, EmptyState, Skeleton, Dialog, Field,
 // Section.
 //

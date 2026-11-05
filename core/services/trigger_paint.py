@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """Which boxes a Trigger's "Recolour the bounding box" paints.
 
 A workflow Trigger decorates a branch port or a Formula, and that rule is

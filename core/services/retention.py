@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 retention.py -- the hub-level data retention policy, and the sweep that
 enforces it.

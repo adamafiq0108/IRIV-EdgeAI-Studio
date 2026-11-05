@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // TypedInput -- one value field that says WHAT KIND of value it holds.
 //
 // A value typed into a box is ambiguous until its type is chosen: "5" is a

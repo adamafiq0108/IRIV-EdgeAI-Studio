@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // HardwareFooter - one thin strip along the bottom of every system page, so the
 // operator can watch what the box is doing WHILE it does it.
 //

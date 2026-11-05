@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // DetectGate - "Show video only when an object is detected" ([video]
 // view_on_detect) for one live tile: the video element is MOUNTED only while
 // the AI reports detections on that camera (and view_hold_s after), and a

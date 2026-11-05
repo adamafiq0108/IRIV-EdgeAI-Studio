@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Shared visual treatment for log rows and their level labels.
 //
 // ONE vocabulary for all three Diagnostics pages. The Log Hub speaks the

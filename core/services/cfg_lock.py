@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 cfg_lock.py -- one writer at a time for a system's config.local.toml, across
 PROCESSES, and a write that can never be torn.

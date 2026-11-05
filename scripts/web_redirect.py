@@ -1,5 +1,6 @@
 #!/usr/bin/python3 -I
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 web_redirect.py -- port 80 to the hub's port, 443 to its HTTPS port, or no
 redirect at all. Run as root through sudo by the hub (core/services/

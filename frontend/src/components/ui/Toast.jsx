@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Toast + error surface. One provider at the shell, `useToast()` anywhere.
 //
 // Why this exists: every page was reporting failures as a string in its own

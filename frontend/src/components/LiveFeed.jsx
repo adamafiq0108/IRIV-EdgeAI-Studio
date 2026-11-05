@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // LiveFeed - the MJPEG stream in its own container. It owns the connection
 // lifecycle (connect, reconnect when the app comes up) so the rest of the page
 // can re-render freely without ever remounting the <img> and tearing down the

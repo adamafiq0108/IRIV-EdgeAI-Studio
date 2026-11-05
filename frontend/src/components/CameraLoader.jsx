@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The wait for a picture, said with a picture.
 //
 // Every feed on the box used to say it in words -- "Connecting to the video

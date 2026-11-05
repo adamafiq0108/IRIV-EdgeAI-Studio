@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Read-only renderer for a Builder page.
 //
 // The Builder places widgets on a 12-column grid ({x, y, w, h} cells); older

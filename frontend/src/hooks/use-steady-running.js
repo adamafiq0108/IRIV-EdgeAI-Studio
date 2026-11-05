@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // A "stopped" answer has to prove itself. The status endpoint reports
 // running=false transiently -- an app restarting after a config change, a
 // master respawning after a deploy -- and pages that believed it at once

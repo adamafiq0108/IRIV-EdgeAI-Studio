@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Generic analytics widget - renders by WidgetSpec.kind, never by system slug.
 // A system package declares WidgetSpecs (data_fn → JSON); this switch turns each
 // kind into UI. A new kind is one case here (product repo, generic), matching

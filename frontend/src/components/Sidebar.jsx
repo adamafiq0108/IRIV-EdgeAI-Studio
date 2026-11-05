@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // File-explorer sidebar (v2.0): folder tree + devices + Unassigned. Ported from
 // _sidebar.html + sidebar.js. Admins get folder/device management; operators a
 // read-only tree. Mutations hit the folder/device APIs, then reload the shell.

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // BoxRestartNote - "a restart is needed", shared by the Software port and
 // Hostname cards on the Network page.
 //

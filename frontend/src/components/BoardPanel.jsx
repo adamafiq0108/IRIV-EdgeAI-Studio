@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // BoardPanel - who owns each of the board's terminals. Hub, Administration.
 //
 // A GPIO line is ONE piece of hardware and every system on the box shares it,

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 models.py -- the master's model store: bring your own HEF (or ONNX, or .pt).
 

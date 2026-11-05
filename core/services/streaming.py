@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """The WebRTC video path: MediaMTX stream naming, health, and the WHEP proxy.
 
 Video reaches a browser two ways in this product, chosen per system by

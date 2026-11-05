@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // VariablesPanel - the workflow's variable manager, opened from the header.
 //
 // The declaration/constant form itself lives in NewVariableForm.jsx, shared

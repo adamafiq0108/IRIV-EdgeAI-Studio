@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // BusSettingsPanel - the RS485/Modbus bus settings, INSIDE the inspector.
 //
 // These settings (transport, port, baud, unit id) belong to the WIRE, not to

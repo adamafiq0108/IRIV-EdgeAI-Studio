@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 wifi_profile.py -- write a Wi-Fi profile as root, with the key off every argv.
 

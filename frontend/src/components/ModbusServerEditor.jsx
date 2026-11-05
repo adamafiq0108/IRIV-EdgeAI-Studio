@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // ModbusServerEditor - the "Modbus Server" connection, Node-RED style.
 //
 // A Modbus Read and a Modbus Write on the same PLC are two nodes and ONE

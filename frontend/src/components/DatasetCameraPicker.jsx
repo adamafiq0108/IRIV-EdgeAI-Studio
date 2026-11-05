@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The Dataset page's camera picker: nothing at all with one camera (there is
 // nothing to choose), a labelled dropdown of the system's cameras by name with
 // more. A switched-off camera is still listed, marked "(off)", so the operator

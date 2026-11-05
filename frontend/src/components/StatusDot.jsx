@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // A status dot: green when something is working, red when it is not, grey
 // when nobody knows yet. The same look as the AI dot (AiDot.jsx), so a
 // canvas with an MQTT dot on a Publish node and an AI dot on a Detection

@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """modbus_watchdog.py -- the Modbus Server connection's Drive watchdog switch.
 
 Kept out of detector_control.py, which sits at its line ceiling; its

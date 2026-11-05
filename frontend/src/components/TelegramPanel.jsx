@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // TelegramPanel - the box's Telegram bots, under Settings.
 //
 // The bot token and chat id used to be typed into each Telegram node, so a

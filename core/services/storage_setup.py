@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 storage_setup.py -- "New storage detected": noticing a drive fitted after the
 box was installed, asking the admin once, and setting it up through the root

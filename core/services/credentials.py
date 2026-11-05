@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 credentials.py -- device credential status + atomic rotation flow (v2.0
 #9/#11/#12/#13).

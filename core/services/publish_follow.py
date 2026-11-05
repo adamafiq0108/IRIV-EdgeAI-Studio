@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """When an MQTT Publish publishes: when what is wired into it says so.
 
 The node used to carry its own clock ("Every N seconds") on top of whatever

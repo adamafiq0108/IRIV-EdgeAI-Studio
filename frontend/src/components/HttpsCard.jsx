@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // HttpsCard - HTTPS on the Network page (the card titled "HTTPS"), under the
 // Software port and Hostname cards.
 //

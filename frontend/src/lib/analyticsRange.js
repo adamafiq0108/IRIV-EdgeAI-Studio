@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // analyticsRange - the date range the Analytics page is showing, shared with
 // the pages that offer to "follow" it (Tok Aba, 2026-10-14: the SQL
 // Playground's Period "Follow Analytics range").

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 #
 # run_all.sh -- Stand up the hub and every enabled system's master on this host.
 #

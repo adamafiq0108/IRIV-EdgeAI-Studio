@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // System - the switches that are about the BOX.
 //
 // Everything else under Settings is about a system (a camera and its rules),

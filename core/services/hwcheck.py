@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """The hardware this product is built for, and the check that it is there.
 
 IRIV EdgeAI Studio needs a Hailo accelerator (8, 8L or 10H) fitted. The

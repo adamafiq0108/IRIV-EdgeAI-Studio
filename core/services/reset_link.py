@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """Mail a password-reset link -- the part of the forgot flow with no request.
 
 Two callers: /api/auth/forgot (a person typed their address) and the front

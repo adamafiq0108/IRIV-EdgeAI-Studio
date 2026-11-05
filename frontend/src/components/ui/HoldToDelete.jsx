@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Hold-to-delete: the button arms only after the pointer has been held down
 // for its full duration, and releasing early cancels with nothing done.
 //

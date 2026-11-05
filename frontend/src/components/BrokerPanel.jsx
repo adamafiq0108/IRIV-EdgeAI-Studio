@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // BrokerPanel - this box's MQTT broker (Mosquitto), under Settings.
 //
 // Modelled on Node-RED's Aedes broker node, because that is what the people

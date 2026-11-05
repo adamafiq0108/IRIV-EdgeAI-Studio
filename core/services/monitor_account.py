@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 monitor_account.py -- the Monitor account: one fixed, read-mostly sign-in that
 sees every system on the box.

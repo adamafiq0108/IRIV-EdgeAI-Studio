@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Floating light/dark toggle for pages OUTSIDE the shells (login and the
 // other auth pages) - the shells render their own in the header. Mounting it
 // is also what APPLIES the saved choice on these standalone pages: useTheme

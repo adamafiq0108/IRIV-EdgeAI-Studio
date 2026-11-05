@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Data-fetching hooks over the api client. useApi fetches once; usePoll refetches
 // on an interval (the master refreshes device/monitoring state every sync cycle,
 // so pages poll to stay live without a websocket). Both surface {data, error,

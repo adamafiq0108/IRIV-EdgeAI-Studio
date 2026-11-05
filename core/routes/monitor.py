@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 monitor.py -- the Monitor account's switch, its page choices and its access
 token. Thin: parse, guard, call core/services/monitor_account.py.

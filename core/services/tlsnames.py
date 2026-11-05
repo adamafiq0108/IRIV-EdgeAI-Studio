@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 tlsnames.py -- every name and address a browser may use to reach THIS
 box right now: what the HTTPS certificate has to cover (https.py).

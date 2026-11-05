@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Edit system: the hub card's pencil (Tok Aba, 2026-10-06). Was "Rename
 // system", one Name field; the Name field is unchanged, and the system's PORT
 // -- the address on the card -- sits under it.

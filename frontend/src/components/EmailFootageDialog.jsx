@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // EmailFootageDialog - send a system's footage by email, once or forever.
 //
 // THREE ways to say what to send, because there are three ways people ask for

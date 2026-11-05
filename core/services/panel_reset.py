@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """Master password reset from the box itself: a code on the front panel.
 
 The emailed link needs an address on file and a mailbox that works. An

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 hub_overlay.py -- GET /api/hub/overlay: the Live Wall's overlay events.
 

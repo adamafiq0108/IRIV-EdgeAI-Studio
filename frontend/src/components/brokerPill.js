@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // brokerPill - what the Workflow page's MQTT broker pill says, as plain
 // functions so tests/check_brokerpill.mjs can run them without React.
 

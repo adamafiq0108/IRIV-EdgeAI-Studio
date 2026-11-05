@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // ExprEditor - the formula editor for Custom Formula (analytics.expr) and
 // Formula variable (variable.formula) nodes.
 //

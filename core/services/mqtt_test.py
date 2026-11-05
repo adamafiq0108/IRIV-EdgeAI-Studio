@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 mqtt_test.py -- "is my topic right?", answered from the box: a test publish
 that listens for its own message, and a short listen on a Subscribe node's

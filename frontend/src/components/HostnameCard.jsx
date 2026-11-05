@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // HostnameCard - the box's hostname on the LAN (<name>.local), on the Network page
 // (the card titled "Hostname").
 //

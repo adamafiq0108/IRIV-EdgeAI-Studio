@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 devices.py -- master-owned device metadata (display name/description/notes/
 folder) + the device list used by global search. Admin-only for writes.

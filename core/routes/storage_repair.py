@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 storage_repair.py -- "Try again" on the Dataset pages' "Storage is not
 writable" card (frontend/src/components/NoStorage.jsx).

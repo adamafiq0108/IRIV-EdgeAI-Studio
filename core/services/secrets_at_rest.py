@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 secrets_at_rest.py -- what this box keeps on disk that is secret, and that it
 is kept safely. Run once at every hub and master start (hub_server.py,

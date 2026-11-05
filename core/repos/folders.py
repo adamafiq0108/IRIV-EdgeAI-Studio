@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 repos/folders.py -- SQL for the device folder hierarchy. SQL only, no logic
 (docs/conventions.md sec 2). Reads tolerate a Postgres outage (return []);

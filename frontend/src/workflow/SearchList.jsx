@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // SearchList - a dropdown whose search box is INSIDE the list.
 //
 // A native <select> cannot be searched, so every picker here used to pair one

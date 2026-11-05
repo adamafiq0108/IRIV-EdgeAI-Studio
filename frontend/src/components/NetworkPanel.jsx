@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // NetworkPanel - how this box gets on a network, and how you get on to it.
 //
 // Commissioning is the case this page exists for: somebody is standing at an

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 storage_setup.py -- "New storage detected": the popup's poll, the admin's
 No, and Format / Use as it is (core/services/storage_setup.py finds and

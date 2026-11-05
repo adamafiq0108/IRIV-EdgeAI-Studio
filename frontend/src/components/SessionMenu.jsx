@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // SessionMenu - the sidebar's bottom button: who you are, and the three ways
 // to leave.
 //

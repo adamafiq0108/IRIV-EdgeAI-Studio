@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // UndoRedo - one joined control, on every page that has a history.
 //
 // Two arrows glued into a single segmented unit rather than two loose

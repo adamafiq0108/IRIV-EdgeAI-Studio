@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Feed status box - which of the four rows burned into the top-right of the
 // live picture are drawn: model, camera, hailo fps, camera fps.
 //

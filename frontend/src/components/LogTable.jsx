@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // LogTable -- the alarm-list table the three Diagnostics pages share.
 //
 // WHY IT IS SHARED. The Log Hub, the Events log and the Audit log answer

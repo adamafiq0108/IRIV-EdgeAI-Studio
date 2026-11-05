@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // overlayStream.js - ONE overlay connection per page, shared by every feed on
 // it.
 //

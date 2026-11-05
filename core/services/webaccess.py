@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 webaccess.py -- how a browser reaches this box: by PORT, or through the
 REVERSE PROXY on port 80. A setting, master or developer only.

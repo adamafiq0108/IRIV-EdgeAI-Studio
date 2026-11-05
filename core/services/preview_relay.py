@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """preview_relay.py -- the master's end of one MJPEG preview, and how it ends.
 
 /api/detector/preview copies the detection app's multipart stream

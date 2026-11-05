@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """passthrough.py -- the live VIEW straight from an IP camera, not through us.
 
 [video] feed in the system's config:

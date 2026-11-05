@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Freestyle grid canvas: 12 columns, fixed-height rows. Drag the title bar to
 // move, drag the corner handle to resize - the same normalized-pointer maths
 // the zone editor uses, just snapped to grid cells. No layout library: the

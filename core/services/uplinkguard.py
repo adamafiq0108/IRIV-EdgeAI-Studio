@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 uplinkguard.py -- a fixed address saved as the internet uplink proves it, or
 goes back to what it was.

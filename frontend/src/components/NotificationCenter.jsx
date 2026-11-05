@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // NotificationCenter - the bell in the hub header, and everything behind it.
 //
 // The box tells you what needs attention, wherever you already are, instead

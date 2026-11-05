@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 builder_assets.py -- the pictures an Image card shows (Tok Aba, 2026-10-14).
 

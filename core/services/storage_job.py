@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 storage_job.py -- setting up the drive the "New storage detected" popup
 asked about (core/services/storage_setup.py finds and remembers drives;

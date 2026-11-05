@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 gatewayfault.py -- a default gateway that can never forward, and the one
 case that is corrected rather than demoted.

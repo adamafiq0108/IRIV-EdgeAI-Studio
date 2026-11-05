@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 dataset_record.py -- the dataset CLIP recorder: the raw stream into an H.264
 .mp4 under the system's dataset_rec folder, timed or START/STOP.

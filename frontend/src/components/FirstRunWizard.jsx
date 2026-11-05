@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // First setup, before the first sign-in, in the shape of a phone's: a short
 // run of cards, Next on each, Skip where the step is optional.
 //

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // BoardPorts - the board's USB sockets and ethernet jacks, drawn like the
 // faceplate, with live state.
 //

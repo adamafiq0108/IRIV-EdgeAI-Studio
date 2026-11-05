@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 chip_balance.py -- GET /api/system/chip-balance: the live table under the
 "Hailo load balancer (testing)" card in Settings > System.

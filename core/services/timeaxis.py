@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """The time axis of a chart: how far apart its points are (the STEP, "Group
 by time") and which stretch of time it covers (the RANGE, "Time range").
 

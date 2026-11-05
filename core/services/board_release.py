@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 board_release.py -- the terminals this box has handed to another program
 (Node-RED, a customer script), and which rules use each terminal, which is

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // VideoSavingPanel - the Detection page's video display switches, in the
 // camera Quality group: [video] overlay, view_on_detect and view_hold_s.
 //

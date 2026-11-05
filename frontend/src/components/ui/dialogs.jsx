@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Shared confirm / form dialogs, composed from the existing Dialog, Input,
 // Label and Button components.
 //

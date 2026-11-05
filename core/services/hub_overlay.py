@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 hub_overlay.py -- the Live Wall's overlay: ONE event stream per hub page,
 carrying the overlay messages of every client-mode system on the wall.

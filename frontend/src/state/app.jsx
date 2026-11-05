@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // App-wide shell context: brand, current user, the system this master serves,
 // the capability-driven nav, and the device sidebar tree. Fetched once from
 // /api/bootstrap when the protected shell mounts. A 401 means "no session" -

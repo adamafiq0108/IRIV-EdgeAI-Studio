@@ -1,4 +1,5 @@
 #!/bin/sh
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 # Install the video gateway: MediaMTX binary, config, systemd unit.
 #
 # Idempotent -- safe to re-run on every deploy. There is NO per-board value in

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // PanelSettings - the box's OLED, button and buzzer, with the screen on screen.
 //
 // The panel itself needs none of this: it runs headless, which is the point of

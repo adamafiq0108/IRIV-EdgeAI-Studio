@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 secrets.py -- encrypt device bearer tokens at rest (v2.0 #21).
 

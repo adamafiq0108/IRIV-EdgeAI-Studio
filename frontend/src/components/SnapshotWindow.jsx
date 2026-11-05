@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // SnapshotWindow - the Footage page's window for ONE photo.
 //
 // The photo at its own shape and the facts about it side by side on a wide

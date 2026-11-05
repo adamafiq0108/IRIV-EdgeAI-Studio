@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """Measuring objects with a depth camera, from the master's side.
 
 The maths lives in the system's own app (systems/<slug>/app/measure.py) and

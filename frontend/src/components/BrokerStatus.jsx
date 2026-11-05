@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // BrokerStatus - the MQTT broker pill on the Workflow page.
 //
 // An MQTT Subscribe node reading nothing and a broker that is not running

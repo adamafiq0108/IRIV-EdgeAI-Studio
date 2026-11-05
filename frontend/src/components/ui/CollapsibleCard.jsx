@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // A panel-card whose body folds away behind its own header.
 //
 // Pages that stack several tall cards (AI Models) otherwise make the lower

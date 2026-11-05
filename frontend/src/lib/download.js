@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Authenticated file downloads.
 //
 // The export endpoints sit behind the session cookie, so `window.location =

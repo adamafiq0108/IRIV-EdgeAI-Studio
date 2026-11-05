@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 mqtt_apply.py -- set up this box's MQTT broker (Mosquitto), as root, from a
 request the platform hands it on stdin.

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 video_saving.py -- GET/POST /api/detector/control/video: the Detection page's
 "Video saving" switches ([video] on_demand, view_on_detect, view_hold_s),

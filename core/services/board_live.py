@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 board_live.py -- what each board terminal is doing RIGHT NOW: the pin levels
 read without claiming a line, the bus activity the running apps publish, and

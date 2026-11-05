@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 boxpending.py -- the software port and the hostname change at the NEXT
 RESTART OF THE BOX, never on Save.

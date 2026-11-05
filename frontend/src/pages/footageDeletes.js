@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Footage deletes that outlive the page they were started on.
 //
 // Deleting footage is DEFERRED: the rows are hidden immediately and the

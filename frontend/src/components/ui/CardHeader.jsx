@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // CardHeader / StateSwitch - the header row a settings card wears, and the
 // on/off control that sits at its top right (Tok Aba, 2026-10-14; the Device
 // Hotspot card is the template).

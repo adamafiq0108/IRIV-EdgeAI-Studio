@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """The Trigger node's Advanced settings: what it SENDS and how often.
 
 A Trigger names a moment. Downstream of it, everything used to read the

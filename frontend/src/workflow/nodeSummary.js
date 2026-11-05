@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // THE in / does / out SUMMARY of every workflow node (Tok Aba, 2026-10-14:
 // "all nodes should have this", then "in the PROPERTIES of every node only,
 // not at the node itself"). Three rows -- what goes in, what is done to it,

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The nav's grouping and icons, shared between the shell that DRAWS the rail
 // and the pages that point at each other. One copy, because the sidebar, the
 // breadcrumb and the "next page" button must all agree on what the order of a

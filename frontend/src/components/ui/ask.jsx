@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // ask.jsx -- confirm and prompt, as the product's own dialogs.
 //
 // ConfirmDialog and FormDialog already existed, but using them costs a piece

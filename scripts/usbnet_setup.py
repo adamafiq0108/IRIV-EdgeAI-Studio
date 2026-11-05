@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """Make the eth1 port behave like a soldered-on port. Run from udev.
 
 eth1 is not a Raspberry Pi port. It is a Realtek RTL8153 hanging off USB, and

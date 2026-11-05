@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """What a camera lets you adjust, read from the camera itself.
 
 Every camera is different. A cheap UVC module offers brightness and nothing

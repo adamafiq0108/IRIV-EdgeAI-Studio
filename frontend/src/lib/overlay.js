@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // overlay.js - draw the detection overlay in the BROWSER, from the app's
 // metadata, the way the app used to burn it into the frame.
 //

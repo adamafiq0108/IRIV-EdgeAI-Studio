@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The body of "+ New variable", shared by the Variables panel (inline,
 // expands in place) and the palette's own dialog (a popup) -- one place for
 // the field, so the two triggers can never drift into offering different

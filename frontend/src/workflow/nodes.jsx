@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Workflow node components - one shell, per-category summaries. All types
 // render through NodeShell; what varies is the one-line config summary and the
 // live value chip. Registry/spec, live values, and compile errors arrive via

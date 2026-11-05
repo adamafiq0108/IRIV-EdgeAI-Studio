@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // nodeStatus - what the small status dot on a canvas node says, as plain
 // functions so tests/check_nodestatus.mjs can run them without React.
 //

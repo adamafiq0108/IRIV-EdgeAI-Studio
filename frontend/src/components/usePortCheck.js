@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The port field's live answer, shared by the create wizard's "Custom port"
 // and Edit system (Tok Aba, 2026-10-06).
 //

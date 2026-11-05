@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // A list of email recipients, one address per row (Tok Aba, 2026-10-14: "for
 // Email To, instead of using comma, please make a button Add so the user can
 // add another email").

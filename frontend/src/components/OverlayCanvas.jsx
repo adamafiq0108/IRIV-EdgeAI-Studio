@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // OverlayCanvas - the detection overlay drawn by the BROWSER, over a live
 // <video> or <img>, for a system in [video] overlay = "client" mode.
 //

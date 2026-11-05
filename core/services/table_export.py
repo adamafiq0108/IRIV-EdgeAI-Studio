@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 table_export.py -- one table card's rows as a CSV file, for a date range and
 the columns the person picked (Tok Aba, 2026-10-14: "put CSV directly at the

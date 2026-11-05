@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 class_filter.py -- the dashboard's "Class filter" card: run or pause one
 NAMED Class Filter of this system's workflow.

@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """Box-wide switches: the settings that are about the BOX.
 
 Everything else in config is about a SYSTEM (a camera and its rules), an

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 mqtt_clients.py -- the MQTT Connections an MQTT Subscribe or MQTT Publish
 picks (core/services/mqtt_clients.py). Mounted on every MASTER.

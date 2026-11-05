@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 broker_login.py -- the login this box's own MQTT broker wants, for MQTT nodes
 that talk to it.

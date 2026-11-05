@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Standalone login card. Brand comes from the open
 // /api/public; submit posts JSON to /api/auth/login and routes on success.
 import { useEffect, useState } from "react";

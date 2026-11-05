@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 cameras.py -- fleet camera-usage endpoint (v2.0), and the per-system
 "is the camera there" look.

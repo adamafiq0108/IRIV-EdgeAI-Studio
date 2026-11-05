@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 mqtt_test.py -- the MQTT nodes' test buttons: "Test publish" on MQTT Publish,
 "Listen" on MQTT Subscribe. The work is in core/services/mqtt_test.py.

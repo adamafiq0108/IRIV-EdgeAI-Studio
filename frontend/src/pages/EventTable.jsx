@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Events log -- the detection event store (/api/events), as an alarm list.
 //
 // WHAT THIS PAGE IS FOR. The Log Hub answers "what did this software do".

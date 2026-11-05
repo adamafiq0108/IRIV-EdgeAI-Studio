@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 #
 # setup_nvme.sh -- put the event database and the detection snapshots on the
 # NVMe, not the eMMC. The eMMC wears out under the DB's write traffic and a busy

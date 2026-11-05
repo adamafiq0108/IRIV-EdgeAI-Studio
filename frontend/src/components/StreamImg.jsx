@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // StreamImg - an MJPEG <img> that only exists while somebody can actually see
 // it. Every open preview pins a blocking threadpool thread on the master, and
 // the browser happily keeps pulling frames from a backgrounded tab or an

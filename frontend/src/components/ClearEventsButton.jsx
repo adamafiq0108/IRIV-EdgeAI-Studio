@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The Events Log's "Clear events" button, beside Export CSV / Export LOG.
 //
 // Drawn only for someone the server says may clear (`allowed` is the query

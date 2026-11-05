@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // httpsLinks - the HTTPS card's words that are pure logic: the addresses the
 // box answers HTTPS on, and the one-line state. No imports, so
 // tests/check_httpslinks.mjs runs it with plain node (no bundler needed).

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 repos/device_meta.py -- SQL for master-owned device metadata (display name,
 description, notes, folder assignment). SQL only. Reads degrade to {} on a

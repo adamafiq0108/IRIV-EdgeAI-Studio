@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 ssd1306.py -- the IRIV board's 128x64 OLED, drawn from Python.
 

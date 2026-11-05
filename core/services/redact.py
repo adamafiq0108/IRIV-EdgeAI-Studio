@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 redact.py -- keep credentials out of what the function and output routes
 send to a browser, and put them back when a client sends a list back.

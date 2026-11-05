@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """Recorded footage a system can run detection against instead of a camera.
 
 A clip or a still image, uploaded once and then opened exactly the way a

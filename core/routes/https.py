@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 https.py -- the HTTPS card on the Network page (core/services/https.py,
 httpsrun.py; the server itself is core/tlsserve.py).

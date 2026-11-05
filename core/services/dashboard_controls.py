@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 dashboard_controls.py -- the dashboard cards that CHANGE something, and the
 "paused" state they put on the cards after them.

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // THE CHART TYPE PICKER, its title strip and the in-family "Show as", drawn
 // ONCE for the workflow node inspector and both Builders. Definitions and the
 // switch rules are chartTypes.js; nothing here decides what is stored.

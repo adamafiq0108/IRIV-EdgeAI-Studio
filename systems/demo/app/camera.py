@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 camera.py -- frame capture and JPEG encoding, with a hardware-free fallback.
 

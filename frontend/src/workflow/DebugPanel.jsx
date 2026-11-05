@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Debug - "is this graph actually doing anything?"
 //
 // A node graph looks correct long before it behaves correctly. Answering that

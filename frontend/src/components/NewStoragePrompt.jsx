@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // NewStoragePrompt - "New storage detected", the popup for a drive fitted
 // after the box was installed (Tok Aba 2026-10-07; core/services/
 // storage_setup.py). Mounted by HubShell for the master account only: every

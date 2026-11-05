@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 control.py -- forwards the Manage page's calls to a device's Contract v1.2
 control channel, and shapes the control snapshot for rendering.

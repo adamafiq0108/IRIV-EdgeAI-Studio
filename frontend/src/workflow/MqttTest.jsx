@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // MqttTest - "is my topic right?", from the node's own inspector.
 //
 //   PublishTest  under MQTT Publish: subscribes to the node's topic, publishes

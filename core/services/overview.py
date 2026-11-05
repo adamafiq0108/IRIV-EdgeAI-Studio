@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 overview.py -- Platform Overview + Camera Overview shaping (v2.0 #8, #17).
 

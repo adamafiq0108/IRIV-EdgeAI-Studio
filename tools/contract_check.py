@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 contract_check.py -- Conformance harness for IRIV EdgeAI Studio System Contract v1.
 

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 wifitest.py -- "Test connection" and "Test and switch": wlan0 leaves the
 access point, joins a network as a TRIAL, and either stays on it or comes

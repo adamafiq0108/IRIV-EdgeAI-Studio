@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // InfoHint - the explanation, folded into a mark you can hover.
 //
 // Why: every setting on this product had its "why" printed underneath it. Each

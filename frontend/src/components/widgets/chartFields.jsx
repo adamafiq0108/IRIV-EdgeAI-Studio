@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // THE CHART BUILDER, drawn ONCE for the workflow node inspector
 // (pages/Workflow.jsx) and both Builders (builderShared.jsx). The model it
 // edits is chartModel.js; the labels and the step / range controls it reuses

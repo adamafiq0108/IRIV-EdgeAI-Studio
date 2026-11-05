@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Log Hub -- this process's event log, as an operator alarm list.
 //
 // WHAT THIS PAGE IS FOR. Somebody opens it when something is already wrong,

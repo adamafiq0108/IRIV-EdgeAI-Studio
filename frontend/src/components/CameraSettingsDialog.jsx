@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // One camera's own settings: brightness, exposure, white balance -- whatever
 // THIS camera says it has.
 //

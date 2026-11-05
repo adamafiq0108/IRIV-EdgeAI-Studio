@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // SignOutDialog - the one sign-out confirmation, used by every shell.
 //
 // This replaces window.confirm("Sign out?"): the native box cannot be styled,

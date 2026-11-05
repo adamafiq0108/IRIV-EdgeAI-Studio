@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Blynk IoT - connect the dashboard's live values to the Blynk cloud.
 //
 // Paste the device auth token (Blynk console → Device → Device Info), map any

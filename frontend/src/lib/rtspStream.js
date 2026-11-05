@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The RTSP "Stream" choice on the camera form: the path AFTER host:port/.
 //
 // Cameras disagree on what that path is. TP-Link/Tapo answer stream1 (main)

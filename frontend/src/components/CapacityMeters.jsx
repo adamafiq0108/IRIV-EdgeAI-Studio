@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The two capacities this box enforces, in the hub's header.
 //
 //   Systems Created  how many exist, of how many may exist

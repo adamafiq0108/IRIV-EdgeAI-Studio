@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // WifiSwitchOverlay - the whole window while wlan0 changes job, and the page
 // that finds the box again afterwards.
 //

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 mqtt_broker.py -- this box's MQTT broker: status for the Workflow page's
 pill, settings and install for Settings > MQTT Broker.

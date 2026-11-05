@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """Which camera an If/Else, a Formula or a Variable runs on.
 
 Those compile to `expr` functions, and an `expr` was given no camera on

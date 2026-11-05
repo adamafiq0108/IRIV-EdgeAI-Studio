@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The "AI running" dot. A STATUS, never a control: Start / Stop detection stay
 // where they always were.
 //

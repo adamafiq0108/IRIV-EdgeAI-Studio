@@ -1,5 +1,6 @@
 #!/usr/bin/python3 -I
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 storage_setup.py -- put a newly fitted drive to work as the box's storage,
 and keep the box's own folders on it writable. Run as root through sudo by

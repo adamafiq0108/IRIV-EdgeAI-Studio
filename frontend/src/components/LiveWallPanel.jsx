@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Live Wall - up to 4 live feeds at once, each slot picking any system's
 // streaming device. The browser pulls each MJPEG straight from that system's
 // master (/video_feed/<host>): the hub never proxies video (one master's

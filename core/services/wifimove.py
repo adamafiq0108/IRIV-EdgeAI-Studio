@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 wifimove.py -- the two moves a live Wi-Fi switch makes: wlan0 joining a
 network, and wlan0 becoming the access point (the network it left brought

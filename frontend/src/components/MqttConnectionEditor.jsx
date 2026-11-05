@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // MqttConnectionEditor - the "MQTT Connection" a Subscribe or Publish picks.
 //
 // A beta tester (2026-10-02): "MQTT there no broker IP? add user and password

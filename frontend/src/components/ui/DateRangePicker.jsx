@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // DateRangePicker - a preset rail beside a two-month calendar.
 //
 // Replaces a pair of <input type="date"> boxes. Two inputs can express a

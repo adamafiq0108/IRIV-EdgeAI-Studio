@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Undo/redo for a page's working copy, with the keyboard shortcuts an operator
 // already has in their fingers from every other editor: Ctrl/Cmd+Z to undo,
 // Ctrl+Shift+Z or Ctrl+Y to redo.

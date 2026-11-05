@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 wifiscan.py -- what the root Wi-Fi helper can do on THIS box, a fresh scan
 through it, and the trial join both connection-test buttons use.

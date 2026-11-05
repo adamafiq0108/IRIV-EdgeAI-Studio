@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Which camera the Dataset page captures from.
 //
 // A system with more than one camera lets the operator pick (owner request,

@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 mqtt_bus.py -- one MQTT client per MQTT Connection, shared by every node.
 

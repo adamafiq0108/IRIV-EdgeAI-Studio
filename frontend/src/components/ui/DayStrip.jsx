@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // DayStrip - the days of one span, as a row of pickable columns.
 //
 // The date-range picker above it answers "which period am I looking at";

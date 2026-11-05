@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // SPA entry. Mounts the router into #root. The whole app is client-rendered and
 // served by FastAPI (see master_server.py catch-all); the backend is JSON-only.
 // FIRST, before anything can fire a request: the per-tab session intake reads

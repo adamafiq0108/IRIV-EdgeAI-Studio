@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // SwitchWifiDialog - access point -> Wi-Fi: which network, and whether it works.
 //
 // Tok Aba (2026-10-08). While the box broadcasts its access point, "Search

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // WHICH CARD IS IN FRONT where cards overlap on a Builder page (Tok Aba,
 // 2026-10-14: "put at front / put at back"). Pure functions; the Builders'
 // Arrange buttons, the canvas chrome and both grids use them.

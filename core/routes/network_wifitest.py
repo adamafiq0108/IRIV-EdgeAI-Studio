@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 network_wifitest.py -- POST /api/hub/network/wifi/test, the Network page's
 "Test connection": wlan0 leaves the access point, tries the network as a

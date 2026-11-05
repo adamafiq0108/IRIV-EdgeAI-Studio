@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Overlay - the workflow rules that DRAW on the feed (a proximity link line,
 // a guard bubble), as a card of switches with an add button.
 //

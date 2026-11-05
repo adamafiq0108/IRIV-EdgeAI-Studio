@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 host_health.py -- the health of THIS box: the machine running the dashboards and
 detection, and its Hailo NPU.

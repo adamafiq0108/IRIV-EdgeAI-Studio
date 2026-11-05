@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Manage / device control (ported from control.html + control.js). Renders the
 // device's Contract v1.2 control snapshot generically - domains/settings/actions
 // come straight from the device, so a new control domain needs zero changes

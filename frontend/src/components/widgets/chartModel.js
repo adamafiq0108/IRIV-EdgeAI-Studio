@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // THE CHART BUILDER MODEL, read and written the same way by the workflow node
 // inspector (pages/Workflow.jsx) and both Builders (builderShared.jsx).
 // Mirrors core/services/chartmodel.py; the design note is

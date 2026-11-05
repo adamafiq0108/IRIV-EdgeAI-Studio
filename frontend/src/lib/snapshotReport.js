@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // snapshotReport.js - one snapshot as a PDF violation notice.
 //
 // The notice is built from the record the master hands the photo window

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 #
 # setup_pi.sh -- Install and wire one IRIV EdgeAI Studio process on a Linux host.
 #

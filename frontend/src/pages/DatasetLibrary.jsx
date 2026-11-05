@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Dataset Library - browse what the Dataset page captured: the photos and the
 // clips, selectable, downloadable as a ZIP, deletable in bulk.
 //

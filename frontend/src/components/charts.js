@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Shared charting helpers. The library is recharts (SVG, composable) - it
 // replaced Chart.js (canvas) so the ReUI chart templates, which are built on
 // recharts, can be adopted directly instead of being reimplemented.

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // viewOnDetect.js - "Show video only when an object is detected" ([video]
 // view_on_detect), the part that decides.
 //

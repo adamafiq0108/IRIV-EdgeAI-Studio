@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 gst_detector.py -- detection via a GStreamer + Hailo pipeline, self-contained.
 

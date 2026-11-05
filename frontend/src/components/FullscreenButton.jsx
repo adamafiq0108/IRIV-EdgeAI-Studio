@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // FullscreenButton - hand the whole screen to the page.
 //
 // These boxes get mounted on a wall or a shop-floor panel PC, where the

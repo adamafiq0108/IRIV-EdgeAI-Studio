@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 profile_cpu.py -- What each process, thread and camera costs in CPU, on the box.
 

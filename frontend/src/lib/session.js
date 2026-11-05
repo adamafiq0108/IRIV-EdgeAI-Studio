@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Per-tab session identity. The ONLY file that touches sessionStorage.
 //
 // The browser holds ONE session cookie per host, shared by every tab and

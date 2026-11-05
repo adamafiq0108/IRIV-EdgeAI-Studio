@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The active-scope pill shown beside a page title. Hidden when nothing is
 // scoped; when a folder is selected in the sidebar it shows the folder name and
 // an "Overall" button that clears the scope (back to all devices).

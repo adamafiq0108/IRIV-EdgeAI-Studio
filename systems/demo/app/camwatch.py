@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 camwatch.py -- restart AI detection by itself when a camera stops answering,
 and stop it when the camera is not there at all.

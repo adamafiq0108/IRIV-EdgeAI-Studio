@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 webproxy.py -- in reverse-proxy mode the hub relays /s/<slug>/... to that
 system's master on 127.0.0.1 (core/services/webaccess.py says why the mode

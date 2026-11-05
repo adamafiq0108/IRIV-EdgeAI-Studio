@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Workflow Guideline - the stepped primer in the right-hand rail.
 //
 // Five steps, each a video plus what that step teaches. It replaced four

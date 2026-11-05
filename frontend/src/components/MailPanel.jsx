@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // MailPanel - the box's sending mailboxes, under Settings.
 //
 // A sender used to be a field buried in each system's email config, which

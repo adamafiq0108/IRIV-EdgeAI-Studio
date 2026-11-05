@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 authtls.py -- the session wall's view of the SCHEME: is this request on
 TLS, which session cookie belongs to it, and is a write cross-site.

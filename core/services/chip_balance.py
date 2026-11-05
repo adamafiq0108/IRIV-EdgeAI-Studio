@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """The Hailo load balancer's live table, read from the apps' heartbeats.
 
 Every detection app on the box writes one small heartbeat file into a shared

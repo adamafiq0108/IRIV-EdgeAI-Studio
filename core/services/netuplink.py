@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 netuplink.py -- which port a fixed address puts the box's internet on, the
 route metric that says so, and the snapshot of the port's ipv4 settings that

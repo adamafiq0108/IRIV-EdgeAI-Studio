@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 dataset_capture.py -- named snapshots and short clips for TRAINING DATA, saved
 to the NVMe drive (/mnt/nvme/dataset_image, /mnt/nvme/dataset_rec). Only

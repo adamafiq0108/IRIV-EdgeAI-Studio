@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // SettingsPage - the one shape every page under Settings wears.
 //
 // The three pages here got written at different times and looked it: one

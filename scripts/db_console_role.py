@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 db_console_role.py -- give the platform's database user the one privilege the
 query console needs, and nothing else.

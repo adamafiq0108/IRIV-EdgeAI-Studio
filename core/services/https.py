@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 https.py -- HTTPS on the LAN with the box's own certificate authority: the
 setting, where the keys live, and when a certificate is issued.

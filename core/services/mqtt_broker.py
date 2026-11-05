@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 mqtt_broker.py -- this box's MQTT broker: is it up, who holds the port, and
 what it is set to. Settings > MQTT Broker and the Workflow page's broker pill

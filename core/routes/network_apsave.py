@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 network_apsave.py -- the work behind the access point's Save button
 (POST /api/hub/network/ap/save in core/routes/network.py).

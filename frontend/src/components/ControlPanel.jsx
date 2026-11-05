@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // System Control - the hub's table of every system: status, pipeline type,
 // camera source, model, live FPS, an autostart toggle, and
 // run / restart / stop for each one's master (admin only). Every per-system

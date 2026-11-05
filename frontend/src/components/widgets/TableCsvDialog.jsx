@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // "Download CSV" for one table card (Tok Aba, 2026-10-14): the button at the
 // card's top right opens this. The person picks a date range and which of the
 // card's columns; the server reads the rows again for that range (POST

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 depth_probe.py -- Read one depth frame from the Orbbec Gemini and say what it
 saw. Proves the camera works, and which of the two ways in is live right now.

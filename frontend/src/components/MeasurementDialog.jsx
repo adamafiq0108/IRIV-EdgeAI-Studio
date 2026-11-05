@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Measurement setup for a depth camera: calibrate the floor once, try a
 // measurement by hand, and save which numbers each kind of object carries.
 //

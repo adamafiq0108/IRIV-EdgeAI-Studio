@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // camErrors.js -- why a camera failed, in words the person at the board can
 // act on.
 //

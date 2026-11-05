@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 tlsserve.py -- the hub's second front door: the same app, on HTTPS, beside
 the HTTP one (Settings -> Network -> HTTPS; core/services/https.py says why

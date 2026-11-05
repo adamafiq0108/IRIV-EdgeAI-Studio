@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // appPassword - the sending mailbox takes an APP password only (Tok Aba,
 // 2026-10-14: "only allow app password").
 //

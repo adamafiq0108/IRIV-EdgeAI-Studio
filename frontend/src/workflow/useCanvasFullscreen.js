@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // useCanvasFullscreen - the Workflow page's "Full screen" (Tok Aba,
 // 2026-10-14: "so the user can play around in there without any space issue").
 //

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Modbus - this box AS a Modbus device, for a PLC or SCADA head to poll.
 //
 // The other direction has always existed: the workflow's Modbus nodes READ a

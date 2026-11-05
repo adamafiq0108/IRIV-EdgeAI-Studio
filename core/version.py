@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 # The platform's version -- one number for the whole product, read from the
 # VERSION file at the repo root, which is the single source of truth (the
 # release workflow asserts the git tag matches it).

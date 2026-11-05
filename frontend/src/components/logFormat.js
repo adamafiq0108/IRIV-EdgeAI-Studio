@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Formatting and export for the three Diagnostics log pages.
 //
 // Its own module with NO imports, the way auditDetail.js is, and for the same

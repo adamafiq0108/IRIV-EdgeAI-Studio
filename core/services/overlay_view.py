@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """overlay_view.py -- who draws a system's live overlay, as the master sees it.
 
 [video] overlay in the system's config (systems/<slug>/config.toml):

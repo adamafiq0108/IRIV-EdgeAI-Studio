@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Protected layout for every authenticated page. Fetches /api/bootstrap once,
 // provides it via AppContext, and renders the topbar + sidebar + routed page.
 // A 401 (no session) redirects to /login; any other error shows a message.

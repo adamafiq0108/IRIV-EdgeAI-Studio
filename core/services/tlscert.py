@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 tlscert.py -- the box's own certificate authority and the server
 certificate it issues itself. Bytes in, objects out: no files, no

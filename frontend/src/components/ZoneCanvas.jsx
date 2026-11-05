@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // ZoneCanvas - the zone drawing/overlay surface, shared by the Zones page
 // (full editor) and the Detection page (read-only overlay).
 //

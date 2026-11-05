@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Thin fetch wrapper. Every call is same-origin (the SPA is served by the same
 // FastAPI process), so the session cookie rides automatically. The backend
 // speaks one shape: {"ok": true, ...} on success, {"ok": false, "error": "..."}

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 httpsrun.py -- the running half of HTTPS (https.py is the setting and the
 keys, core/tlsserve.py the server): what the listener is doing, the TLS

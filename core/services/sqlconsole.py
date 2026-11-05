@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 services/sqlconsole.py -- the SQL editor, and the wall that makes it safe.
 

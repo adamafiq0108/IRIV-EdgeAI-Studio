@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The {placeholders} a message node (Email, Telegram) can use, worked out
 // from the canvas the way the compiler works them out (core/services/
 // workflow.py), so the inspector's chips offer exactly the names the message

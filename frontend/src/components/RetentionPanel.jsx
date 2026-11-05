@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // RetentionPanel - the platform data-retention policy, hub Administration.
 // ONE policy for the whole box, admin-only (the API enforces it; the shell
 // hides the nav item too). Events stay live on each system for ~a week, then

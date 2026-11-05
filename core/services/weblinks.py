@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 weblinks.py -- every browser-facing address, in the access method the box
 is set to (core/services/webaccess.py).

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The settings of the two STATIC cards (Tok Aba, 2026-10-14): a Text card
 // (the operator's own words) and an Image card (a picture uploaded to this
 // box). They read no data, so instead of the Data section the Builders'

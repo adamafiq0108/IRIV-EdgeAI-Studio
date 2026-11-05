@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Client-side display config for workflow node types + the edge-validation
 // mirror. The AUTHORITATIVE registry (types, ranks, data defaults) comes from
 // GET /api/workflow - this file only adds what the server doesn't care about:

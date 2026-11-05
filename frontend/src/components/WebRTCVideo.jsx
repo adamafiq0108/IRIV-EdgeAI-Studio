@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // WebRTCVideo - the live feed over WebRTC, with MJPEG as the safety net.
 //
 // The board publishes H.264 into its local gateway (MediaMTX); this component

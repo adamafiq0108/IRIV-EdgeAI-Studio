@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // TriggerInspector - the Trigger node's settings (output.trigger), laid out
 // the way Tok Aba's mockup has it (2026-10-14):
 //

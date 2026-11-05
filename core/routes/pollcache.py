@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 pollcache.py -- the shared poll cache's two framework edges: the read-only
 counters route behind the "Shared poll cache (testing)" card, and the hook

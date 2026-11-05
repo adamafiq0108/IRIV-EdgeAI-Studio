@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """Vendor SDKs a camera needs, and installing one when it is missing.
 
 Some cameras are not UVC devices. An Orbbec Gemini opens through its own SDK,

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // First run: name the administrator account, give it a password of your own,
 // and (optionally) put a recovery email and a sending mailbox on file.
 // Rendered inside the shell (admin only).

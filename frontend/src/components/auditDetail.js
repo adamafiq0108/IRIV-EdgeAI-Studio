@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The audit log's `detail` field, as something React can render.
 //
 // It is a JSONB column, so it arrives as an OBJECT -- `{}` for most actions,

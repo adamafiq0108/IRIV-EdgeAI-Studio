@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Forgot password: two ways back in.
 //
 // BY EMAIL: type the address on your account. The server says the SAME thing

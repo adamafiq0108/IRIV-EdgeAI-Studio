@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The standard top-right "and now go here" button, on every page that HAS a
 // next step: the following page of the same nav section, drawn the way the
 // sidebar draws it -- icon, then name -- so the button and the rail entry it

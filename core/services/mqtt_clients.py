@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 mqtt_clients.py -- named MQTT Connections: a broker set up once and picked by
 every MQTT Subscribe and MQTT Publish that talks to it.

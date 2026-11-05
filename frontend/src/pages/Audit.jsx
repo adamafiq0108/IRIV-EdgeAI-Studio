@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Audit log -- who did what, and what it did.
 //
 // WHAT THIS PAGE IS FOR. It is read exactly once, after the fact, by someone

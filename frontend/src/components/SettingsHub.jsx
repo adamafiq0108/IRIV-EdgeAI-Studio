@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // SettingsHub - one Settings entry in the rail, with the choice inside it.
 //
 // Accounts, Data Retention and Board I/O were three separate rail items under

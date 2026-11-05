@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // AccountsPanel - platform-level account management, lives in the hub
 // (IRIV EdgeAI Studio → Administration). ONE place to manage every account: the
 // credential store and session secret are already shared across the hub and

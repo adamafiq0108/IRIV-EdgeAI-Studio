@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // boxAccess - how ONE SYSTEM is reached, as Edit system and the create
 // wizard say it (Tok Aba, 2026-10-07).
 //

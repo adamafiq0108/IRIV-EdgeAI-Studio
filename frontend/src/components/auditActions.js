@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The audit log's `action`, in the words a customer reads it in.
 //
 // The server writes dotted ids ("system.settings", "session.revoke_others")

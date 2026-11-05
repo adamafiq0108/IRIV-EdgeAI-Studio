@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Undo/redo for the workflow canvas: a bounded stack of {nodes, edges}
 // snapshots. Callers push() BEFORE a structural mutation (add/delete/connect/
 // paste, drag-end) - never during drag-move, which would flood the stack.

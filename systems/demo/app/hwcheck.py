@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """The detection app's own copy of the hardware check (core/services/hwcheck.py).
 
 The app imports nothing from core/, so the probe is repeated here: the Hailo

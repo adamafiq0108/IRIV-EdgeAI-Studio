@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 overlay.py -- GET /api/detector/overlay: the live overlay as server-sent
 events, for a system whose browser draws it ([video] overlay = "client").

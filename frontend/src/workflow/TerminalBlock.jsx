@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // TerminalBlock - the board's screw terminals, drawn as they are printed,
 // with what each one is doing right now.
 //

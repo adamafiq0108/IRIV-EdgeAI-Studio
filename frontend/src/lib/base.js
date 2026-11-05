@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Where this page is served from: "" (the site root) or "/s/<slug>".
 //
 // The box can be reached two ways (Settings -> Network -> Software port;

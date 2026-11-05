@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 class_filter.py -- named Class Filters: the naming rule, and pausing one from
 the dashboard.

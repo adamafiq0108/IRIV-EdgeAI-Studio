@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 #
 # install_service.sh -- make the platform come back by itself after a reboot.
 #

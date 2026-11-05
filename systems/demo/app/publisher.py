@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """publisher.py -- push one camera's annotated video to the WebRTC gateway.
 
 The MJPEG path encodes a JPEG per frame in Python and serves it over HTTP.

@@ -1,5 +1,6 @@
 #!/usr/bin/python3 -I
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 set_hostname.py -- rename the box. Run as root through sudo by the hub
 (core/services/hostname.py), installed root-owned at

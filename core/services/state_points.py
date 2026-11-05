@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """The ON and OFF points of a Detection Stream and a Class Filter.
 
 Tok Aba (2026-10-09): "detection stream just got option logic for on only,

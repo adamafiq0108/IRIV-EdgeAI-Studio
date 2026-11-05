@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """Real-world size from a depth picture: length, width, height, distance.
 
 A camera only knows ANGLES. A box that is 100 pixels wide might be a matchbox

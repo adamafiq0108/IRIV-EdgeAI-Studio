@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // The Monitor account's two panels.
 //
 //   MonitorSwitchCard  System settings (master and developer): the switch, the

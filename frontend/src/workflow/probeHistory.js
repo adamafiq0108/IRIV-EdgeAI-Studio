@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // probeHistory - what a Debug node has seen, with the time it saw it.
 //
 // The Debug node's face shows the CURRENT reading. Node-RED's debug tab shows

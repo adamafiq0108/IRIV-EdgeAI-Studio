@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 log_clear.py -- Clear Log: the mark that hides app.log's cleared lines, and
 one system's purge. The hub clears its own ring only (Tok Aba, 2026-10-14):

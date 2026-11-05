@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Dark mode, shared by every shadcn shell (HubShell on the hub, MasterShell on
 // the masters) so 5100 and 511x expose the same toggle and honour the same
 // stored choice. shadcn's tokens already define a .dark palette - and index.css

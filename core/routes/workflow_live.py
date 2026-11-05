@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 workflow_live.py -- GET /api/workflow/live: what the Workflow page and the
 Overlay panel POLL, without what they only need once.

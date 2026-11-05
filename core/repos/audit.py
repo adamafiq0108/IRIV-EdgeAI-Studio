@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 repos/audit.py -- SQL for the centralized audit log. SQL only. Writes are
 best-effort (a Postgres outage must never block the action being audited),
