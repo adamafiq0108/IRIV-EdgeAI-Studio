@@ -22,23 +22,26 @@ import { createContext, useContext } from "react";
 /** The colour of the current pane's icon tile, provided by SettingsHub. */
 export const SettingsTone = createContext("#8e8e93");
 
-export function IconTile({ icon: Icon, color, size = 28 }) {
+/** The neutral icon tile the rest of the product uses (the About page's
+ *  section headers): a light grey square, the icon drawn in muted ink. On a
+ *  selected (blue) row it turns translucent white, so it still reads. `color`
+ *  is accepted for callers that pass one and deliberately not used. */
+export function IconTile({ icon: Icon, size = 28, active = false }) {
   return (
-    <span className="grid shrink-0 place-items-center text-white"
-          style={{ width: size, height: size, borderRadius: Math.round(size * 0.24), background: color,
-                   boxShadow: "inset 0 0 0 0.5px rgba(0,0,0,.12)" }}>
-      <Icon style={{ width: size * 0.58, height: size * 0.58 }} strokeWidth={2.1} aria-hidden="true" />
+    <span className={"grid shrink-0 place-items-center rounded-md "
+                     + (active ? "bg-white/20 text-white" : "bg-muted text-muted-foreground")}
+          style={{ width: size, height: size }}>
+      <Icon style={{ width: size * 0.56, height: size * 0.56 }} strokeWidth={1.9} aria-hidden="true" />
     </span>
   );
 }
 
 export default function SettingsPage({ title, icon: Icon, description,
                                        actions = null, children }) {
-  const color = useContext(SettingsTone);
   return (
     <div className="w-full space-y-6">
       <header className="flex items-center gap-4 pt-1">
-        {Icon && <IconTile icon={Icon} color={color} size={44} />}
+        {Icon && <IconTile icon={Icon} size={44} />}
         <div className="min-w-0 flex-1">
           <h1 className="text-[26px] font-semibold leading-tight tracking-tight">{title}</h1>
           {description && (

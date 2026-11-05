@@ -135,7 +135,7 @@ export default function SettingsHub({ tabs: allowed = null }) {
                     className={"inline-flex shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-medium transition-colors "
                       + (on ? "text-white" : "bg-card text-foreground hover:bg-muted")}
                     style={on ? { background: "#007aff" } : undefined}>
-              <IconTile icon={x.icon} color={x.color} size={22} /> {x.label}
+              <IconTile icon={x.icon} size={22} active={on} /> {x.label}
             </button>
           );
         })}
@@ -165,7 +165,7 @@ export default function SettingsHub({ tabs: allowed = null }) {
                             className={"flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors "
                               + (on ? "font-medium text-white" : "text-foreground hover:bg-black/[.05] dark:hover:bg-white/[.06]")}
                             style={on ? { background: "#007aff" } : undefined}>
-                      <IconTile icon={x.icon} color={x.color} size={24} />
+                      <IconTile icon={x.icon} size={26} active={on} />
                       <span className="truncate">{x.label}</span>
                     </button>
                   </li>
