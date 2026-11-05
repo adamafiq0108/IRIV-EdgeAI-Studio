@@ -20,11 +20,12 @@
 export default function SettingsPage({ title, icon: Icon, description,
                                        actions = null, children }) {
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-4">
-      <header className="flex items-start gap-3">
+    <div className="w-full space-y-4">
+      <header className="flex items-start gap-3 rounded-xl border bg-card px-5 py-4">
         {Icon && (
-          <Icon className="mt-0.5 size-5 shrink-0 text-muted-foreground"
-                aria-hidden="true" />
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+            <Icon className="size-[18px]" aria-hidden="true" />
+          </span>
         )}
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-semibold leading-tight">{title}</h1>
