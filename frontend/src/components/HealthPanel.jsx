@@ -85,7 +85,25 @@ function Section({ icon: Icon, title, sub, right, children }) {
   );
 }
 
-const TILES = "grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4";
+/** Tiles in rows of three, and the last row shares the full width: five tiles
+ *  are three, then two wider ones; four are three, then one across. On a
+ *  narrow screen they are simply two to a row. */
+function TileGrid({ children }) {
+  const items = [children].flat(2).filter(Boolean);
+  const n = items.length;
+  const rem = n % 3;
+  const lastRow = n - (rem || 3);
+  return (
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
+      {items.map((el, i) => {
+        let span = "md:col-span-2";
+        if (i >= lastRow && rem === 2) span = "md:col-span-3";
+        if (i >= lastRow && rem === 1) span = "md:col-span-6";
+        return <div key={el.key ?? i} className={"min-w-0 " + span}>{el}</div>;
+      })}
+    </div>
+  );
+}
 
 /** The board itself: CPU, RAM, each storage device, CPU temperature. */
 function BoardCard({ host }) {
@@ -101,7 +119,7 @@ function BoardCard({ host }) {
   return (
     <Section icon={Cpu} title="This board"
              sub={sub || "the board running the dashboards and detection"}>
-      <div className={TILES}>
+      <TileGrid>
         <Tile label="CPU" value={host.cpu_percent} />
         <Tile label="Memory" value={host.mem_percent} />
         <Tile label="CPU temperature" value={host.cpu_temp_c} fmt={temp}
@@ -115,7 +133,7 @@ function BoardCard({ host }) {
                         : s.total_gb ? `${s.total_gb} GB` : null]
                        .filter(Boolean).join(" · ")} />
         ))}
-      </div>
+      </TileGrid>
     </Section>
   );
 }
@@ -159,7 +177,7 @@ function HailoCard({ npu = {}, pipelines, arch }) {
           accelerator fitted).
         </p>
       ) : (
-        <div className={TILES}>
+        <TileGrid>
           <Tile label="Hailo HAT" value={hat || "-"} fmt={(v) => v} bar={false}
                 sub={npu.arch ? "architecture" : undefined} />
           <Tile label="NPU load (estimate)" value={loadPct} warn={70} crit={88}
@@ -173,7 +191,7 @@ function HailoCard({ npu = {}, pipelines, arch }) {
                        : (npu.power_note || undefined)} />
           <Tile label="Running pipelines" value={running.length} bar={false}
                 fmt={(v) => String(v)} sub={`${chipPipes.length} on the NPU`} />
-        </div>
+        </TileGrid>
       )}
     </Section>
   );

@@ -279,10 +279,13 @@ export function SkelGuideline() {
 /** About: the headline card, then the readings on the left and the software on
  *  the right, in the real page's own grid. */
 export function SkelAbout() {
+  // Rows of three, the last row sharing the width (as the real tiles do).
   const tiles = (n) => (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
       {Array.from({ length: n }, (_, i) => (
-        <div key={i} className="rounded-lg border p-3">
+        <div key={i} className={"rounded-lg border p-3 " + (
+          i >= n - (n % 3 || 3) && n % 3 === 2 ? "md:col-span-3"
+            : i >= n - (n % 3 || 3) && n % 3 === 1 ? "md:col-span-6" : "md:col-span-2")}>
           <SkelLine w="50%" h={10} style={{ marginBottom: 10 }} />
           <SkelLine w="40%" h={22} style={{ marginBottom: 12 }} />
           <SkelLine h={8} style={{ borderRadius: 8 }} />
