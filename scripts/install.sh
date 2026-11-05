@@ -1647,6 +1647,14 @@ systemctl enable irivai-hub.service >/dev/null
 # with a different port would leave the old one serving where nobody probes.
 systemctl restart irivai-hub.service
 for slug in $BUILTIN_SLUGS; do
+    # A built-in the box does not list (demo, on every box: it ships only as
+    # the template new systems are built from) gets no service. Started, its
+    # master would see it is not listed, stand down, and leave a failed unit.
+    if grep -qE '^enabled = \[\]' "${TARGET}/config/systems.local.toml" 2>/dev/null        || ! grep -qE "^enabled = .*\"${slug}\"" "${TARGET}/config/systems.local.toml" "${TARGET}/config/systems.toml" 2>/dev/null; then
+        systemctl disable "irivai-master@${slug}.service" >/dev/null 2>&1 || true
+        note "${slug}: not listed on this box, so its service is not started"
+        continue
+    fi
     systemctl enable "irivai-master@${slug}.service" >/dev/null
     systemctl restart "irivai-master@${slug}.service"
 done

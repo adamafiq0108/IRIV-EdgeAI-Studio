@@ -10,9 +10,17 @@
 # system.py is discovered automatically; adding one never edits a server file.
 #
 # `enabled` is the switch. Omit it to take everything found in `dir`.
+#
+# Empty by default: a box opens to an empty Home, with the templates to make
+# its first system, never the reference "demo" system. demo still ships -- it
+# is what every new system is built from (core/services/provision.py) -- it
+# is just not listed. A deployment that wants it lists it in
+# systems.local.toml. (install.sh seeds the same empty list on a first
+# install; this default is what a box gets when that file is missing, as on a
+# cloned image whose local settings were cleared.)
 
 dir = "systems"
-enabled = ["demo"]
+enabled = []
 
 # Where the hub answers. Masters use it for their "< Systems" back link.
 #
