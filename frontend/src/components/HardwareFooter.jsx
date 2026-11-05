@@ -25,11 +25,8 @@
 // never cover page content. The two pages that size themselves to the viewport
 // (.wf-page, .ocr-page) subtract --hw-footer-h - see theme.css.
 import { useCallback, useEffect, useState } from "react";
-import { Cable } from "lucide-react";
 import { api } from "../api/client.js";
 import { useVisibleInterval } from "../api/hooks.js";
-import { UsbPorts, EthPorts, useBoardPorts } from "./BoardPorts.jsx";
-import TerminalBlock from "../workflow/TerminalBlock.jsx";
 
 // While the box is working: fast enough to see inside one job. An OCR read is a
 // few seconds end to end, so a 10 s poll can miss an entire read - the exact
@@ -118,19 +115,6 @@ export function describeStats(meter) {
 export default function HardwareFooter() {
   const [meter, setMeter] = useState(null);
   const [down, setDown] = useState(false);
-  // The board's connectors, drawn like the faceplate, one click away from
-  // the same strip that shows its load: "what is this box doing" and "what
-  // is plugged into it" are the two halves of one question. The panel polls
-  // only while open; Escape and the button both close it.
-  const [portsOpen, setPortsOpen] = useState(false);
-  const boardPorts = useBoardPorts(portsOpen);
-  useEffect(() => {
-    if (!portsOpen) return undefined;
-    const onKey = (e) => { if (e.key === "Escape") setPortsOpen(false); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [portsOpen]);
-
   const sample = useCallback(async () => {
     try {
       const d = await api.get("/api/host/meter");
@@ -166,41 +150,6 @@ export default function HardwareFooter() {
       <span className="hw-tail">
         {down ? "no reading" : busy ? "analysing" : "idle"}
       </span>
-      <button type="button"
-              className={"btn btn-sm" + (portsOpen ? " btn-accent" : "")}
-              style={{ padding: "1px 7px", lineHeight: 1 }}
-              title="The board's connectors - USB sockets, ethernet jacks, screw terminals, live"
-              onClick={() => setPortsOpen((v) => !v)}>
-        <Cable size={12} />
-      </button>
-      {portsOpen && (
-        <div className="hw-ports-pop" role="dialog" aria-label="Board ports">
-          {/* One ROW, in the order the board is read at a cabinet: the screw
-              terminals first (that is what a wire goes into), then the
-              ethernet jacks, then USB. Stacked, the three panels made a
-              column taller than the window and put the terminal block --
-              the reason anyone opens this -- below the fold. */}
-          <div className="hw-ports-row">
-            <div className="hw-ports-col hw-ports-col-wide">
-              <div className="hw-ports-title">Terminals</div>
-              <TerminalBlock usedPorts={[]} poll={portsOpen} />
-            </div>
-            <div className="hw-ports-col">
-              <div className="hw-ports-title">Ethernet</div>
-              <EthPorts eth={boardPorts.data?.eth} />
-            </div>
-            <div className="hw-ports-col">
-              <div className="hw-ports-title">USB</div>
-              <UsbPorts usb={boardPorts.data?.usb} />
-            </div>
-          </div>
-          {boardPorts.error && (
-            <p className="muted small" style={{ margin: 0 }}>
-              Cannot read the board: {boardPorts.error}
-            </p>
-          )}
-        </div>
-      )}
     </footer>
   );
 }

@@ -4531,49 +4531,6 @@ body.wf-fs-on .topbar { visibility: hidden; }
   overflow-wrap: anywhere;
 }
 
-/* The hardware footer's Ports popover: floats above the strip, never over
-   the page content the footer itself promises not to cover. */
-.hw-ports-pop {
-  position: fixed;
-  right: 12px;
-  bottom: calc(var(--hw-footer-h, 34px) + 8px);
-  z-index: 60;
-  display: grid;
-  gap: 12px;
-  padding: 12px;
-  max-height: min(70vh, 640px);
-  overflow-y: auto;
-  background: var(--surface2, #1d2026);
-  border: 1px solid rgba(128, 128, 128, .3);
-  border-radius: 10px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, .45);
-  /* Wide enough for the three panels side by side, and never wider than the
-     window. The terminal block is one long connector, so the popover is
-     landscape by nature -- as a 420px column it had to stack the panels and
-     scroll, which put the terminals (the reason anyone opens this) below the
-     fold. */
-  width: min(1180px, calc(100vw - 24px));
-}
-.hw-ports-row {
-  display: flex;
-  /* Centred on the row's height. The terminal block is far taller than the
-     jacks and the USB stack, so top-aligning left those two hanging from the
-     ceiling with a hand's depth of empty space under them. */
-  align-items: center;
-  gap: 18px;
-  /* Wraps rather than squeezing: on a narrow window the panels drop under
-     each other at full size instead of being crushed into unreadable ones. */
-  flex-wrap: wrap;
-}
-.hw-ports-col { display: grid; gap: 6px; min-width: 0; align-content: center; }
-/* The terminal block sets the row's height and takes whatever is left; it is
-   the only panel whose width carries information. */
-.hw-ports-col-wide { flex: 1 1 520px; overflow-x: auto; }
-.hw-ports-title {
-  font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
-  text-transform: uppercase; color: var(--muted, #8b8f98);
-}
-
 /* -- widget animations -------------------------------------------------------
    How a card ARRIVES, chosen per widget (builder.ANIMATIONS). These are the
    half that moves the WHOLE CARD, so they work on a tile, a table and a video
