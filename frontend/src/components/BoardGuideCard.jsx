@@ -156,7 +156,7 @@ function describe(d) {
 /** One view of the layout picture with the dots on it. */
 function View({ view, states, selected, onSelect, label }) {
   return (
-    <svg viewBox={view.box} className="w-full rounded-lg border bg-white" role="group" aria-label={label}
+    <svg viewBox={view.box} className="w-full" role="group" aria-label={label}
          style={{ display: "block" }}>
       <image href={IMG.layout} x="0" y="0" width={LAYOUT_W} height={LAYOUT_H} />
       {view.spots.filter((s) => states.some((x) => x.id === s.id)).map((s) => {
