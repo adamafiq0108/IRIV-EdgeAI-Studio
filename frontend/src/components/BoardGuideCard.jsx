@@ -67,6 +67,10 @@ const RIGHT = {
 const TONE = {
   ok: "#22a06b", idle: "#8a8f98", warn: "#fab219", crit: "#d03b3b", unknown: "#8a8f98",
 };
+//: The outline colour for every part, regardless of state -- red reads clearly
+//: against the dark panel, which a grey or green stroke did not. The fill still
+//: carries the live state; the outline's only job is "look here".
+const HIGHLIGHT = "#e5342c";
 
 const byId = (list, id) => (list || []).find((p) => p.id === id);
 const mbps = (v) => (v >= 1000 ? "1 Gb/s" : `${v} Mb/s`);
@@ -167,12 +171,12 @@ function View({ view, states, selected, onSelect, label }) {
              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(s.id); }}>
             <title>{`${st?.label || s.id}${st?.status ? ` - ${st.status}` : ""}`}</title>
             {s.shape === "circle" ? (
-              <circle cx={s.x} cy={s.y} r={s.r} fill={tone} fillOpacity={sel ? 0.3 : 0.16}
-                      stroke={tone} strokeWidth={sel ? 6 : 4}
+              <circle cx={s.x} cy={s.y} r={s.r} fill={tone} fillOpacity={sel ? 0.32 : 0.18}
+                      stroke={HIGHLIGHT} strokeWidth={sel ? 6 : 4}
                       strokeDasharray={st?.tone === "unknown" ? "8 5" : undefined} />
             ) : (
-              <rect x={s.x} y={s.y} width={s.w} height={s.h} rx="5" fill={tone} fillOpacity={sel ? 0.3 : 0.16}
-                    stroke={tone} strokeWidth={sel ? 6 : 4}
+              <rect x={s.x} y={s.y} width={s.w} height={s.h} rx="5" fill={tone} fillOpacity={sel ? 0.32 : 0.18}
+                    stroke={HIGHLIGHT} strokeWidth={sel ? 6 : 4}
                     strokeDasharray={st?.tone === "unknown" ? "8 5" : undefined} />
             )}
           </g>
