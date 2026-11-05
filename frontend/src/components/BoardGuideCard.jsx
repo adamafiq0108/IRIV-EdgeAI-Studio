@@ -1,17 +1,19 @@
 // Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
-// Board guide - the IRIV Edge AI CM5 as it really looks, with every port
-// marked on the photo and what is on each one RIGHT NOW beside it.
+// Board guide - the IRIV Edge AI CM5 as Cytron draws it, with every port marked
+// on the picture and what is on each one RIGHT NOW beside it.
 //
-// The photos are the product's own (core/static/img/iriv-cm5-*.png). Each port
-// is a dot drawn over the photo at the connector's place, in the photo's own
-// pixel coordinates (an SVG viewBox crops the photo to its panel, so the
-// numbers never need converting). The dot's colour is the port's state, read
-// from GET /api/hub/board every two seconds while the card is on screen:
+// The picture is the product page's own "External Layout" (front, left and
+// right views, core/static/img/iriv-cm5-layout.png); the block diagram and
+// the board layout under it are the page's too. Each port is a dot drawn over
+// the picture at the connector, in the picture's own pixel coordinates (an SVG
+// viewBox crops it to one view, so the numbers never need converting). The
+// dot's colour is the port's state, read from GET /api/hub/board every two
+// seconds while the card is on screen:
 //
 //   green   something is on it and active: a link with a cable, a camera, a
 //           contact closed, a relay energised, a Modbus device answering
 //   grey    nothing on it, or quiet
-//   amber   a warning: RS485 asked and got no answer, a line busy elsewhere
+//   amber   a warning: RS485 asked and got no answer
 //   red     the line is held by another program
 //   dashed  the box could not read it (never shown as "off")
 //
@@ -20,43 +22,49 @@
 // in it, so for the terminals the honest words are "reads high", "energised",
 // "on", "answering" - never "connected".
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Cpu } from "lucide-react";
+import { ChevronDown, Cpu } from "lucide-react";
 import { api } from "../api/client.js";
 import { useVisibleInterval } from "../api/hooks.js";
 
 const IMG = {
-  front: "/static/img/iriv-cm5-front.png",
-  side: "/static/img/iriv-cm5-side.png",
+  layout: "/static/img/iriv-cm5-layout.png",       // 1314 x 1600
+  block: "/static/img/iriv-cm5-block.png",
+  internal: "/static/img/iriv-cm5-internal.png",
   guide: "/static/img/iriv-edge-ai-cm5.png",
 };
+const LAYOUT_W = 1314, LAYOUT_H = 1600;
 
-//: Where each port is on the 800x800 front photo, in its pixels.
-const FRONT = [
-  { id: "LEDS", x: 245, y: 590, r: 9 },
-  { id: "LED01", x: 330, y: 590, r: 9 },
-  { id: "BUTTON", x: 277, y: 565, r: 9 },
-  { id: "POWER", x: 334, y: 565, r: 9 },
-  { id: "VIN", x: 372, y: 541, r: 6 },
-  { id: "RS485", x: 404, y: 541, r: 6 },
-  { id: "DO0", x: 444, y: 541, r: 6 },
-  { id: "L0", x: 477, y: 541, r: 6 },
-  { id: "GND", x: 372, y: 573, r: 6 },
-  { id: "SS", x: 388, y: 573, r: 6 },
-  { id: "DI0", x: 404, y: 573, r: 6 },
-  { id: "DI1", x: 420, y: 573, r: 6 },
-  { id: "DO1", x: 444, y: 573, r: 6 },
-  { id: "L1", x: 477, y: 573, r: 6 },
-  { id: "ETH0", x: 537, y: 550, r: 11 },
-  { id: "ETH1", x: 621, y: 550, r: 11 },
-  { id: "USBC", x: 720, y: 573, r: 10 },
-];
-//: The side photo: the two antenna sockets, the OLED window, the DIN clip.
-const SIDE = [
-  { id: "WIFI", x: 155, y: 585, r: 11 },
-  { id: "4G", x: 323, y: 572, r: 11 },
-  { id: "OLED", x: 465, y: 625, r: 11 },
-  { id: "DIN", x: 60, y: 640, r: 11 },
-];
+//: Where each port is on the layout picture, in its pixels, per view.
+const FRONT = {
+  box: "340 230 960 270",
+  spots: [
+    { id: "BUTTON", x: 516, y: 372, r: 10 }, { id: "POWER", x: 594, y: 372, r: 10 },
+    { id: "VIN", x: 655, y: 355, r: 6 }, { id: "RS485", x: 703, y: 355, r: 6 },
+    { id: "DO0", x: 764, y: 355, r: 6 }, { id: "L0", x: 811, y: 355, r: 6 },
+    { id: "GND", x: 655, y: 382, r: 6 }, { id: "SS", x: 680, y: 382, r: 6 },
+    { id: "DI0", x: 703, y: 382, r: 6 }, { id: "DI1", x: 727, y: 382, r: 6 },
+    { id: "DO1", x: 764, y: 382, r: 6 }, { id: "L1", x: 811, y: 382, r: 6 },
+    { id: "ETH0", x: 907, y: 355, r: 12 }, { id: "ETH1", x: 1040, y: 355, r: 12 },
+    { id: "USBC", x: 1190, y: 385, r: 10 },
+    { id: "LEDS", x: 475, y: 413, r: 9 }, { id: "LED01", x: 599, y: 413, r: 9 },
+  ],
+};
+const LEFT = {
+  box: "500 660 790 320",
+  spots: [
+    { id: "DIN", x: 553, y: 833, r: 11 }, { id: "WIFI", x: 653, y: 770, r: 11 },
+    { id: "4G", x: 820, y: 770, r: 11 }, { id: "OLED", x: 962, y: 820, r: 11 },
+  ],
+};
+const RIGHT = {
+  box: "470 1190 790 300",
+  spots: [
+    { id: "USB0", x: 725, y: 1300, r: 11 }, { id: "USB1", x: 725, y: 1350, r: 11 },
+    { id: "HDMI", x: 857, y: 1357, r: 11 },
+    { id: "MIPI0", x: 980, y: 1375, r: 8 }, { id: "MIPI1", x: 1097, y: 1375, r: 8 },
+    { id: "SIM", x: 1085, y: 1415, r: 10 },
+  ],
+};
 
 const TONE = {
   ok: "#22a06b", idle: "#8a8f98", warn: "#fab219", crit: "#d03b3b", unknown: "#8a8f98",
@@ -85,6 +93,8 @@ function gpioState(p, kind) {
   if (p.level === 0 || p.level === 1) return { tone: "idle", status: "off", detail: "Output is off" + who };
   return { tone: "unknown", status: "cannot read", detail: "The output could not be read back" + who };
 }
+
+const NONE = { tone: "idle", status: "", detail: "Not monitored" };
 
 /** Every port, in the order they are listed, with its live state. */
 function describe(d) {
@@ -122,45 +132,51 @@ function describe(d) {
   const buzzer = byId(ports, "BUZZER");
 
   return [
-    { panel: "Front", id: "LEDS", label: "Status LEDs", can: "PWR, ACT, M.2 · 4G, PWR, WWAN", tone: "idle", status: "read the lights", detail: "Power, activity, M.2 and 4G module state" },
-    { panel: "Front", id: "LED01", label: "LED 0, LED 1", can: "2 programmable LEDs", tone: "idle", status: "programmable", detail: "Driven by a system's rules" },
-    { panel: "Front", id: "BUTTON", label: "USER button", can: "1 programmable button",
-      ...(button ? gpioState({ ...button, value: button.value }, "input") : { tone: "unknown", status: "not detected", detail: "" }),
-      status: button?.value === 1 ? "pressed" : button?.value === 0 ? "released" : (button ? "cannot read" : "not detected") },
-    { panel: "Front", id: "POWER", label: "POWER button", can: "Power on and off", tone: "idle", status: "", detail: "Hold to switch the box off" },
-    { panel: "Front", id: "VIN", label: "VIN", can: "DC 10-30 V in, surge-protected", tone: "idle", status: "", detail: "Field power; the box is on, so it is powered" },
-    { panel: "Front", id: "GND", label: "GND", can: "Power return", tone: "idle", status: "", detail: "" },
-    { panel: "Front", id: "RS485", label: "RS485 (A, B, G)", can: "Isolated, up to 500 kbps", ...rsState },
-    { panel: "Front", id: "SS", label: "S/S", can: "Input common", tone: "idle", status: "", detail: "Common for DI0 and DI1" },
-    { panel: "Front", id: "DI0", label: "DI0", can: "Isolated input, 3-50 V high", ...gpioState(byId(ports, "DI0"), "input") },
-    { panel: "Front", id: "DI1", label: "DI1", can: "Isolated input, 3-50 V high", ...gpioState(byId(ports, "DI1"), "input") },
-    { panel: "Front", id: "DO0", label: "DO0", can: "Isolated dry contact, 50 V 500 mA", ...gpioState(byId(ports, "DO0"), "output") },
-    { panel: "Front", id: "DO1", label: "DO1", can: "Isolated dry contact, 50 V 500 mA", ...gpioState(byId(ports, "DO1"), "output") },
-    { panel: "Front", id: "L0", label: "L0 (+ -)", can: "LED driver, Vin up to 2 A, PWM", ...gpioState(byId(ports, "L0"), "pwm") },
-    { panel: "Front", id: "L1", label: "L1 (+ -)", can: "LED driver, Vin up to 2 A, PWM", ...gpioState(byId(ports, "L1"), "pwm") },
+    { panel: "Front", id: "POWER", label: "Power button", can: "Power on and off", ...NONE, detail: "Hold to switch the box off" },
+    { panel: "Front", id: "BUTTON", label: "User button", can: "1 programmable button (GPIO4)",
+      ...(button ? gpioState(button, "input") : { tone: "unknown", status: "not detected", detail: "" }),
+      status: button?.busy ? "held by another program" : button?.value === 1 ? "pressed" : button?.value === 0 ? "released" : (button ? "cannot read" : "not detected") },
+    { panel: "Front", id: "VIN", label: "VIN", can: "DC 10-30 V in, surge-protected", ...NONE, detail: "Field power; the box is on, so it is powered" },
+    { panel: "Front", id: "GND", label: "GND", can: "Power return", ...NONE, detail: "" },
+    { panel: "Front", id: "RS485", label: "RS485 (A, B, G)", can: "Isolated, up to 500 kbps, via USB-to-UART", ...rsState },
+    { panel: "Front", id: "SS", label: "S/S", can: "Input common for DI0 and DI1", ...NONE, detail: "" },
+    { panel: "Front", id: "DI0", label: "DI0", can: "Isolated input, 3-50 V high (GPIO22)", ...gpioState(byId(ports, "DI0"), "input") },
+    { panel: "Front", id: "DI1", label: "DI1", can: "Isolated input, 3-50 V high (GPIO27)", ...gpioState(byId(ports, "DI1"), "input") },
+    { panel: "Front", id: "DO0", label: "DO0", can: "Isolated dry contact, 50 V 500 mA (GPIO23)", ...gpioState(byId(ports, "DO0"), "output") },
+    { panel: "Front", id: "DO1", label: "DO1", can: "Isolated dry contact, 50 V 500 mA (GPIO24)", ...gpioState(byId(ports, "DO1"), "output") },
+    { panel: "Front", id: "L0", label: "L0 (+ -)", can: "LED driver, Vin up to 2 A, PWM (GPIO12)", ...gpioState(byId(ports, "L0"), "pwm") },
+    { panel: "Front", id: "L1", label: "L1 (+ -)", can: "LED driver, Vin up to 2 A, PWM (GPIO13)", ...gpioState(byId(ports, "L1"), "pwm") },
     { panel: "Front", id: "ETH0", label: "ETH0", can: "Gigabit RJ45, the module's own port", ...ethState("eth0") },
-    { panel: "Front", id: "ETH1", label: "ETH1", can: "Gigabit RJ45 (Realtek on USB)", ...ethState("eth1") },
-    { panel: "Front", id: "USBC", label: "USB-C BOOT/DBG", can: "Boot and debug from a computer", tone: "idle", status: "", detail: "Not monitored; not for field power" },
-    { panel: "Back", id: "USB0", label: "USB 3.0 (socket 1)", can: "Camera or drive", ...usbState(0) },
-    { panel: "Back", id: "USB1", label: "USB 3.0 (socket 2)", can: "Camera or drive", ...usbState(1) },
-    { panel: "Back", id: "HDMI", label: "HDMI", can: "HDMI 2.0, 4K at 60 Hz", tone: "idle", status: "", detail: "Not monitored" },
-    { panel: "Side", id: "WIFI", label: "WIFI antenna", can: "SMA socket · Wi-Fi 2.4 / 5 GHz, Bluetooth 5.0", ...wifiState },
-    { panel: "Side", id: "4G", label: "4G antenna socket", can: "For a 4G module in the mPCIe slot", tone: "idle", status: "", detail: "Not monitored" },
-    { panel: "Side", id: "OLED", label: "OLED window", can: '0.96" display: name, address, state', tone: "idle", status: "", detail: "The front panel the box prints by itself" },
-    { panel: "Side", id: "DIN", label: "DIN clip", can: "DIN-rail mount", tone: "idle", status: "", detail: "" },
-    { panel: "Inside", id: "BUZZER", label: "Buzzer", can: "Local alarm", ...(buzzer ? gpioState(buzzer, "output") : { tone: "unknown", status: "not detected", detail: "" }),
-      status: buzzer?.lit ? "sounding" : buzzer ? "silent" : "not detected" },
+    { panel: "Front", id: "ETH1", label: "ETH1", can: "Gigabit RJ45, a controller on USB 3", ...ethState("eth1") },
+    { panel: "Front", id: "USBC", label: "USB-C BOOT/DBG", can: "Boot and debug from a computer", ...NONE, detail: "Not monitored; not for field power" },
+    { panel: "Front", id: "LEDS", label: "Status LEDs", can: "PWR, ACT, M.2 · 4G PWR, WWAN", ...NONE, status: "read the lights", detail: "Power, activity, M.2 and 4G module state" },
+    { panel: "Front", id: "LED01", label: "LED 0, LED 1", can: "2 programmable LEDs (GPIO20, GPIO21)", ...NONE, status: "programmable", detail: "Driven by a system's rules" },
+    { panel: "Left", id: "DIN", label: "DIN bracket", can: "DIN-rail mount", ...NONE, detail: "" },
+    { panel: "Left", id: "WIFI", label: "WiFi antenna", can: "Wi-Fi 2.4 / 5 GHz, Bluetooth 5.0", ...wifiState },
+    { panel: "Left", id: "4G", label: "4G antenna (reserved)", can: "For a 4G module in the mPCIe slot", ...NONE },
+    { panel: "Left", id: "OLED", label: "OLED display", can: '0.96" SSD1306 on I2C1 (0x3C)', ...NONE, detail: "The front panel the box prints by itself" },
+    { panel: "Right", id: "USB0", label: "USB 3.0 (upper)", can: "Camera or drive, via the USB 3.0 hub", ...usbState(0) },
+    { panel: "Right", id: "USB1", label: "USB 3.0 (lower)", can: "Camera or drive, via the USB 3.0 hub", ...usbState(1) },
+    { panel: "Right", id: "HDMI", label: "HDMI", can: "HDMI 2.0, 4K at 60 Hz", ...NONE },
+    { panel: "Right", id: "MIPI0", label: "MIPI 0", can: "4-lane CSI camera (I2C0)", ...NONE },
+    { panel: "Right", id: "MIPI1", label: "MIPI 1", can: "4-lane CSI camera", ...NONE },
+    { panel: "Right", id: "SIM", label: "Micro SIM socket", can: "For a 4G module in the mPCIe slot", ...NONE },
+    { panel: "Inside", id: "BUZZER", label: "Buzzer", can: "Local alarm (GPIO19)",
+      ...(buzzer ? gpioState(buzzer, "output") : { tone: "unknown", status: "not detected", detail: "" }),
+      status: buzzer?.busy ? "held by another program" : buzzer?.lit ? "sounding" : buzzer ? "silent" : "not detected" },
+    { panel: "Inside", id: "ATECC", label: "ATECC608 secure chip", can: "I2C1 (0x60)", ...NONE },
+    { panel: "Inside", id: "M2", label: "M.2 Key-M (NVMe)", can: "Behind the PCIe switch, with the AI HAT+", ...NONE, detail: "The NVMe shows on the board card above" },
+    { panel: "Inside", id: "MPCIE", label: "Mini PCIe (4G, LoRa)", can: "USB only, with the micro-SIM", ...NONE },
   ];
 }
 
-/** The photo with the dots on it. `box` is the viewBox that crops the 800x800
- *  photo to its panel; `spots` the dots in photo pixels. */
-function Photo({ src, box, spots, states, selected, onSelect, label }) {
+/** One view of the layout picture with the dots on it. */
+function View({ view, states, selected, onSelect, label }) {
   return (
-    <svg viewBox={box} className="bg-black/90 w-full rounded-lg" role="group" aria-label={label}
+    <svg viewBox={view.box} className="w-full rounded-lg border bg-white" role="group" aria-label={label}
          style={{ display: "block" }}>
-      <image href={src} x="0" y="0" width="800" height="800" />
-      {spots.map((s) => {
+      <image href={IMG.layout} x="0" y="0" width={LAYOUT_W} height={LAYOUT_H} />
+      {view.spots.map((s) => {
         const st = states.find((x) => x.id === s.id);
         const tone = TONE[st?.tone || "unknown"];
         const sel = selected === s.id;
@@ -171,8 +187,8 @@ function Photo({ src, box, spots, states, selected, onSelect, label }) {
              onClick={() => onSelect(s.id)}
              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(s.id); }}>
             <title>{`${st?.label || s.id}${st?.status ? ` - ${st.status}` : ""}`}</title>
-            {sel && <circle cx={s.x} cy={s.y} r={s.r + 7} fill="none" stroke="#ffffff" strokeWidth="2" className="bg-spot-ring" />}
-            <circle cx={s.x} cy={s.y} r={s.r + 2.5} fill="#ffffff" opacity="0.9" />
+            {sel && <circle cx={s.x} cy={s.y} r={s.r + 7} fill="none" stroke="#04bade" strokeWidth="2.5" className="bg-spot-ring" />}
+            <circle cx={s.x} cy={s.y} r={s.r + 2.5} fill="#ffffff" opacity="0.95" />
             <circle cx={s.x} cy={s.y} r={s.r} fill={st?.tone === "unknown" ? "none" : tone}
                     stroke={tone} strokeWidth={st?.tone === "unknown" ? 2 : 0}
                     strokeDasharray={st?.tone === "unknown" ? "3 2" : undefined} />
@@ -183,10 +199,27 @@ function Photo({ src, box, spots, states, selected, onSelect, label }) {
   );
 }
 
+function Legend() {
+  const words = { ok: "active / connected", idle: "quiet / empty", warn: "warning", crit: "held elsewhere" };
+  return (
+    <div className="flex flex-wrap gap-1.5 text-xs">
+      {Object.keys(words).map((t) => (
+        <span key={t} className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5">
+          <span className="size-2 rounded-full" style={{ background: TONE[t] }} />{words[t]}
+        </span>
+      ))}
+      <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5">
+        <span className="size-2 rounded-full" style={{ border: `2px dashed ${TONE.unknown}` }} />cannot read
+      </span>
+    </div>
+  );
+}
+
 export default function BoardGuideCard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState("ETH0");
+  const [inside, setInside] = useState(false);
   const load = useCallback(async () => {
     try { setData(await api.get("/api/hub/board")); setError(""); }
     catch (e) { setError(e.message || "cannot read the board"); }
@@ -196,7 +229,7 @@ export default function BoardGuideCard() {
 
   const states = useMemo(() => describe(data), [data]);
   const sel = states.find((s) => s.id === selected);
-  const panels = ["Front", "Back", "Side", "Inside"];
+  const panels = ["Front", "Left", "Right", "Inside"];
 
   return (
     <section className="rounded-xl border bg-card p-4" data-board-guide>
@@ -216,34 +249,22 @@ export default function BoardGuideCard() {
         </div>
         <a href={IMG.guide} target="_blank" rel="noopener noreferrer"
            className="text-xs font-medium underline-offset-2 hover:underline">
-          Full guide: what each port can do and what to plug in
+          Printable guide: what each port can do and what to plug in
         </a>
       </div>
       {error && <p className="mb-2 text-xs text-destructive">{error}</p>}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-3">
-          <Photo src={IMG.front} box="60 468 740 184" spots={FRONT} states={states}
-                 selected={selected} onSelect={setSelected} label="Front panel" />
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-            <Photo src={IMG.side} box="0 488 800 284" spots={SIDE} states={states}
-                   selected={selected} onSelect={setSelected} label="Side" />
-            <div className="rounded-lg border p-3 text-xs">
-              <div className="font-semibold">Back panel</div>
-              <div className="mt-1 text-muted-foreground">2x USB 3.0 and HDMI. Their state is in the list.</div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {["ok", "idle", "warn", "crit"].map((t) => (
-                  <span key={t} className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5">
-                    <span className="size-2 rounded-full" style={{ background: TONE[t] }} />
-                    {{ ok: "active / connected", idle: "quiet / empty", warn: "warning", crit: "held elsewhere" }[t]}
-                  </span>
-                ))}
-              </div>
-            </div>
+          <View view={FRONT} states={states} selected={selected} onSelect={setSelected} label="Front" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <View view={LEFT} states={states} selected={selected} onSelect={setSelected} label="Left side" />
+            <View view={RIGHT} states={states} selected={selected} onSelect={setSelected} label="Right side" />
           </div>
           {sel && (
             <div className="rounded-lg border px-3 py-2 text-sm" aria-live="polite">
-              <span className="inline-block size-2.5 rounded-full align-middle" style={{ background: TONE[sel.tone] }} />
+              <span className="inline-block size-2.5 rounded-full align-middle"
+                    style={sel.tone === "unknown" ? { border: `2px dashed ${TONE.unknown}` } : { background: TONE[sel.tone] }} />
               <strong className="ml-2">{sel.label}</strong>
               {sel.status ? <span className="ml-2">{sel.status}</span> : null}
               <div className="mt-0.5 text-xs text-muted-foreground">
@@ -251,10 +272,11 @@ export default function BoardGuideCard() {
               </div>
             </div>
           )}
+          <Legend />
         </div>
 
         <div className="min-w-0 overflow-hidden rounded-lg border">
-          <div className="max-h-[640px] overflow-y-auto">
+          <div className="max-h-[720px] overflow-y-auto">
             {panels.map((panel) => (
               <div key={panel}>
                 <div className="sticky top-0 bg-muted/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
@@ -282,6 +304,25 @@ export default function BoardGuideCard() {
           </div>
         </div>
       </div>
+
+      {/* How it is wired inside, from the product page: the block diagram and the board. */}
+      <button type="button" className="mt-4 flex items-center gap-1.5 text-sm font-medium"
+              aria-expanded={inside} onClick={() => setInside((v) => !v)}>
+        <ChevronDown size={15} style={{ transition: "transform .15s", transform: inside ? "rotate(180deg)" : "none" }} />
+        Inside the box: block diagram and board layout
+      </button>
+      {inside && (
+        <div className="mt-3 grid gap-3 lg:grid-cols-2">
+          <a href={IMG.block} target="_blank" rel="noopener noreferrer" className="block">
+            <img src={IMG.block} loading="lazy" decoding="async" className="w-full rounded-lg border bg-white"
+                 alt="Block diagram: what each port is connected to on the Compute Module 5" />
+          </a>
+          <a href={IMG.internal} target="_blank" rel="noopener noreferrer" className="block">
+            <img src={IMG.internal} loading="lazy" decoding="async" className="w-full rounded-lg border bg-white"
+                 alt="Internal board layout: the M.2 socket, mPCIe socket, GPIO header for the AI HAT+, RTC battery, fuses and buzzer" />
+          </a>
+        </div>
+      )}
     </section>
   );
 }
