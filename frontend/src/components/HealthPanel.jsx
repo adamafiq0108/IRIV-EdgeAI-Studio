@@ -28,8 +28,8 @@ const SEVERITY = {
 
 function severity(v, warn, crit) {
   if (typeof v !== "number") return "ok";
-  if (crit != null && v >= crit) return "crit";
-  if (warn != null && v >= warn) return "warn";
+  if (crit != null && v > crit) return "crit";
+  if (warn != null && v > warn) return "warn";
   return "ok";
 }
 
@@ -122,8 +122,9 @@ function BoardCard({ host }) {
       <TileGrid>
         <Tile label="CPU" value={host.cpu_percent} />
         <Tile label="Memory" value={host.mem_percent} />
+        {/* A temperature is a meter too, on a 0-100 °C scale: red above 80. */}
         <Tile label="CPU temperature" value={host.cpu_temp_c} fmt={temp}
-              warn={70} crit={82} bar={false} />
+              warn={70} crit={80} />
         {storages.map((s, i) => (
           <Tile key={s.mount || i}
                 label={`Storage ${i + 1} · ${s.label || s.mount}`}
@@ -185,8 +186,8 @@ function HailoCard({ npu = {}, pipelines, arch }) {
           <Tile label="Inference speed" value={peak || null} bar={false}
                 fmt={(v) => (v == null ? "-" : `${Math.round(v)} fps`)}
                 sub={`${Math.round(fpsSum)} fps across pipelines`} />
-          <Tile label="NPU temperature" value={npu.temp_c} fmt={temp} bar={false}
-                warn={75} crit={85}
+          <Tile label="NPU temperature" value={npu.temp_c} fmt={temp}
+                warn={75} crit={80}
                 sub={npu.power_w != null ? `${npu.power_w.toFixed(1)} W`
                        : (npu.power_note || undefined)} />
           <Tile label="Running pipelines" value={running.length} bar={false}
