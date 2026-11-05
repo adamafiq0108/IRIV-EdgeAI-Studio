@@ -337,3 +337,7 @@
    topbar) off-screen on a phone. Panels that need to scroll sideways (tables,
    code) carry their own overflow container. */
 html, body { max-width: 100%; overflow-x: clip; }
+/* Always keep the scrollbar's room. Without it a short page has no scrollbar
+   and a long one does, so switching between them (Settings panes, tabs)
+   narrows and widens the page and every centred layout jumps sideways. */
+html { scrollbar-gutter: stable; }

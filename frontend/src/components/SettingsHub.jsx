@@ -132,7 +132,7 @@ export default function SettingsHub({ tabs: allowed = null }) {
           return (
             <button key={x.id} type="button" onClick={() => setTab(x.id)}
                     aria-current={on ? "page" : undefined}
-                    className={"inline-flex shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-medium transition-colors "
+                    className={"inline-flex shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 "
                       + (on ? "" : "bg-card text-foreground hover:bg-muted")}
                     style={on ? { background: "var(--brand-accent, #04bade)", color: "var(--brand-accent-ink, #04222b)" } : undefined}>
               <IconTile icon={x.icon} size={22} active={on} /> {x.label}
@@ -162,7 +162,7 @@ export default function SettingsHub({ tabs: allowed = null }) {
                   <li key={x.id}>
                     <button type="button" onClick={() => setTab(x.id)} title={x.hint}
                             aria-current={on ? "page" : undefined}
-                            className={"flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors "
+                            className={"flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 "
                               + (on ? "font-medium" : "text-foreground hover:bg-black/[.05] dark:hover:bg-white/[.06]")}
                             style={on ? { background: "var(--brand-accent, #04bade)", color: "var(--brand-accent-ink, #04222b)" } : undefined}>
                       <IconTile icon={x.icon} size={26} active={on} />
@@ -179,7 +179,7 @@ export default function SettingsHub({ tabs: allowed = null }) {
       {/* Keyed, so switching remounts the pane: each one polls something,
           and leaving a stopped pane's timer running is how a settings page
           keeps endpoints warm that nobody is looking at. */}
-      <div className="min-w-0 pb-10">
+      <div className="min-h-[70vh] min-w-0 pb-10">
         <SettingsTone.Provider value={active.color}>
           {Panel ? <Panel key={active.id} /> : null}
         </SettingsTone.Provider>
