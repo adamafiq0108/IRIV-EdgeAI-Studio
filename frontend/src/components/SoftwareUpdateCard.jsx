@@ -6,7 +6,7 @@
 // it is, and only then is there a button that installs. The box keeps the live
 // version and the one before it, so an update can be undone.
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Package } from "lucide-react";
+import { Package, Upload } from "lucide-react";
 import { api } from "../api/client.js";
 import { useApp } from "../state/app.jsx";
 import { useToast } from "./ui/Toast.jsx";
@@ -26,6 +26,7 @@ export default function SoftwareUpdateCard() {
   const fileRef = useRef(null);
   const [st, setSt] = useState(null);
   const [busy, setBusy] = useState("");          // "" | upload | install | rollback | restart
+  const [over, setOver] = useState(false);       // a file is being dragged over the drop area
 
   const load = useCallback(async () => {
     try { setSt(await api.get("/api/hub/update/status")); }
@@ -51,9 +52,19 @@ export default function SoftwareUpdateCard() {
     toast.warn("The box is taking longer than usual", "Reload this page in a minute.");
   }
 
-  async function onPicked(e) {
+  function onPicked(e) {
     const file = e.target.files?.[0];
     e.target.value = "";
+    upload(file);
+  }
+
+  function onDrop(e) {
+    e.preventDefault();
+    setOver(false);
+    if (!busy) upload(e.dataTransfer.files?.[0]);
+  }
+
+  async function upload(file) {
     if (!file) return;
     setBusy("upload");
     try {
@@ -155,27 +166,58 @@ export default function SoftwareUpdateCard() {
             <p className="mt-3 text-sm text-destructive">{staged.error}</p>
           )}
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            <input ref={fileRef} type="file" accept=".gz,.tgz,application/gzip"
-                   style={{ display: "none" }} onChange={onPicked} />
+          <input ref={fileRef} type="file" accept=".gz,.tgz,application/gzip"
+                 style={{ display: "none" }} onChange={onPicked} />
+          {!(staged && !staged.error) && (
+            <div role="button" tabIndex={0} aria-label="Choose an update file"
+                 aria-disabled={!!busy}
+                 className="mt-3 flex cursor-pointer flex-col items-center gap-1 rounded-lg border-2 border-dashed px-4 py-5 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+                 style={{ borderColor: over ? "var(--primary, #04bade)" : undefined,
+                          background: over ? "color-mix(in srgb, var(--primary, #04bade) 8%, transparent)" : undefined,
+                          opacity: busy ? 0.6 : 1 }}
+                 onClick={() => { if (!busy) fileRef.current?.click(); }}
+                 onKeyDown={(e) => {
+                   if ((e.key === "Enter" || e.key === " ") && !busy) {
+                     e.preventDefault();
+                     fileRef.current?.click();
+                   }
+                 }}
+                 onDragOver={(e) => { e.preventDefault(); if (!busy) setOver(true); }}
+                 onDragLeave={() => setOver(false)}
+                 onDrop={onDrop}>
+              <Upload size={22} className="text-muted-foreground" aria-hidden="true" />
+              <div className="text-sm font-medium">
+                {busy === "upload" ? "Uploading…" : "Drag & drop release file here"}
+              </div>
+              <div className="text-xs text-muted-foreground">or click to browse from device</div>
+            </div>
+          )}
+
+          <div className="mt-3 grid gap-2">
             {staged && !staged.error ? (
               <>
                 <button type="button" className="btn btn-accent" disabled={!!busy}
+                        style={{ width: "100%", justifyContent: "center" }}
                         onClick={install}>
                   {busy === "install" || busy === "restart" ? "Installing…" : "Install"}
                 </button>
-                <button type="button" className="btn" disabled={!!busy} onClick={discard}>
+                <button type="button" className="btn" disabled={!!busy}
+                        style={{ width: "100%", justifyContent: "center" }}
+                        onClick={discard}>
                   Cancel
                 </button>
               </>
             ) : (
               <button type="button" className="btn" disabled={!!busy}
+                      style={{ width: "100%", justifyContent: "center" }}
                       onClick={() => fileRef.current?.click()}>
-                {busy === "upload" ? "Uploading…" : "Choose update file"}
+                Choose update file
               </button>
             )}
             {st.previous && !staged && (
-              <button type="button" className="btn" disabled={!!busy} onClick={rollback}>
+              <button type="button" className="btn" disabled={!!busy}
+                      style={{ width: "100%", justifyContent: "center" }}
+                      onClick={rollback}>
                 Go back to {st.previous.version}
               </button>
             )}

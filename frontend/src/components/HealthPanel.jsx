@@ -231,10 +231,10 @@ export default function HealthPanel() {
         <div className="min-w-0 space-y-5">
           {data.host && <BoardCard host={data.host} />}
           <HailoCard npu={data.host?.npu} pipelines={pipelines} arch={pipes?.arch} />
-          <LoadedNetworks pipelines={pipelines} />
         </div>
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           <SoftwareUpdateCard />
+          <LoadedNetworks pipelines={pipelines} />
         </div>
       </div>
     </div>
