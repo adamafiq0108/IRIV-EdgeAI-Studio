@@ -13,6 +13,7 @@
 import { Activity, Cpu, HardDrive, OctagonAlert, TriangleAlert } from "lucide-react";
 import { usePoll } from "../api/hooks.js";
 import AboutCard from "./AboutCard.jsx";
+import BoardGuideCard from "./BoardGuideCard.jsx";
 import { ErrorNote, SkelAbout } from "./Loading.jsx";
 import SoftwareUpdateCard from "./SoftwareUpdateCard.jsx";
 
@@ -261,6 +262,7 @@ export default function HealthPanel() {
           <SoftwareUpdateCard />
         </div>
       </div>
+      <BoardGuideCard />
     </div>
   );
 }
