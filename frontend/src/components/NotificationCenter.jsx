@@ -31,7 +31,7 @@ import {
 import { OPEN_EVENT as STORAGE_SETUP_EVENT } from "./NewStoragePrompt.jsx";
 import {
   Bell, Inbox, Server, KeyRound, MailOpen, Check, X, Trash2,
-  HardDrive,
+  HardDrive, Thermometer,
 } from "lucide-react";
 
 //: A message longer than this is shown as its first lines plus "Read more",
@@ -82,6 +82,8 @@ export default function NotificationCenter({ admin = false, onGo = null }) {
   // Where the device data lives (/api/hub/retention `storage`), for the one
   // notice that depends on it. Null until read.
   const [storage, setStorage] = useState(null);
+  // The board's and the NPU's temperature, for the heat warning. Null until read.
+  const [temps, setTemps] = useState(null);
   const [updateTick, setUpdateTick] = useState(0);
   const reload = useCallback(async () => setUpdateTick((t) => t + 1), []);
   // This account's inbox, and the open reset requests where the account may
@@ -121,7 +123,7 @@ export default function NotificationCenter({ admin = false, onGo = null }) {
     inbox.reload().catch(() => {});
   }
 
-  const notices = buildNotices({ storage });
+  const notices = buildNotices({ storage, temps, go: onGo });
   // The dot means "there is something here you have not acted on": a problem
   // or an unread message. A box with nothing to say does not decorate its
   // own header.
@@ -130,6 +132,7 @@ export default function NotificationCenter({ admin = false, onGo = null }) {
   return (
     <>
       {admin && <StorageWatch tick={updateTick} onState={setStorage} />}
+      {admin && <TempWatch tick={updateTick} onState={setTemps} />}
       <Popover open={open} onOpenChange={setOpen}>
         {/* `render`, not `asChild`: Base UI composes through a render prop
             and ignores `asChild`, which left a button nested inside a button
@@ -344,11 +347,44 @@ function StorageWatch({ tick, onState }) {
   return null;
 }
 
+//: A reading above this is a warning, the same line the About page draws its
+//: red bar at.
+export const HOT_C = 80;
+
+function TempWatch({ tick, onState }) {
+  // The temperatures, as a child so it mounts only for an admin. Faster than the
+  // storage reading: heat comes and goes within minutes, and a warning that
+  // arrives after it has passed is no use.
+  const read = useCallback(async () => {
+    try {
+      const h = await api.get("/api/hub/health");
+      onState({ cpu: h?.host?.cpu_temp_c ?? null, npu: h?.host?.npu?.temp_c ?? null });
+    } catch { onState(null); }
+  }, [onState]);
+  useEffect(() => { read(); }, [read, tick]);
+  useVisibleInterval(read, 30000);
+  return null;
+}
+
 // Everything on the System tab is derived, never stored: it is a reading of
 // live state. Nothing is "dismissed" here because nothing here goes away by
 // being read -- the only thing that clears it is fixing it.
-function buildNotices({ storage }) {
+function buildNotices({ storage, temps, go }) {
   const out = [];
+  // Heat: present only while the board or the NPU reads above HOT_C, and gone
+  // when it cools. Named by part, with the reading, so it says what is hot.
+  const hot = [["CPU", temps?.cpu], ["NPU", temps?.npu]]
+    .filter(([, c]) => typeof c === "number" && c > HOT_C);
+  if (hot.length) {
+    out.push({
+      id: "temperature", icon: Thermometer,
+      title: hot.map(([n, c]) => `${n} temperature is high: ${Math.round(c)}°C`).join(" · "),
+      body: `Above ${HOT_C}°C the board is running hot. Check that the fan and `
+        + "heatsink are clear, that the vents are not blocked, and the room "
+        + "temperature; sustained heat shortens the hardware's life.",
+      action: "Open About", run: () => go?.("health"),
+    });
+  }
   // Device data (events, snapshots, clips) is held to 60 days unless EVERY
   // system's data is on an NVMe, then 12 months. Present only while some of it
   // is not: no NVMe fitted, or one fitted that the data is not on. The server
