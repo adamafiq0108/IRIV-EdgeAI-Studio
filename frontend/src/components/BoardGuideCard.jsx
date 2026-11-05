@@ -34,26 +34,33 @@ const IMG = {
 };
 const LAYOUT_W = 1314, LAYOUT_H = 1600;
 
-//: Where each port is on the layout picture, in its pixels, per view.
+//: Where each port is on the layout picture, in its pixels, per view: an
+//: outline that follows the part (a box round a jack or a terminal group, a
+//: circle round a button or a socket).
 const FRONT = {
   box: "340 230 960 270",
   spots: [
-    { id: "BUTTON", x: 516, y: 372, r: 10 }, { id: "RS485", x: 703, y: 355, r: 6 },
-    { id: "DO0", x: 764, y: 355, r: 6 }, { id: "L0", x: 811, y: 355, r: 6 },
-    { id: "DI0", x: 703, y: 382, r: 6 }, { id: "DI1", x: 727, y: 382, r: 6 },
-    { id: "DO1", x: 764, y: 382, r: 6 }, { id: "L1", x: 811, y: 382, r: 6 },
-    { id: "ETH0", x: 907, y: 355, r: 12 }, { id: "ETH1", x: 1040, y: 355, r: 12 }
+    { id: "BUTTON", shape: "circle", x: 516, y: 372, r: 15 },
+    { id: "RS485", shape: "rect", x: 667, y: 338, w: 74, h: 33 },
+    { id: "DI0", shape: "rect", x: 691, y: 369, w: 24, h: 27 },
+    { id: "DI1", shape: "rect", x: 715, y: 369, w: 25, h: 27 },
+    { id: "DO0", shape: "rect", x: 740, y: 338, w: 48, h: 33 },
+    { id: "DO1", shape: "rect", x: 740, y: 369, w: 48, h: 27 },
+    { id: "L0", shape: "rect", x: 788, y: 338, w: 48, h: 33 },
+    { id: "L1", shape: "rect", x: 788, y: 369, w: 48, h: 27 },
+    { id: "ETH0", shape: "rect", x: 853, y: 298, w: 113, h: 113 },
+    { id: "ETH1", shape: "rect", x: 985, y: 298, w: 113, h: 113 },
   ],
 };
 const LEFT = {
   box: "500 660 790 320",
-  spots: [ { id: "WIFI", x: 653, y: 770, r: 11 }
-  ],
+  spots: [{ id: "WIFI", shape: "circle", x: 653, y: 775, r: 24 }],
 };
 const RIGHT = {
   box: "470 1190 790 300",
   spots: [
-    { id: "USB0", x: 725, y: 1300, r: 11 }, { id: "USB1", x: 725, y: 1350, r: 11 }
+    { id: "USB0", shape: "rect", x: 678, y: 1270, w: 96, h: 54 },
+    { id: "USB1", shape: "rect", x: 678, y: 1324, w: 96, h: 54 },
   ],
 };
 
@@ -159,11 +166,15 @@ function View({ view, states, selected, onSelect, label }) {
              onClick={() => onSelect(s.id)}
              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(s.id); }}>
             <title>{`${st?.label || s.id}${st?.status ? ` - ${st.status}` : ""}`}</title>
-            {sel && <circle cx={s.x} cy={s.y} r={s.r + 7} fill="none" stroke="#04bade" strokeWidth="2.5" className="bg-spot-ring" />}
-            <circle cx={s.x} cy={s.y} r={s.r + 2.5} fill="#ffffff" opacity="0.95" />
-            <circle cx={s.x} cy={s.y} r={s.r} fill={st?.tone === "unknown" ? "none" : tone}
-                    stroke={tone} strokeWidth={st?.tone === "unknown" ? 2 : 0}
-                    strokeDasharray={st?.tone === "unknown" ? "3 2" : undefined} />
+            {s.shape === "circle" ? (
+              <circle cx={s.x} cy={s.y} r={s.r} fill={tone} fillOpacity={sel ? 0.3 : 0.16}
+                      stroke={tone} strokeWidth={sel ? 6 : 4}
+                      strokeDasharray={st?.tone === "unknown" ? "8 5" : undefined} />
+            ) : (
+              <rect x={s.x} y={s.y} width={s.w} height={s.h} rx="5" fill={tone} fillOpacity={sel ? 0.3 : 0.16}
+                    stroke={tone} strokeWidth={sel ? 6 : 4}
+                    strokeDasharray={st?.tone === "unknown" ? "8 5" : undefined} />
+            )}
           </g>
         );
       })}
@@ -192,8 +203,9 @@ export default function BoardGuideCard() {
   const [error, setError] = useState("");
   const [selected, setSelected] = useState("ETH0");
   const [inside, setInside] = useState(false);
+  const [readAt, setReadAt] = useState(0);
   const load = useCallback(async () => {
-    try { setData(await api.get("/api/hub/board")); setError(""); }
+    try { setData(await api.get("/api/hub/board")); setError(""); setReadAt(Date.now()); }
     catch (e) { setError(e.message || "cannot read the board"); }
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -213,8 +225,9 @@ export default function BoardGuideCard() {
           <div className="min-w-0">
             <h2 className="text-sm font-semibold leading-tight">IRIV Edge AI CM5 board</h2>
             <div className="mt-0.5 text-xs text-muted-foreground">
-              Every port the box can read, and what is on it right now. Hover a dot or a row.
+              Every port the box can read, and what is on it right now. Hover a part or a row.
               {data?.model ? ` · ${data.model}` : ""}
+              {" · "}{readAt ? "live, read every 2 s" : error ? "not read" : "reading…"}
               {data && data.detected === false ? " · this box is not an IRIV board, so the terminals cannot be read" : ""}
             </div>
           </div>
