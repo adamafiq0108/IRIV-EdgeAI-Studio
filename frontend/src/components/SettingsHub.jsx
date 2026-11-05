@@ -7,7 +7,9 @@
 // Preview for a place people look at constantly. One entry, and the choice is
 // made after you have decided you are changing a setting.
 //
-// The chooser is a side menu, grouped by what a setting is ABOUT (who may get
+// The chooser is a side menu in the macOS System Settings manner: a search
+// box, coloured icon tiles, a filled selection, and groups set apart by
+// space. It is grouped by what a setting is ABOUT (who may get
 // in, what the box keeps, how it connects, how it tells you things, its
 // hardware), with one line under each entry saying what it is for. Nine tabs
 // in one strip wrapped onto two rows and left the reader to guess what
@@ -16,6 +18,8 @@
 // one page frame (ui/SettingsPage.jsx).
 //
 import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
+import { IconTile, SettingsTone } from "./ui/SettingsPage.jsx";
 import AccountsPanel from "./AccountsPanel.jsx";
 import SystemPanel from "./SystemPanel.jsx";
 import RetentionPanel from "./RetentionPanel.jsx";
@@ -37,32 +41,32 @@ const GROUPS = ["Access", "Data", "Connectivity", "Notifications", "Hardware"];
 
 export default function SettingsHub({ tabs: allowed = null }) {
   const all = [
-    { id: "accounts", group: "Access", label: "Accounts", icon: Users, Panel: AccountsPanel,
+    { id: "accounts", color: "#007aff", group: "Access", label: "Accounts", icon: Users, Panel: AccountsPanel,
       hint: "Who can sign in and what they open" },
     // The BOX's own switches -- what this appliance may do at all, as
     // against what one system measures or one account may open. Beside
     // Accounts: the two answer the same question from either end.
-    { id: "system", group: "Access", label: "System", icon: SlidersHorizontal, Panel: SystemPanel,
+    { id: "system", color: "#8e8e93", group: "Access", label: "System", icon: SlidersHorizontal, Panel: SystemPanel,
       hint: "What this box may do" },
-    { id: "retention", group: "Data", label: "Data Retention", icon: Database, Panel: RetentionPanel,
+    { id: "retention", color: "#34c759", group: "Data", label: "Data Retention", icon: Database, Panel: RetentionPanel,
       hint: "How long recordings and events are kept" },
     // Both belong to the BOX rather than to any system: one network, one
     // broker, however many systems run on top of them.
-    { id: "network", group: "Connectivity", label: "Network", icon: Network, Panel: NetworkPanel,
+    { id: "network", color: "#0a84ff", group: "Connectivity", label: "Network", icon: Network, Panel: NetworkPanel,
       hint: "Ethernet, Wi-Fi and the hotspot" },
-    { id: "mqtt", group: "Connectivity", label: "MQTT Broker", icon: RadioTower, Panel: BrokerPanel,
+    { id: "mqtt", color: "#ff9500", group: "Connectivity", label: "MQTT Broker", icon: RadioTower, Panel: BrokerPanel,
       hint: "The box's own broker on the plant LAN" },
     // Box-wide on purpose: one mailbox serves every system's Email nodes and
     // Footage sends, so it is declared here rather than four times over.
-    { id: "mail", group: "Notifications", label: "Email", icon: Mail, Panel: MailPanel,
+    { id: "mail", color: "#30b0c7", group: "Notifications", label: "Email", icon: Mail, Panel: MailPanel,
       hint: "The mailbox alerts are sent from" },
     // Same reasoning, same shape: a bot token belongs to the box, not to each
     // of the twelve nodes that message the same operations group.
-    { id: "telegram", group: "Notifications", label: "Telegram", icon: Send, Panel: TelegramPanel,
+    { id: "telegram", color: "#32ade6", group: "Notifications", label: "Telegram", icon: Send, Panel: TelegramPanel,
       hint: "The bot alerts are sent with" },
-    { id: "board", group: "Hardware", label: "Board I/O", icon: CircuitBoard, Panel: BoardPanel,
+    { id: "board", color: "#af52de", group: "Hardware", label: "Board I/O", icon: CircuitBoard, Panel: BoardPanel,
       hint: "Which terminals the platform drives" },
-    { id: "panel", group: "Hardware", label: "Front Panel", icon: MonitorSmartphone, Panel: PanelSettings,
+    { id: "panel", color: "#5856d6", group: "Hardware", label: "Front Panel", icon: MonitorSmartphone, Panel: PanelSettings,
       hint: "The OLED display and its button" },
   ];
 
@@ -87,6 +91,7 @@ export default function SettingsHub({ tabs: allowed = null }) {
   // A remembered tab that no longer exists (an account demoted
   // between visits, or a tier that never had it) must not render nothing.
   const active = tabs.find((t) => t.id === tab) || tabs[0] || null;
+  const [query, setQuery] = useState("");
   const [Lazy, setLazy] = useState(null);
   useEffect(() => {
     let dead = false;
@@ -113,73 +118,71 @@ export default function SettingsHub({ tabs: allowed = null }) {
     );
   }
 
-  const groups = GROUPS.map((g) => ({ g, items: tabs.filter((t) => t.group === g) }))
+  const q = query.trim().toLowerCase();
+  const hit = (x) => !q || x.label.toLowerCase().includes(q) || x.hint.toLowerCase().includes(q);
+  const groups = GROUPS.map((g) => ({ g, items: tabs.filter((x) => x.group === g && hit(x)) }))
                        .filter((x) => x.items.length);
 
   return (
-    <div className="mx-auto grid w-full max-w-7xl gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
+    <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
       {/* Narrow screens: one scrolling row of the same entries. */}
       <nav aria-label="Settings" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 lg:hidden">
-        {tabs.map((t) => {
-          const on = t.id === active.id;
+        {tabs.map((x) => {
+          const on = x.id === active.id;
           return (
-            <button key={t.id} type="button" onClick={() => setTab(t.id)}
+            <button key={x.id} type="button" onClick={() => setTab(x.id)}
                     aria-current={on ? "page" : undefined}
-                    className={"inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors "
-                      + (on ? "border-primary bg-primary/10 text-foreground"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground")}>
-              <t.icon className="size-4" aria-hidden="true" /> {t.label}
+                    className={"inline-flex shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-medium transition-colors "
+                      + (on ? "text-white" : "bg-card text-foreground hover:bg-muted")}
+                    style={on ? { background: "#007aff" } : undefined}>
+              <IconTile icon={x.icon} color={x.color} size={22} /> {x.label}
             </button>
           );
         })}
       </nav>
 
-      {/* Wide screens: the grouped menu, beside the panel, and it stays put
-          while a long panel scrolls. */}
+      {/* Wide screens: the menu beside the pane; it stays put while a long
+          pane scrolls. */}
       <nav aria-label="Settings" className="hidden lg:block">
-        <div className="sticky top-4 rounded-xl border bg-card p-2">
-          <div className="px-2.5 pb-2 pt-1.5">
-            <div className="text-base font-semibold">Settings</div>
-            <div className="text-xs text-muted-foreground">For the whole box, every system on it</div>
+        <div className="sticky top-4 space-y-4">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <input type="search" value={query} onChange={(e) => setQuery(e.target.value)}
+                   placeholder="Search" aria-label="Search settings"
+                   className="h-8 w-full rounded-lg border-0 bg-black/[.05] pl-8 pr-2 text-sm outline-none ring-0 placeholder:text-muted-foreground focus:bg-black/[.07] focus:ring-2 focus:ring-[#007aff]/40 dark:bg-white/[.08]" />
           </div>
+          {groups.length === 0 && (
+            <p className="px-2 text-sm text-muted-foreground">No setting matches "{query}".</p>
+          )}
           {groups.map(({ g, items }) => (
-            <div key={g} className="mt-1.5">
-              <div className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {g}
-              </div>
-              <ul className="space-y-0.5">
-                {items.map((t) => {
-                  const on = t.id === active.id;
-                  return (
-                    <li key={t.id}>
-                      <button type="button" onClick={() => setTab(t.id)}
-                              aria-current={on ? "page" : undefined}
-                              className={"group flex w-full items-start gap-2.5 rounded-lg border-l-2 px-2.5 py-2 text-left transition-colors "
-                                + (on ? "border-primary bg-muted"
-                                      : "border-transparent hover:bg-muted/60")}>
-                        <t.icon aria-hidden="true"
-                                className={"mt-0.5 size-4 shrink-0 " + (on ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
-                        <span className="min-w-0">
-                          <span className={"block text-sm font-medium " + (on ? "text-foreground" : "text-foreground/90")}>
-                            {t.label}
-                          </span>
-                          <span className="block text-xs leading-snug text-muted-foreground">{t.hint}</span>
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+            <ul key={g} className="space-y-0.5" aria-label={g}>
+              {items.map((x) => {
+                const on = x.id === active.id;
+                return (
+                  <li key={x.id}>
+                    <button type="button" onClick={() => setTab(x.id)} title={x.hint}
+                            aria-current={on ? "page" : undefined}
+                            className={"flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors "
+                              + (on ? "font-medium text-white" : "text-foreground hover:bg-black/[.05] dark:hover:bg-white/[.06]")}
+                            style={on ? { background: "#007aff" } : undefined}>
+                      <IconTile icon={x.icon} color={x.color} size={24} />
+                      <span className="truncate">{x.label}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           ))}
         </div>
       </nav>
 
-      {/* Keyed, so switching remounts the panel: each one polls something,
-          and leaving a stopped panel's timer running is how a settings page
+      {/* Keyed, so switching remounts the pane: each one polls something,
+          and leaving a stopped pane's timer running is how a settings page
           keeps endpoints warm that nobody is looking at. */}
-      <div className="min-w-0">
-        {Panel ? <Panel key={active.id} /> : null}
+      <div className="min-w-0 pb-10">
+        <SettingsTone.Provider value={active.color}>
+          {Panel ? <Panel key={active.id} /> : null}
+        </SettingsTone.Provider>
       </div>
     </div>
   );

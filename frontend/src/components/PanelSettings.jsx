@@ -81,35 +81,12 @@ function Screen({ frame, scale = 3 }) {
 }
 
 // One editable line, plus the way back to what it said out of the box.
-function TextLine({ name, value, fallback, onChange, onFocus }) {
-  return (
-    <label>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div className="muted small" style={{ flex: 1 }}>
-          {LINE_LABEL[name] || name}
-        </div>
-        {value !== fallback && (
-          <button type="button" className="btn btn-sm"
-                  style={{ padding: "0 6px", fontSize: 11 }}
-                  title={`Back to "${fallback}"`}
-                  onClick={() => onChange(fallback)}>reset</button>
-        )}
-      </div>
-      <input className="input" value={value} placeholder={fallback}
-             data-line={name}
-             onFocus={(e) => onFocus?.(name, e.target)}
-             onChange={(e) => onChange(e.target.value)} />
-    </label>
-  );
-}
-
 export default function PanelSettings() {
   const [data, setData] = useState(null);
   const [form, setForm] = useState(null);
   const [page, setPage] = useState("about");
   const [frame, setFrame] = useState(null);
   const [busy, setBusy] = useState("");
-  const focused = useRef(null);     // {key, el} - where a placeholder lands
   const toast = useToast();
   const confirm = useConfirm();
 
@@ -152,26 +129,6 @@ export default function PanelSettings() {
   // line was last edited -- the same contract the Workflow's message nodes
   // keep. Falling back to the page's first line rather than doing nothing:
   // clicking a chip and having nothing happen reads as a broken button.
-  function insertPlaceholder(name) {
-    const token = `{${name}}`;
-    const lines = data.text_by_page?.[page] || [];
-    const target = focused.current;
-    const key = (target && lines.includes(target.key)) ? target.key : lines[0];
-    if (!key) return;
-    const el = target && target.key === key ? target.el : null;
-    const current = form.text?.[key] ?? "";
-    const at = el ? (el.selectionStart ?? current.length) : current.length;
-    const next = current.slice(0, at) + token + current.slice(at);
-    set({ text: { ...(form.text || {}), [key]: next } });
-    if (el) {
-      // After React has written the new value, or the caret jumps to the end.
-      requestAnimationFrame(() => {
-        el.focus();
-        try { el.setSelectionRange(at + token.length, at + token.length); }
-        catch { /* the input may have unmounted */ }
-      });
-    }
-  }
   const nodered = data.nodered || {};
   const conflict = form.enabled && nodered.active;
 
@@ -356,76 +313,6 @@ export default function PanelSettings() {
               })}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* ---- what the pages say ---- */}
-      <div className="panel-card">
-        <div className="section-title">
-          Wording - {PAGE_LABEL[page] || page}
-        </div>
-        <p className="muted small" style={{ marginTop: -4 }}>
-          Every line on the panel is yours to write. A name in braces is
-          replaced by the box's own fact when it draws - click one to insert
-          it where the cursor is.
-        </p>
-
-        <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
-          {(data.text_by_page?.[page] || []).map((key) => (
-            <TextLine key={key} name={key} value={form.text?.[key] ?? ""}
-                      fallback={data.default_text?.[key] || ""}
-                      onFocus={(k, el) => { focused.current = { key: k, el }; }}
-                      onChange={(v) => set({ text: { ...(form.text || {}), [key]: v } })} />
-          ))}
-
-          {page === "url" && (
-            <label>
-              <div className="muted small">Address to show</div>
-              {/* Blank = iriv.local on the software's port (Settings ->
-                  Network -> Software port); this page is served by the hub,
-                  so the port in the address bar IS that port. */}
-              <input className="input" value={form.dashboard_url || ""}
-                     placeholder={`iriv.local${window.location.port ? `:${window.location.port}` : ""}`}
-                     onChange={(e) => set({ dashboard_url: e.target.value })} />
-            </label>
-          )}
-          {page === "wifi" && (
-            // No field for the key: the panel has no copy of its own. The
-            // <code>{"{ap_password}"}</code> line prints the hotspot key from
-            // Settings -> Network, so a re-key there shows here at once.
-            <div className="muted small">
-              The <code>{"{ap_password}"}</code> field prints the access point's
-              password set on Settings -&gt; Network.
-            </div>
-          )}
-
-          <label>
-            <div className="muted small">Footer line, under the rule (every page)</div>
-            <input className="input" value={form.hint || ""}
-                   onChange={(e) => set({ hint: e.target.value })} />
-          </label>
-
-          <div>
-            <div className="muted small" style={{ marginBottom: 4 }}>
-              Facts you can drop in
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-              {(data.placeholders || []).map((p) => (
-                <button key={p} type="button" className="btn btn-sm"
-                        style={{ padding: "1px 7px", fontSize: 11 }}
-                        title={`Insert {${p}} - currently "${data.facts?.[p] ?? ""}"`}
-                        onClick={() => insertPlaceholder(p)}>
-                  {`{${p}}`}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <p className="muted small" style={{ margin: 0 }}>
-            A small row holds 21 characters and the large ones on the identity
-            page hold six - a longer value there is drawn small rather than
-            over its neighbour. The preview shows exactly what happens.
-          </p>
         </div>
       </div>
 

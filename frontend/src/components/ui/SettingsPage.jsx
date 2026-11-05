@@ -1,40 +1,52 @@
 // Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // SettingsPage - the one shape every page under Settings wears.
 //
-// The three pages here got written at different times and looked it: one
-// opened with a legacy `page-title`, one with a shadcn <h2> inside its first
-// card, and one with no heading at all, straight into a tab strip. Three
-// answers to "what page am I on" on three pages that are the same KIND of
-// page - box-wide decisions, managed once, admin only.
+// The pages here got written at different times and looked it: one opened
+// with a legacy `page-title`, one with a shadcn <h2> inside its first card,
+// and one with no heading at all. So the header is not each page's business:
+// a page supplies its name, a line saying what the setting does, and its
+// content; the frame supplies everything else.
 //
-// So the header is not each page's business any more. A page supplies its
-// name, a line saying what the setting does, and its content; the frame
-// supplies everything else. Width is capped here too: these are forms and
-// tables, and a settings row stretched across a 1600px screen puts the
-// control a hand's width from the label it belongs to.
+// The look follows the macOS System Settings pane: the entry's coloured icon
+// tile beside a large title, then grouped sections - a small grey heading
+// ABOVE a white rounded box, rather than a heading inside a bordered card.
+// The tile colour comes from the menu entry (SettingsTone, set by
+// SettingsHub), so the page and the menu agree about which pane this is.
 //
 // Shadcn tokens throughout, because this mounts inside HubShell's `.cy-app`
 // subtree where the legacy palette means different things -- `--muted` there
 // is a BACKGROUND colour, which is how a settings page shipped with text the
 // same shade as the card behind it.
+import { createContext, useContext } from "react";
+
+/** The colour of the current pane's icon tile, provided by SettingsHub. */
+export const SettingsTone = createContext("#8e8e93");
+
+export function IconTile({ icon: Icon, color, size = 28 }) {
+  return (
+    <span className="grid shrink-0 place-items-center text-white"
+          style={{ width: size, height: size, borderRadius: Math.round(size * 0.24), background: color,
+                   boxShadow: "inset 0 0 0 0.5px rgba(0,0,0,.12)" }}>
+      <Icon style={{ width: size * 0.58, height: size * 0.58 }} strokeWidth={2.1} aria-hidden="true" />
+    </span>
+  );
+}
+
 export default function SettingsPage({ title, icon: Icon, description,
                                        actions = null, children }) {
+  const color = useContext(SettingsTone);
   return (
-    <div className="w-full space-y-4">
-      <header className="flex items-start gap-3 rounded-xl border bg-card px-5 py-4">
-        {Icon && (
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-            <Icon className="size-[18px]" aria-hidden="true" />
-          </span>
-        )}
+    <div className="w-full space-y-6">
+      <header className="flex items-center gap-4 pt-1">
+        {Icon && <IconTile icon={Icon} color={color} size={44} />}
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-semibold leading-tight">{title}</h1>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-tight">{title}</h1>
           {description && (
-            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{description}</p>
           )}
         </div>
         {/* Page-level actions sit on the title row, not buried above the
-            first card, so "what can I do here" is answered in the same
+            first section, so "what can I do here" is answered in the same
             glance as "where am I". */}
         {actions && (
           <div className="flex shrink-0 items-center gap-2">{actions}</div>
@@ -45,20 +57,20 @@ export default function SettingsPage({ title, icon: Icon, description,
   );
 }
 
-/** A section within a settings page: one card, one heading, one job. */
+/** A section within a settings page: a small heading above one rounded box. */
 export function SettingsSection({ title, description, actions = null, children }) {
   return (
-    <section className="rounded-xl border bg-card p-5">
+    <section className="space-y-2">
       {(title || actions) && (
-        <div className="flex items-start gap-3">
+        <div className="flex items-end gap-3 px-1">
           <div className="min-w-0 flex-1">
             {title && (
-              <h2 className="flex items-center gap-1.5 text-base font-semibold">
+              <h2 className="flex items-center gap-1.5 text-[13px] font-semibold text-foreground/80">
                 {title}
               </h2>
             )}
             {description && (
-              <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
             )}
           </div>
           {actions && (
@@ -66,7 +78,9 @@ export function SettingsSection({ title, description, actions = null, children }
           )}
         </div>
       )}
-      {children}
+      <div className="rounded-2xl border border-black/[.06] bg-card p-5 shadow-[0_1px_2px_rgba(0,0,0,.04)] dark:border-white/[.08]">
+        {children}
+      </div>
     </section>
   );
 }
