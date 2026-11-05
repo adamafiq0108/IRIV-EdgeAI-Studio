@@ -95,6 +95,278 @@ export function actionFallback(action) {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+// -- `change` rows ------------------------------------------------------------
+// Every other change a signed-in account makes is written as action `change`
+// with the operation's route name in detail.what ("hub.remove_system"), the
+// path, the status and what was sent (core/services/change_log.py). Here it
+// becomes a sentence: "Removed a system" + "test".
+
+//: Route name -> what the person did. The ones a plain reading of the name
+//: gets wrong or leaves vague; everything else goes through changeFallback.
+const CHANGES = {
+  "auth.change_own_password": "Changed their password",
+  "auth.change_own_username": "Changed their username",
+  "auth.first_run": "Completed first-time setup",
+  "auth.setup_json": "Completed account setup",
+  "auth.forgot_json": "Asked for a password reset",
+  "auth.reset_json": "Reset a password",
+  "auth.reset_request_approve": "Approved a password reset",
+  "auth.reset_request_reject": "Rejected a password reset",
+  "auth.revoke_session": "Signed out a session",
+  "auth.revoke_others": "Signed out other sessions",
+  "auth.remove_device": "Removed a sign-in device",
+  "auth.remove_other_devices": "Removed other sign-in devices",
+  "auth.session_policy": "Changed automatic sign-out",
+  "auth.panel_reset": "Reset the front panel password",
+  "blynk.save": "Changed Blynk settings",
+  "blynk.test": "Tested Blynk",
+  "board.io_test": "Tested a board output",
+  "boxrestart.restart": "Restarted the box",
+  "builder.asset_upload": "Uploaded a dashboard picture",
+  "builder.save": "Saved a dashboard",
+  "builder.publish": "Published a dashboard",
+  "control.action": "Ran a control action",
+  "control.apply": "Applied control settings",
+  "datasets.add_row": "Added a table row",
+  "datasets.edit_row": "Edited a table row",
+  "datasets.delete_rows": "Deleted table rows",
+  "datasets.save": "Changed the tables",
+  "datasets.rename": "Renamed the database",
+  "datasets.query_save": "Saved a query",
+  "datasets.query_delete": "Deleted a saved query",
+  "detector.add_camera": "Added a camera",
+  "detector.remove_camera": "Removed a camera",
+  "detector.set_camera": "Changed a camera",
+  "detector.set_cameras": "Changed the cameras",
+  "detector.enable_camera": "Switched a camera on or off",
+  "detector.set_camera_controls": "Changed camera picture settings",
+  "detector.camera_sdk": "Installed a camera SDK",
+  "detector.set_zones": "Changed the zones",
+  "detector.zones_editing": "Edited the zones",
+  "detector.set_params": "Changed detection settings",
+  "detector.set_tracker": "Changed tracking settings",
+  "detector.set_capture": "Changed capture settings",
+  "detector.set_video": "Changed video settings",
+  "detector.set_hud": "Changed the video overlay",
+  "detector.set_overlay": "Changed the video overlay",
+  "detector.set_outputs": "Changed the outputs",
+  "detector.set_modbus": "Changed Modbus settings",
+  "detector.save_modbus_client": "Saved a Modbus device",
+  "detector.delete_modbus_client": "Removed a Modbus device",
+  "detector.power": "Started or stopped detection",
+  "detector.set_tutorial": "Changed the tutorial",
+  "detector.import_db": "Imported a database",
+  "detector.dataset_record": "Started dataset recording",
+  "detector.dataset_record_stop": "Stopped dataset recording",
+  "detector.dataset_snap": "Took a dataset photo",
+  "detector.dataset_delete": "Deleted dataset photos",
+  "detector.dataset_repair": "Repaired the dataset",
+  "detector.snapshot_post": "Took a snapshot",
+  "detector.snapshot_delete": "Deleted a snapshot",
+  "detector.snapshots_delete": "Deleted snapshots",
+  "detector.clips_delete": "Deleted clips",
+  "detector.footage_email": "Emailed footage",
+  "detector.footage_schedule_put": "Changed the footage email schedule",
+  "detector.measure_calibrate": "Calibrated measurement",
+  "detector.measure_clear": "Cleared the measurement calibration",
+  "detector.measure_profiles": "Changed measurement profiles",
+  "detector.measure_run": "Ran a measurement",
+  "detector.webrtc_whep": "Opened a live view",
+  "detector.webrtc_session_delete": "Closed a live view",
+  "devices.update": "Changed a device",
+  "email.save": "Changed email settings",
+  "email.send": "Sent an email",
+  "email.send_cancel": "Cancelled an email",
+  "events.clear": "Cleared the events",
+  "events.update": "Changed an event",
+  "folders.assign": "Moved a device to a folder",
+  "folders.create": "Created a folder",
+  "folders.update": "Changed a folder",
+  "folders.delete": "Deleted a folder",
+  "functions.save": "Saved the functions",
+  "hostname.save": "Changed the device name",
+  "https.save": "Changed HTTPS settings",
+  "https.regenerate": "Made a new HTTPS certificate",
+  "hub.autostart": "Changed a system's autostart",
+  "hub.capture": "Changed a system's capture",
+  "hub.create_system": "Created a system",
+  "hub.import_system": "Imported a system",
+  "hub.remove_system": "Removed a system",
+  "hub.rename_system": "Renamed a system",
+  "hub.remove_orphan": "Removed a leftover system",
+  "hub.purge_system_data": "Deleted a system's data",
+  "hub.detection": "Started or stopped a system's detection",
+  "hub.power": "Started or stopped a system",
+  "hub.image_upload": "Changed a system's picture",
+  "hub.image_delete": "Removed a system's picture",
+  "hub.save_template": "Saved a system as a template",
+  "hub.rename_user_template": "Renamed a template",
+  "hub.delete_user_template": "Deleted a template",
+  "hub.set_board_release": "Changed which board terminals are shared",
+  "hub.set_nodered": "Switched Node-RED on or off",
+  "hub.set_retention": "Changed data retention",
+  "hubport.save": "Changed the dashboard port",
+  "hubport.test": "Tested the dashboard port",
+  "inbox.delete": "Deleted a message",
+  "logs.clear": "Cleared the log",
+  "logs.purge": "Cleared the log",
+  "logs.level": "Changed the log detail level",
+  "mail.save_account": "Saved a mailbox",
+  "mail.delete_account": "Removed a mailbox",
+  "mail.set_default": "Changed the default mailbox",
+  "mail.test_account": "Tested a mailbox",
+  "media.upload": "Uploaded a file",
+  "media.delete": "Deleted a file",
+  "models.upload": "Uploaded an AI model",
+  "models.local_upload": "Uploaded an AI model",
+  "models.delete": "Deleted an AI model",
+  "models.local_delete": "Deleted an AI model",
+  "models.deploy": "Deployed an AI model",
+  "models.save": "Changed AI model settings",
+  "models.builtin_fetch": "Downloaded a built-in AI model",
+  "models.builtin_select": "Chose a built-in AI model",
+  "models.builtin_select_many": "Chose built-in AI models",
+  "models.local_select": "Chose an AI model",
+  "monitor.set": "Changed the monitor account",
+  "monitor.pages": "Changed the monitor pages",
+  "monitor.systems": "Changed the monitor systems",
+  "monitor.token_make": "Made a monitor link",
+  "monitor.token_revoke": "Revoked a monitor link",
+  "monitor.token_login": "Opened a monitor link",
+  "mqtt_broker.save": "Changed MQTT broker settings",
+  "mqtt_broker.install": "Installed the MQTT broker",
+  "mqtt_broker.auto": "Changed MQTT broker auto-install",
+  "mqtt_clients.save": "Saved an MQTT connection",
+  "mqtt_clients.delete": "Removed an MQTT connection",
+  "network.ap": "Switched the hotspot on or off",
+  "network.ap_save": "Changed the hotspot",
+  "network.join": "Joined a Wi-Fi network",
+  "network.forget": "Forgot a Wi-Fi network",
+  "network.radio": "Switched Wi-Fi on or off",
+  "network.reset": "Reset Wi-Fi",
+  "network.ipv4": "Changed a network address",
+  "network.ipv4_keep": "Kept the new network address",
+  "network.ipv4_revert": "Reverted the network address",
+  "network.ipv4_test": "Tested a network address",
+  "network.wifi_test": "Tested Wi-Fi",
+  "panel.save": "Changed the front panel",
+  "panel.page": "Stepped the front panel page",
+  "panel.beep": "Sounded the buzzer",
+  "proxy.footage_delete": "Deleted footage",
+  "remote.save": "Changed remote access settings",
+  "remote.tunnel_start": "Started remote access",
+  "remote.tunnel_stop": "Stopped remote access",
+  "roles.create": "Created a role",
+  "roles.delete": "Deleted a role",
+  "settings.add": "Added a setting",
+  "settings.remove": "Removed a setting",
+  "storage.forget_nvme": "Forgot the NVMe drive",
+  "storage_setup.setup": "Set up storage",
+  "storage_setup.decline": "Declined storage setup",
+  "system.settings_save": "Changed system settings",
+  "telegram.save_bot": "Saved a Telegram bot",
+  "telegram.delete_bot": "Removed a Telegram bot",
+  "telegram.set_default": "Changed the default Telegram bot",
+  "telegram.test_bot": "Tested a Telegram bot",
+  "telegram.unblock": "Unblocked a Telegram chat",
+  "telegram.unlink": "Unlinked a Telegram chat",
+  "update.upload": "Uploaded a software update",
+  "update.install": "Installed a software update",
+  "update.discard": "Discarded a software update",
+  "update.rollback": "Went back to the previous version",
+  "users.create": "Created a user",
+  "users.update": "Changed a user",
+  "users.delete": "Deleted a user",
+  "users.reset_password": "Reset a user's password",
+  "workflow.save": "Saved the workflow",
+  "workflow.compile": "Applied the workflow",
+  "workflow.card_style": "Changed a workflow card",
+  "workflow.class_filter": "Changed the class filter",
+  "workflow.csv_file": "Uploaded a workflow CSV file",
+  "workflow.inject": "Triggered a workflow node",
+  "workflow.test_output": "Tested a workflow output",
+  "workflow.mqtt_test_publish": "Sent a test MQTT message",
+  "workflow.mqtt_test_listen": "Listened for MQTT messages",
+  "workflow.mqtt_test_stop": "Stopped listening for MQTT messages",
+};
+
+//: The first word of a route name -> the verb a person reads.
+const VERBS = {
+  add: "Added", create: "Created", new: "Created", save: "Saved", set: "Changed",
+  update: "Changed", edit: "Edited", rename: "Renamed", remove: "Removed",
+  delete: "Deleted", clear: "Cleared", purge: "Cleared", upload: "Uploaded",
+  import: "Imported", install: "Installed", start: "Started", stop: "Stopped",
+  restart: "Restarted", reset: "Reset", test: "Tested", publish: "Published",
+  deploy: "Deployed", enable: "Enabled", disable: "Disabled", apply: "Applied",
+  select: "Chose", approve: "Approved", reject: "Rejected", revoke: "Revoked",
+  send: "Sent", fetch: "Downloaded",
+};
+
+/** A route name with no hand-written sentence, read as one:
+ *  "foo.remove_widget" -> "Removed widget"; failing that, by the method. */
+function changeFallback(what, method) {
+  const name = String(what || "").split(".").pop() || "";
+  const words = name.split("_").filter(Boolean);
+  if (words.length && VERBS[words[0]]) {
+    return [VERBS[words[0]], ...words.slice(1)].join(" ") || VERBS[words[0]];
+  }
+  const m = String(method || "").toUpperCase();
+  const verb = m === "DELETE" ? "Removed" : m === "POST" ? "Saved" : "Changed";
+  return words.length ? `${verb} ${words.join(" ")}` : `${verb} a setting`;
+}
+
+/** The sentence for a `change` row. */
+function changeLabel(entry) {
+  const d = entry?.detail || {};
+  return CHANGES[d.what] || changeFallback(d.what, d.method);
+}
+
+//: Path words that name a KIND of thing, never the thing itself.
+const GENERIC = new Set(["api", "hub", "systems", "system", "users", "roles", "detector", "datasets",
+  "rows", "delete", "save", "settings", "update", "upload", "install", "rollback", "discard",
+  "models", "local", "builtin", "network", "mail", "accounts", "telegram", "bots", "monitor",
+  "media", "folders", "devices", "auth", "board", "panel", "workflow", "events", "logs",
+  "cameras", "camera", "zones", "control", "remote", "storage", "mqtt", "clients", "default",
+  "test", "image", "rename", "power", "autostart", "detection", "capture", "page", "beep", "port"]);
+
+//: Path words followed by the NAME of one of them.
+const COLLECTIONS = new Set(["systems", "users", "roles", "cameras", "folders", "accounts", "bots",
+  "templates", "clients", "devices", "queries", "sessions", "snapshots", "images"]);
+
+/** What the change was made TO, for the line beside the sentence: the named
+ *  thing in the path (a system, a user, a camera), else a short list of the
+ *  settings that were sent. Never the raw method, path or status. */
+function changeDetail(entry, nameOf) {
+  const d = entry?.detail || {};
+  const parts = String(d.path || "").split("/").filter(Boolean).map(decodeURIComponent);
+  // The segment after a collection word is the thing ("/systems/test" ->
+  // "test", even when it is called "test"); failing that, the last word in
+  // the path that does not name a kind of thing.
+  // A segment that is a word of the operation's own name ("test" in
+  // mail.test_account at /accounts/test) is the action, not a name.
+  const own = new Set(String(d.what || "").split(".").pop().split("_"));
+  let target = "";
+  for (let i = parts.length - 2; i >= 0 && !target; i -= 1) {
+    if (COLLECTIONS.has(parts[i].toLowerCase()) && !own.has(parts[i + 1].toLowerCase())) {
+      target = parts[i + 1];
+    }
+  }
+  if (!target) {
+    target = [...parts].reverse().find((p) => !GENERIC.has(p.toLowerCase()) && !own.has(p.toLowerCase())
+                                               && !/^\d+$/.test(p)) || "";
+  }
+  const bits = [];
+  if (target) bits.push(`"${parts.includes("systems") ? nameOf(target) : target}"`);
+  const sent = d.sent && typeof d.sent === "object" && !Array.isArray(d.sent) ? Object.keys(d.sent) : [];
+  const shown = sent.filter((k) => k !== "...").slice(0, 4);
+  if (shown.length) {
+    const words = shown.map((k) => k.replace(/_/g, " "));
+    bits.push(`changed ${words.join(", ")}${sent.length > shown.length ? " and more" : ""}`);
+  }
+  if (d.upload_bytes) bits.push(`${Math.max(1, Math.round(d.upload_bytes / 1024))} KB uploaded`);
+  return bits.join(" · ");
+}
+
 /** The name an audit row goes by. Always a string; never throws, whatever
  *  shape the row arrives in. */
 export function actionLabel(entry) {
@@ -102,6 +374,7 @@ export function actionLabel(entry) {
   if (action === "login" && entry?.result && entry.result !== "ok") {
     return "Sign-in failed";
   }
+  if (action === "change") return changeLabel(entry);
   if (action === "system.settings" || action === "session.policy") {
     const named = switchOf(entry);
     if (named) return named;
@@ -114,6 +387,7 @@ export function actionLabel(entry) {
  *  name it goes by now. "" when the name has said it all. */
 export function actionDetail(entry, text, nameOf = (s) => s) {
   const action = String(entry?.action || "");
+  if (action === "change") return changeDetail(entry, nameOf);
   if ((action === "system.settings" || action === "session.policy")
       && switchOf(entry)) return "";
   if (action === "video.overlay") {
