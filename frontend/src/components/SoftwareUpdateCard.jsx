@@ -201,21 +201,21 @@ export default function SoftwareUpdateCard() {
                         onClick={install}>
                   {busy === "install" || busy === "restart" ? "Installing…" : "Install"}
                 </button>
-                <button type="button" className="btn" disabled={!!busy}
+                <button type="button" className="btn btn-hover-blue" disabled={!!busy}
                         style={{ width: "100%", justifyContent: "center" }}
                         onClick={discard}>
                   Cancel
                 </button>
               </>
             ) : (
-              <button type="button" className="btn" disabled={!!busy}
+              <button type="button" className="btn btn-hover-blue" disabled={!!busy}
                       style={{ width: "100%", justifyContent: "center" }}
                       onClick={() => fileRef.current?.click()}>
                 Choose update file
               </button>
             )}
             {st.previous && !staged && (
-              <button type="button" className="btn" disabled={!!busy}
+              <button type="button" className="btn btn-hover-blue" disabled={!!busy}
                       style={{ width: "100%", justifyContent: "center" }}
                       onClick={rollback}>
                 Go back to {st.previous.version}

@@ -376,6 +376,10 @@ a { color: inherit; text-decoration: none; }
   transition: opacity 0.2s;
 }
 .btn:disabled { opacity: 0.5; cursor: default; }
+/* A neutral button that turns the brand blue under the pointer (a disabled one stays as it is). */
+.btn-hover-blue { transition: background-color .15s, border-color .15s, color .15s, opacity .2s; }
+.btn-hover-blue:enabled:hover { background: var(--brand-accent, #04bade);
+                                border-color: var(--brand-accent, #04bade); color: #fff; }
 /* --brand-accent, NOT --accent, for the same reason as .switch-on below: this
    button sits inside the hub's shadcn subtree (.cy-app) on the Network page,
    where --accent is a near-white surface -- so a Join button with the name
