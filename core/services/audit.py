@@ -48,12 +48,19 @@ ACTIONS = (
     # sign in to an account is an access decision, so each change is a row.
     "device.registered", "device.removed", "device.remove_others",
     "device.expired", "device.refused",
+    # Every other change a signed-in account makes (core/services/change_log.py):
+    # which operation, what was sent, the status it ended with.
+    "change",
 )
 
 
 def record(action, username=None, host_serial=None, result="ok",
            source_ip=None, detail=None, config_dir=None):
     """Append one audit entry, stamped with this process's system. True if written."""
+    # This request has its own row now: the catch-all change log must not
+    # write a second, vaguer one for it.
+    from core.services import change_log                     # noqa: PLC0415
+    change_log.mark_recorded()
     return audit_repo.record(action, username=username, host_serial=host_serial,
                              result=result, source_ip=source_ip, detail=detail,
                              system=_SYSTEM, config_dir=config_dir)

@@ -449,6 +449,12 @@ def create_app(config_dir=None):
     # re-auth-gated token operations for anything a deployment registers.
     app.state.slave_tokens = {}
     app.state.slaves = []
+    # Every change a signed-in account makes becomes an audit row, unless its
+    # route wrote one already (core/services/change_log.py). Inside the
+    # session wall (added before it), so the account is known by the time the
+    # request finishes.
+    from core.services.change_log import ChangeLog
+    app.add_middleware(ChangeLog, config_dir=config_dir)
     # Inside the session wall (added before it): an authenticated write
     # empties the shared poll cache before its response leaves.
     pollcache_route.install(app)

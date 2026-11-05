@@ -968,6 +968,12 @@ def create_app(slug, config_dir=None):
     _sysconfig.export_location(app.state.config_dir)
     app.include_router(spa_router)   # /api/bootstrap + read-only page data (React SPA)
     app.include_router(cameras_router)   # /api/cameras/usage (fleet camera dedup)
+    # Every change a signed-in account makes becomes an audit row, unless its
+    # route wrote one already (core/services/change_log.py). Inside the
+    # session wall (added before it), so the account is known by the time the
+    # request finishes.
+    from core.services.change_log import ChangeLog
+    app.add_middleware(ChangeLog, config_dir=app.state.config_dir)
     # Inside the session wall (added before it): an authenticated write
     # empties the shared poll cache before its response leaves.
     pollcache_route.install(app)

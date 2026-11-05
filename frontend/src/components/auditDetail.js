@@ -19,6 +19,16 @@ export function detailText(detail) {
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail)) return detail.map(detailText).filter(Boolean).join(", ");
   if (typeof detail !== "object") return String(detail);
+  // A `change` row (core/services/change_log.py): the operation first, then
+  // the request and its status, then everything else -- still every key.
+  if (detail.method && detail.path) {
+    const { what, method, path, status, ...rest } = detail;
+    const head = `${what || path} - ${method} ${path} -> ${status ?? "?"}`;
+    const tail = Object.entries(rest)
+      .map(([k, v]) => `${k}: ${v && typeof v === "object" ? JSON.stringify(v) : v}`)
+      .join(" · ");
+    return tail ? `${head} · ${tail}` : head;
+  }
   return Object.entries(detail)
     .map(([k, v]) => `${k}: ${v && typeof v === "object" ? JSON.stringify(v) : v}`)
     .join(" · ");
