@@ -275,3 +275,37 @@ export function SkelGuideline() {
     </section>
   );
 }
+
+/** About: the headline card, then the readings on the left and the software on
+ *  the right, in the real page's own grid. */
+export function SkelAbout() {
+  const tiles = (n) => (
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: n }, (_, i) => (
+        <div key={i} className="rounded-lg border p-3">
+          <SkelLine w="50%" h={10} style={{ marginBottom: 10 }} />
+          <SkelLine w="40%" h={22} style={{ marginBottom: 12 }} />
+          <SkelLine h={8} style={{ borderRadius: 8 }} />
+        </div>
+      ))}
+    </div>
+  );
+  return (
+    <div key="skel" className="page active page-skel mx-auto w-full max-w-[1280px] space-y-5">
+      <div className="panel-card" style={{ display: "flex", gap: 20, alignItems: "center" }}>
+        <SkelLine w={56} h={56} style={{ borderRadius: 10, flex: "none" }} />
+        <div style={{ flex: 1 }}>
+          <SkelLine w="34%" h={22} style={{ marginBottom: 10 }} />
+          <SkelLine w="22%" h={12} />
+        </div>
+      </div>
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 space-y-5">
+          <div className="panel-card"><SkelLine w="24%" h={14} style={{ marginBottom: 14 }} />{tiles(4)}</div>
+          <div className="panel-card"><SkelLine w="24%" h={14} style={{ marginBottom: 14 }} />{tiles(5)}</div>
+        </div>
+        <SkelCard rows={3} />
+      </div>
+    </div>
+  );
+}

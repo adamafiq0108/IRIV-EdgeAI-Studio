@@ -6,6 +6,7 @@
 // it is, and only then is there a button that installs. The box keeps the live
 // version and the one before it, so an update can be undone.
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Package } from "lucide-react";
 import { api } from "../api/client.js";
 import { useApp } from "../state/app.jsx";
 import { useToast } from "./ui/Toast.jsx";
@@ -108,10 +109,17 @@ export default function SoftwareUpdateCard() {
   const staged = st?.staged;
   const ready = st?.ready;
   return (
-    <div className="rounded-xl border bg-card p-4" data-software-update>
-      <div className="font-medium">Software update</div>
-      <div className="mb-3 text-xs text-muted-foreground">
-        Update this box with a release file. Nothing is downloaded from the internet.
+    <section className="rounded-xl border bg-card p-4" data-software-update>
+      <div className="mb-3 flex items-start gap-2.5">
+        <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
+          <Package size={15} aria-hidden="true" />
+        </span>
+        <div>
+          <h2 className="text-sm font-semibold leading-tight">Software update</h2>
+          <div className="mt-0.5 text-xs text-muted-foreground">
+            Update this box with a release file. Nothing is downloaded from the internet.
+          </div>
+        </div>
       </div>
 
       {!st ? (
@@ -179,6 +187,6 @@ export default function SoftwareUpdateCard() {
           )}
         </>
       )}
-    </div>
+    </section>
   );
 }
