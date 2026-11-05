@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 // Health - two cards, because there are two things an operator asks about:
 // how the BOARD is doing (CPU, memory, every storage device, temperature) and
 // how the HAILO is doing (module, load, inference rate, temperature, what it
@@ -5,6 +6,8 @@
 // anything the box cannot measure shows "-" rather than a zero.
 import { usePoll } from "../api/hooks.js";
 import { ErrorNote, SkelCard } from "./Loading.jsx";
+import AboutCard from "./AboutCard.jsx";
+import SoftwareUpdateCard from "./SoftwareUpdateCard.jsx";
 
 function pct(v) { return v == null ? "-" : `${Math.round(v)}%`; }
 function temp(v) { return v == null ? "-" : `${Math.round(v)}°C`; }
@@ -186,9 +189,11 @@ export default function HealthPanel() {
 
   return (
     <div className="space-y-4">
+      <AboutCard />
       {data.host && <BoardCard host={data.host} />}
       <HailoCard npu={data.host?.npu} pipelines={pipelines} arch={pipes?.arch} />
       <LoadedNetworks pipelines={pipelines} />
+      <SoftwareUpdateCard />
     </div>
   );
 }

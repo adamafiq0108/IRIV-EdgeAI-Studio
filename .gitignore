@@ -57,3 +57,6 @@ config/.pollcache.epoch
 
 # Team notes and reviews stay on the laptop; never published.
 docs/team/
+
+# Release files built by scripts/make_release.py
+/dist/

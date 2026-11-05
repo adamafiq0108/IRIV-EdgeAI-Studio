@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 """
 hub_server.py -- The system hub. One process, in front of the masters.
 
@@ -50,6 +51,8 @@ from core.routes.https import router as https_router
 from core.routes.sysport import router as sysport_router
 from core.routes.hostname import router as hostname_router
 from core.routes.boxrestart import router as boxrestart_router
+from core.routes.manual_update import router as manual_update_router
+from core.routes.about import router as about_router
 from core.routes.capacity import router as capacity_router
 from core.routes.mail import router as mail_router
 from core.routes.telegram import router as telegram_router
@@ -433,6 +436,8 @@ def create_app(config_dir=None):
     # /api/hub/restart - "Restart now" for those two: a reboot, after which
     # main() applies them (core/services/boxpending.py).
     app.include_router(boxrestart_router)
+    app.include_router(manual_update_router)  # /api/hub/update/* - the About page's software update
+    app.include_router(about_router)  # /api/hub/about - who made this, for the About page
     # Last of the routers: an unhandled error anywhere above becomes one
     # recorded line and one {"ok": false, ...} body carrying the request id,
     # instead of a bare 500 (conventions sec 8).

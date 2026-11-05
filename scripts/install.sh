@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
 #
 # install.sh -- Turn a board into a customer appliance. One command, one box.
 #
@@ -1333,6 +1334,13 @@ chown root:root /usr/local/lib/irivai/wifi-profile.py
 install -m 755 "${SRC_DIR}/scripts/set_hostname.py" /usr/local/lib/irivai/set-hostname.py
 chown root:root /usr/local/lib/irivai/set-hostname.py
 
+# Software update by hand (About -> Software update): switching the live
+# release link in /opt needs root, so it is a root-owned script with the request
+# on stdin and nothing on argv. It refuses a box that is not set up for updates
+# (the live folder is not a link), and keeps only the live and previous release.
+install -m 755 "${SRC_DIR}/scripts/apply_release.py" /usr/local/lib/irivai/apply-release.py
+chown root:root /usr/local/lib/irivai/apply-release.py
+
 # A drive fitted after install (Settings -> "New storage detected"), on the
 # same terms: the popup may ASK to format a drive or mount what is on it, by
 # the drive's id from the hub's own list, and this root-owned script decides
@@ -1477,6 +1485,20 @@ if visudo -cf /etc/sudoers.d/irivai-restart.tmp >/dev/null; then
 else
     rm -f /etc/sudoers.d/irivai-restart.tmp
     warn "the restart sudoers rule did not validate -- the platform will not be able to restart its own units"
+fi
+
+# The update helper, as its own file. NOT irivai-update: this script removes
+# that name above, as a leftover of the old over-the-air updater.
+cat > /etc/sudoers.d/irivai-release.tmp <<SUDOERS
+${SERVICE_USER} ALL=(root) NOPASSWD: /usr/bin/python3 -I /usr/local/lib/irivai/apply-release.py
+SUDOERS
+chmod 440 /etc/sudoers.d/irivai-release.tmp
+if visudo -cf /etc/sudoers.d/irivai-release.tmp >/dev/null; then
+    mv /etc/sudoers.d/irivai-release.tmp /etc/sudoers.d/irivai-release
+    note "sudoers: ${SERVICE_USER} may switch the live release (software update)"
+else
+    rm -f /etc/sudoers.d/irivai-release.tmp
+    warn "the update sudoers rule did not validate -- software update will not be able to switch versions"
 fi
 
 # The box's own hardware and network, for the front panel and the Network
