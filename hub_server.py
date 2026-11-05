@@ -53,6 +53,7 @@ from core.routes.hostname import router as hostname_router
 from core.routes.boxrestart import router as boxrestart_router
 from core.routes.manual_update import router as manual_update_router
 from core.routes.about import router as about_router
+from core.routes.board_hub import router as board_hub_router
 from core.routes.capacity import router as capacity_router
 from core.routes.mail import router as mail_router
 from core.routes.telegram import router as telegram_router
@@ -438,6 +439,7 @@ def create_app(config_dir=None):
     app.include_router(boxrestart_router)
     app.include_router(manual_update_router)  # /api/hub/update/* - the About page's software update
     app.include_router(about_router)  # /api/hub/about - who made this, for the About page
+    app.include_router(board_hub_router)  # /api/hub/board - the ports and what is on them
     # Last of the routers: an unhandled error anywhere above becomes one
     # recorded line and one {"ok": false, ...} body carrying the request id,
     # instead of a bare 500 (conventions sec 8).
