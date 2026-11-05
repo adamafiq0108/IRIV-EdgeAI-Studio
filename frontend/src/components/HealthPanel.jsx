@@ -245,14 +245,19 @@ export default function HealthPanel() {
   return (
     <div className="mx-auto w-full max-w-[1280px] space-y-5">
       <AboutCard hostname={data.host?.hostname} />
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-w-0 space-y-5">
+      {/* Wide: the board and the accelerator, then the loaded networks, then the
+          software update, side by side. Medium: the board on the left, the other
+          two stacked on the right. Narrow: one column. */}
+      <div className="grid items-start gap-5 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-5 lg:row-span-2 xl:row-span-1">
           {data.host && <BoardCard host={data.host} />}
           <HailoCard npu={data.host?.npu} pipelines={pipelines} arch={pipes?.arch} />
         </div>
-        <div className="min-w-0 space-y-5">
-          <SoftwareUpdateCard />
+        <div className="min-w-0">
           <LoadedNetworks pipelines={pipelines} />
+        </div>
+        <div className="min-w-0">
+          <SoftwareUpdateCard />
         </div>
       </div>
     </div>
