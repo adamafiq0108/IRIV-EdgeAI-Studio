@@ -1358,6 +1358,9 @@ function Editor() {
   const lastOpenW = useRef(inspectorW || 270);
   // `auto`: opened only because a node was picked, so it shuts again when the node is let go.
   const autoOpened = useRef(false);
+  // Whether the right column is folded to the edge this render (guide hidden,
+  // no node open), for the resize handlers, which are stable callbacks.
+  const rightCollapsedRef = useRef(false);
   const openRight = useCallback((auto = false) => {
     if (!auto) autoOpened.current = false;
     if (inspectorWRef.current !== 0) return;
@@ -2670,7 +2673,11 @@ function Editor() {
   const startInspectorResize = useCallback((evt) => {
     evt.preventDefault();
     autoOpened.current = false;
-    inspectorDrag.current = { x0: evt.clientX, w0: inspectorWRef.current, moved: false };
+    // From the folded edge (guide hidden, nothing open) the drag grows the
+    // column out of nothing, and showing it at all means showing the guide.
+    const fromEdge = rightCollapsedRef.current;
+    inspectorDrag.current = { x0: evt.clientX, w0: fromEdge ? 0 : inspectorWRef.current,
+                              moved: false, fromEdge };
     evt.currentTarget.setPointerCapture?.(evt.pointerId);
     document.body.style.userSelect = "none";
   }, []);
@@ -2682,17 +2689,25 @@ function Editor() {
     if (Math.abs(evt.clientX - drag.x0) > 3) drag.moved = true;
     const raw = drag.w0 - (evt.clientX - drag.x0);
     const w = raw < 150 ? 0 : Math.max(240, Math.min(560, raw));
+    if (drag.fromEdge) {
+      if (!w) return;                 // not pulled out far enough yet: stay folded
+      drag.fromEdge = false;
+      setGuideHidden(false);
+    }
     if (w) lastOpenW.current = w;
     inspectorWRef.current = w;
     setInspectorW(w);
   }, []);
   const endInspectorResize = useCallback((evt) => {
     if (!inspectorDrag.current) return;
-    // A click (no drag) on the handle of a closed column opens it.
+    // A click (no drag) on the handle of a closed column opens it; on the
+    // folded edge (guide hidden), it brings the guide back.
     const clicked = !inspectorDrag.current.moved && inspectorWRef.current === 0;
+    const unfold = !inspectorDrag.current.moved && inspectorDrag.current.fromEdge;
     inspectorDrag.current = null;
     document.body.style.userSelect = "";
     evt.currentTarget.releasePointerCapture?.(evt.pointerId);
+    if (unfold) { setGuideHidden(false); return; }
     if (clicked) { openRight(); return; }
     localStorage.setItem("wf.inspector.w", String(inspectorWRef.current));
   }, [openRight]);
@@ -2736,8 +2751,13 @@ function Editor() {
   // collapses to its tab.
   // Guideline hidden: no tab, so the column is 0px when nothing is selected.
   // Re-enable: selected || helpOpen ? inspectorW : 34
-  // The guide card is always there, so the column is too.
-  const rightW = inspectorW;
+  // The guide hidden and no node open: the column has nothing to show, so it
+  // folds to the edge and its handle with it, instead of an empty column with
+  // the handle stranded in the middle of the page. A click on the handle, or a
+  // drag back out, brings the guide back (endInspectorResize / move).
+  const rightCollapsed = guideHidden && !selected;
+  rightCollapsedRef.current = rightCollapsed;
+  const rightW = rightCollapsed ? 0 : inspectorW;
   const zoneList = meta.variables?.zone_list || [];
   const modelList = meta.variables?.models || [];
   const selCount = nodes.filter((n) => n.selected).length
@@ -3370,7 +3390,10 @@ function Editor() {
                onPointerMove={moveInspectorResize}
                onPointerUp={endInspectorResize}
                onPointerCancel={endInspectorResize}
-               className="wf-col-bar" data-wf-col-bar="panel" title={inspectorW ? "Drag to resize the panel, or all the way right to close it" : "Drag, or click, to open the panel"}
+               className="wf-col-bar" data-wf-col-bar="panel"
+               title={rightCollapsed ? "Click, or drag out, to show the guide"
+                      : inspectorW ? "Drag to resize the panel, or all the way right to close it"
+                      : "Drag, or click, to open the panel"}
                style={{ position: "absolute", top: 0, bottom: 0, right: rightW - 5, width: 22,
                         cursor: "col-resize", zIndex: 6, touchAction: "none" }} />
           {/* ---- palette (drag its right edge to resize) ----
