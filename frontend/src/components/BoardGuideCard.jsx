@@ -15,7 +15,7 @@
 //   grey    nothing on it, or quiet
 //   amber   a warning: RS485 asked and got no answer
 //   red     the line is held by another program
-//   dashed  the box could not read it (never shown as "off")
+//   grey, unfilled  the box could not read it (never shown as "off")
 //
 // A LIGHT MEANS THE SIGNAL IS ACTIVE NOW, read back from the hardware - not
 // "a rule uses this terminal". A screw terminal cannot tell whether a wire is
@@ -172,12 +172,10 @@ function View({ view, states, selected, onSelect, label }) {
             <title>{`${st?.label || s.id}${st?.status ? ` - ${st.status}` : ""}`}</title>
             {s.shape === "circle" ? (
               <circle cx={s.x} cy={s.y} r={s.r} fill={tone} fillOpacity={sel ? 0.32 : 0.18}
-                      stroke={HIGHLIGHT} strokeWidth={sel ? 6 : 4}
-                      strokeDasharray={st?.tone === "unknown" ? "8 5" : undefined} />
+                      stroke={HIGHLIGHT} strokeWidth={sel ? 6 : 4} />
             ) : (
               <rect x={s.x} y={s.y} width={s.w} height={s.h} rx="5" fill={tone} fillOpacity={sel ? 0.32 : 0.18}
-                    stroke={HIGHLIGHT} strokeWidth={sel ? 6 : 4}
-                    strokeDasharray={st?.tone === "unknown" ? "8 5" : undefined} />
+                    stroke={HIGHLIGHT} strokeWidth={sel ? 6 : 4} />
             )}
           </g>
         );
@@ -196,7 +194,7 @@ function Legend() {
         </span>
       ))}
       <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5">
-        <span className="size-2 rounded-full" style={{ border: `2px dashed ${TONE.unknown}` }} />cannot read
+        <span className="size-2 rounded-full" style={{ background: TONE.unknown }} />cannot read
       </span>
     </div>
   );
@@ -252,8 +250,7 @@ export default function BoardGuideCard() {
           </div>
           {sel && (
             <div className="rounded-lg border px-3 py-2 text-sm" aria-live="polite">
-              <span className="inline-block size-2.5 rounded-full align-middle"
-                    style={sel.tone === "unknown" ? { border: `2px dashed ${TONE.unknown}` } : { background: TONE[sel.tone] }} />
+              <span className="inline-block size-2.5 rounded-full align-middle" style={{ background: TONE[sel.tone] }} />
               <strong className="ml-2">{sel.label}</strong>
               {sel.status ? <span className="ml-2">{sel.status}</span> : null}
               <div className="mt-0.5 text-xs text-muted-foreground">
@@ -276,10 +273,7 @@ export default function BoardGuideCard() {
                     <li key={s.id}
                         className={"flex cursor-pointer items-center gap-2.5 px-3 py-1.5 text-sm " + (selected === s.id ? "bg-primary/10" : "hover:bg-muted/60")}
                         onMouseEnter={() => setSelected(s.id)} onClick={() => setSelected(s.id)}>
-                      <span className="size-2.5 shrink-0 rounded-full"
-                            style={s.tone === "unknown"
-                              ? { border: `2px dashed ${TONE.unknown}` }
-                              : { background: TONE[s.tone] }} />
+                      <span className="size-2.5 shrink-0 rounded-full" style={{ background: TONE[s.tone] }} />
                       <span className="w-36 shrink-0 truncate font-medium">{s.label}</span>
                       <span className="min-w-0 flex-1 truncate text-muted-foreground" title={s.detail}>
                         {s.status || <span className="opacity-60">-</span>}
