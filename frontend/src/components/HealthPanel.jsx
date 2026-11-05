@@ -243,14 +243,6 @@ function LoadedNetworks({ pipelines }) {
   );
 }
 
-//: The page's sections, in reading order, for the bar under the headline:
-//: one click lands on each, and the order says what matters first.
-const SECTIONS = [
-  { id: "about-health", label: "Health" },
-  { id: "about-software", label: "Software" },
-  { id: "about-board", label: "Board and ports" },
-];
-
 export default function HealthPanel() {
   const { data, error } = usePoll("/api/hub/health", 10000);
   const { data: pipes } = usePoll("/api/hub/pipelines", 5000);
@@ -267,21 +259,12 @@ export default function HealthPanel() {
       <AboutCard hostname={data.host?.hostname} address={address}
                  hat={data.host?.npu?.present || data.host?.npu?.temp_c != null ? hat : ""} />
 
-      <nav aria-label="Sections" className="flex flex-wrap gap-2">
-        {SECTIONS.map((s) => (
-          <a key={s.id} href={`#${s.id}`}
-             className="rounded-full border px-3 py-1 text-xs font-medium transition-colors hover:bg-muted">
-            {s.label}
-          </a>
-        ))}
-      </nav>
-
       {/* First what someone opening About wants to know: how the box is doing
           and which software it runs, side by side. Wide: the board and the
           accelerator, then the loaded networks, then the software update.
           Medium: the readings on the left, the other two stacked on the right.
           Narrow: one column. */}
-      <div id="about-health" className="scroll-mt-20 grid items-stretch gap-5 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid items-stretch gap-5 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-5 lg:row-span-2 xl:row-span-1">
           {data.host && <BoardCard host={data.host} />}
           <HailoCard npu={data.host?.npu} pipelines={pipelines} arch={pipes?.arch} />
@@ -289,13 +272,13 @@ export default function HealthPanel() {
         <div className="min-w-0">
           <LoadedNetworks pipelines={pipelines} />
         </div>
-        <div id="about-software" className="min-w-0 scroll-mt-20">
+        <div className="min-w-0">
           <SoftwareUpdateCard />
         </div>
       </div>
 
       {/* Then the box itself, as a picture, with what is on every port. */}
-      <div id="about-board" className="scroll-mt-20">
+      <div>
         <BoardGuideCard />
       </div>
 
