@@ -234,10 +234,13 @@ export default function BoardGuideCard() {
             </div>
           </div>
         </div>
-        <a href={IMG.guide} target="_blank" rel="noopener noreferrer"
-           className="text-xs font-medium underline-offset-2 hover:underline">
-          Printable guide: what each port can do and what to plug in
-        </a>
+        <div className="flex flex-col items-end gap-2">
+          <a href={IMG.guide} target="_blank" rel="noopener noreferrer"
+             className="text-xs font-medium underline-offset-2 hover:underline">
+            Printable guide: what each port can do and what to plug in
+          </a>
+          <Legend />
+        </div>
       </div>
       {error && <p className="mb-2 text-xs text-destructive">{error}</p>}
 
@@ -258,7 +261,6 @@ export default function BoardGuideCard() {
               </div>
             </div>
           )}
-          <Legend />
         </div>
 
         <div className="min-w-0 overflow-hidden rounded-lg border">

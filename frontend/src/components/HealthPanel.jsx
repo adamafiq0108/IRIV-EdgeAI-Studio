@@ -229,28 +229,64 @@ function LoadedNetworks({ pipelines }) {
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          No detection pipelines yet. A system's model appears here once it is running.
-        </p>
+        <div className="flex h-full min-h-32 flex-col items-center justify-center gap-1 px-4 py-6 text-center">
+          <p className="text-sm font-medium">No model is running</p>
+          <p className="text-xs text-muted-foreground">
+            A system's model appears here once its detection is running.
+          </p>
+          <a href="/" className="mt-2 text-xs font-medium underline-offset-2 hover:underline">
+            Go to Home to start a system
+          </a>
+        </div>
       )}
     </Section>
   );
 }
 
+//: The page's sections, in reading order, for the bar under the headline:
+//: one click lands on each, and the order says what matters first.
+const SECTIONS = [
+  { id: "about-board", label: "Board and ports" },
+  { id: "about-health", label: "Health" },
+  { id: "about-software", label: "Software" },
+];
+
 export default function HealthPanel() {
   const { data, error } = usePoll("/api/hub/health", 10000);
   const { data: pipes } = usePoll("/api/hub/pipelines", 5000);
+  // The box's wired address for the headline: the first jack with one.
+  const { data: board } = usePoll("/api/hub/board", 15000);
   if (error) return <ErrorNote error={error} />;
   if (!data) return <SkelAbout />;
   const pipelines = pipes?.pipelines || [];
+  const address = (board?.eth || []).find((e) => e.ip)?.ip || "";
+  const hat = (pipes?.arch || data.host?.npu?.arch || "").toUpperCase();
 
   return (
     <div className="mx-auto w-full max-w-[1280px] space-y-5">
-      <AboutCard hostname={data.host?.hostname} />
-      {/* Wide: the board and the accelerator, then the loaded networks, then the
-          software update, side by side. Medium: the board on the left, the other
-          two stacked on the right. Narrow: one column. */}
-      <div className="grid items-stretch gap-5 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <AboutCard hostname={data.host?.hostname} address={address}
+                 hat={data.host?.npu?.present || data.host?.npu?.temp_c != null ? hat : ""} />
+
+      <nav aria-label="Sections" className="flex flex-wrap gap-2">
+        {SECTIONS.map((s) => (
+          <a key={s.id} href={`#${s.id}`}
+             className="rounded-full border px-3 py-1 text-xs font-medium transition-colors hover:bg-muted">
+            {s.label}
+          </a>
+        ))}
+      </nav>
+
+      {/* First: the box itself, as a picture, with what is on every port.
+          It is the one thing on this page nothing else on the product shows. */}
+      <div id="about-board" className="scroll-mt-20">
+        <BoardGuideCard />
+      </div>
+
+      {/* Then the readings and the software, side by side. Wide: the board and
+          the accelerator, then the loaded networks, then the software update.
+          Medium: the readings on the left, the other two stacked on the right.
+          Narrow: one column. */}
+      <div id="about-health" className="scroll-mt-20 grid items-stretch gap-5 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-5 lg:row-span-2 xl:row-span-1">
           {data.host && <BoardCard host={data.host} />}
           <HailoCard npu={data.host?.npu} pipelines={pipelines} arch={pipes?.arch} />
@@ -258,11 +294,14 @@ export default function HealthPanel() {
         <div className="min-w-0">
           <LoadedNetworks pipelines={pipelines} />
         </div>
-        <div className="min-w-0">
+        <div id="about-software" className="min-w-0 scroll-mt-20">
           <SoftwareUpdateCard />
         </div>
       </div>
-      <BoardGuideCard />
+
+      <p className="px-1 pb-2 text-center text-xs text-muted-foreground">
+        Copyright (c) 2026 Cytron Technologies Sdn Bhd. All rights reserved.
+      </p>
     </div>
   );
 }
