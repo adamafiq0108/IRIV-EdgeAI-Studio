@@ -595,7 +595,7 @@ export default function RetentionPanel() {
                             90?" is answered before it is asked. */}
                         <span data-retention-max={f.key}
                               className="text-xs text-muted-foreground">
-                          Maximum retention period: {periodWords(f.unit, max)}
+                          Max {max} {f.unit}
                         </span>
                       </div>
                       {/* Saved longer than applies now: the saved value is
