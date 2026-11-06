@@ -36,6 +36,9 @@ SKIP_HARDENING=0
 INSTALL_SERVICE=1
 SKIP_HARDWARE_CHECK=0
 SKIP_NODE_UPDATE=0
+#: Install Node-RED when the board does not have it (1) or leave it out (0).
+#: Installed OFF either way -- the Board I/O page turns it on (8b).
+INSTALL_NODERED=1
 #: The row store. A board that cannot reach Postgres still runs -- tables can
 #: be designed, nothing is stored -- which is right for a deployment pointing
 #: several boards at one server, and wrong as the default for an appliance
@@ -120,6 +123,9 @@ Options:
                      box. By default the installer updates Node.js to the
                      latest LTS and Node-RED (if the board has it) to its
                      latest release; Node-RED stays on or off as it was.
+  --no-nodered       do not install Node-RED on a board that does not have
+                     it. By default it is installed (and left OFF: Settings ->
+                     Board I/O turns it on).
   --skip-hardware-check
                      install even when the hardware check fails: not an IRIV
                      Edge AI device (no Compute Module 5, no ATECC), or no AI
@@ -153,6 +159,7 @@ while [[ $# -gt 0 ]]; do
         --skip-hardening)    SKIP_HARDENING=1; shift ;;
         --skip-hardware-check) SKIP_HARDWARE_CHECK=1; shift ;;
         --skip-node-update)  SKIP_NODE_UPDATE=1; shift ;;
+        --no-nodered)        INSTALL_NODERED=0; shift ;;
         --no-service)        INSTALL_SERVICE=0; shift ;;
         -h|--help)      usage; exit 0 ;;
         *)              usage >&2; die "unknown argument: $1" ;;
@@ -514,8 +521,52 @@ if [[ $SKIP_NODE_UPDATE -eq 0 ]]; then
         else
             warn "could not update Node-RED -- keeping ${nr_before:-the installed version}"
         fi
+    elif [[ $INSTALL_NODERED -eq 1 ]]; then
+        # NODE-RED, INSTALLED WHERE THE BOARD HAS NONE (an OS image without
+        # it). The board's Node-RED is a feature the Board I/O page turns on,
+        # and that page has nothing to turn on without it. Installed the way
+        # Raspberry Pi OS ships it: its own `nodered` account, a nodered
+        # systemd unit, flows in /home/nodered/.node-red -- so the update step
+        # above, the sudoers rule (enable/disable --now nodered) and the
+        # Board I/O switch all find it where they look. Left OFF: the editor
+        # on 1880 runs code and has no password until one is set (8b).
+        note "Node-RED: not installed -- installing the latest release"
+        if npm install -g --unsafe-perm node-red@latest >/dev/null 2>&1; then
+            id -u nodered >/dev/null 2>&1 \
+                || useradd --system --create-home --home-dir /home/nodered \
+                           --shell /usr/sbin/nologin nodered
+            # GPIO / serial access for flows that drive the board's I/O.
+            for g in gpio dialout i2c spi; do
+                getent group "$g" >/dev/null && usermod -aG "$g" nodered
+            done
+            install -d -o nodered -g nodered -m 750 /home/nodered/.node-red
+            nr_bin="$(command -v node-red)"
+            cat > /etc/systemd/system/nodered.service <<UNIT
+[Unit]
+Description=Node-RED
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nodered
+Group=nodered
+WorkingDirectory=/home/nodered
+Environment="NODE_OPTIONS=--max_old_space_size=512"
+ExecStart=${nr_bin} --userDir /home/nodered/.node-red
+Restart=on-failure
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+            systemctl daemon-reload
+            note "Node-RED: $(node-red --version 2>/dev/null | head -n1 || echo installed) (off; turn it on in Settings -> Board I/O)"
+        else
+            warn "could not install Node-RED (is this box online?) -- the rest of the install carries on"
+        fi
     else
-        note "Node-RED: not installed on this box -- nothing to update"
+        note "Node-RED: not installed (--no-nodered)"
     fi
 fi
 
