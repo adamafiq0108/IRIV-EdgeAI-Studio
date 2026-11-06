@@ -323,25 +323,23 @@ and `irivai-agent` if you passed an adapter.
 
 ## 5. First login
 
-The installer sets no password - an appliance that ships with a documented one
-has no authentication worth the name. Set the administrator's password once, on
-the box:
+Open `http://<box-ip>` (port 80) or `http://<box-ip>:5100` - or
+`http://IRIV-EdgeAI-Studio.local`. A new box opens a short **first setup**
+screen before anyone signs in:
 
-```bash
-sudo tee /opt/irivai-systor/config/auth.local.toml >/dev/null <<'TOML'
-[master]
-password = "choose-something-long"
-TOML
-sudo chown cytron:cytron /opt/irivai-systor/config/auth.local.toml
-sudo chmod 600 /opt/irivai-systor/config/auth.local.toml
-```
+1. **Welcome**
+2. **Your account** - choose the administrator's **username** and **password**
+   (typed twice). Nothing is pre-filled; there is no shared default to keep.
+3. **Recovery email** - optional, used to send a password-reset link. It can be
+   added later under Settings.
+4. **All set** - sign in with the account you just created.
 
-Then open `http://<box-ip>:5100` (or the software port the box was given) and sign in as
-**admin** with that password.
-The first correct login rewrites the file as a PBKDF2 hash, so the cleartext
-leaves the disk without you running anything. Because no recovery email is on
-file yet, the SPA routes you straight to **Account Setup** - give the account
-its real name, its own password and a recovery address there.
+The setup screen only appears until the first account is created. After that
+the box shows the normal sign-in, and the account is changed from the
+dashboard (Settings → Accounts).
+
+Forgot the password with no recovery email set? Hold the **USER** button on
+the front panel for 5 seconds: the screen shows a one-time reset code.
 
 ### The box's own access point
 

@@ -898,7 +898,7 @@ if auth.master_password() or (auth._auth_local().get("master") or {}).get("passw
     sys.exit(0)
 auth.set_admin_username(want_user)
 auth.set_master_password(want_password)
-print("   %s / %s  -- CHANGE THIS on the box" % (want_user, want_password))
+print("   ready for first setup: the first visit to the dashboard creates the account")
 PY
     then
         for f in "${TARGET}/config/auth.local.toml"; do
@@ -2347,7 +2347,7 @@ IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 cat <<EOF
 
   Dashboard      : http://${IP:-<this-box>}  (port 80; also http://${IP:-<this-box>}:${HUB_PORT})
-  Sign in as     : ${DEFAULT_ADMIN_USER} / ${DEFAULT_ADMIN_PASSWORD}  (change it)
+  First visit    : create your own username and password on the setup screen
   Hotspot key    : ${AP_KEY:-iriv1234 (set by the hub at its first start)}  (on the front panel; change it on Settings -> Network)
   OS account     : the pi account password was not changed; change it with passwd if you want
   Installed at   : ${TARGET}

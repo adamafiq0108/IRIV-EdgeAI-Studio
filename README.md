@@ -36,8 +36,9 @@ git clone --depth 1 https://github.com/adamafiq0108/IRIV-EdgeAI-Studio.git /tmp/
 cd /tmp/iriv-src && sudo bash scripts/install.sh
 ```
 
-Then open **`http://<board-ip>`** in your browser and sign in with the account the installer
-prints at the end. The first sign-in asks you to choose your own password.
+Then open **`http://<board-ip>`** in your browser. The first time, a short **setup** screen
+appears: create your own **username** and **password** (and, optionally, a recovery email), then
+sign in with them. There is no shared default account to type in.
 
 > [!TIP]
 > Not sure of the board's address? A new board is called `IRIV-EdgeAI-Studio`, so try
@@ -163,7 +164,8 @@ cd /tmp/iriv-src && sudo bash scripts/install.sh
 It checks the hardware, installs everything, and starts the services. Expect **10-20 minutes**
 on a fresh board. It is safe to run again later: your settings, recordings and models are kept.
 
-At the end it prints where to open the dashboard and how to sign in.
+At the end it prints where to open the dashboard. The first visit there asks you to create your
+own account.
 </details>
 
 <details>
@@ -188,7 +190,8 @@ systemctl is-active irivai-hub                              # active
 curl -s -o /dev/null -w '%{http_code}\n' localhost:5100     # 200
 ```
 
-Then open **`http://<board-ip>`** and sign in.
+Then open **`http://<board-ip>`**: the first time it shows the setup screen where you create
+your username and password; after that it shows the normal sign-in.
 </details>
 
 <details>
