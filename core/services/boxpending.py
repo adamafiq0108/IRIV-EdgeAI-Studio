@@ -127,6 +127,12 @@ def reboot(delay=1.0):
             running = None
         if running and running.reboot():
             return
+        # Software off first, as the panel does (services/software_off.py).
+        try:
+            from core.services import software_off           # noqa: PLC0415
+            software_off.turn_off()
+        except Exception:                                    # noqa: BLE001
+            pass
         try:
             subprocess.Popen(list(REBOOT_ARGV), stdin=subprocess.DEVNULL,
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,

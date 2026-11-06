@@ -161,11 +161,17 @@ async def panel_power(request: Request):
                             detail='action must be "shutdown" or "reboot"')
     running = panel_service.current()
     if running:
-        ok = running.shutdown() if action == "shutdown" else running.reboot()
+        # Off the event loop: the panel turns the software off first (a few
+        # seconds at most), and the hub must keep answering meanwhile.
+        ok = await asyncio.to_thread(
+            running.shutdown if action == "shutdown" else running.reboot)
     else:
         # No panel: still a legitimate request, just without the beep and the
-        # farewell screen.
+        # farewell screen. The software is turned off first all the same
+        # (services/software_off.py) -- that is what makes the power-off quick.
         import subprocess                                    # noqa: PLC0415
+        from core.services import software_off               # noqa: PLC0415
+        await asyncio.to_thread(software_off.turn_off)
         argv = ["sudo", "shutdown", "now"] if action == "shutdown" \
             else ["sudo", "reboot", "now"]
         try:

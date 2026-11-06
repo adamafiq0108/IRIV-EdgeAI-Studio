@@ -685,6 +685,13 @@ class Panel:
         except Exception:                                     # noqa: BLE001
             pass
         time.sleep(0.25)
+        # Software off FIRST (services/software_off.py): left running, the
+        # apps and masters are what the OS waits up to 90 s for at power-off.
+        try:
+            from core.services import software_off           # noqa: PLC0415
+            software_off.turn_off()
+        except Exception:                                     # noqa: BLE001
+            pass
         try:
             subprocess.Popen(argv, stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL)

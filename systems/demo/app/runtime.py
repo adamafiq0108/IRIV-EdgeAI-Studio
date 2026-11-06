@@ -282,9 +282,21 @@ def _alive(pid):
         return str(pid) in out
     try:
         os.kill(pid, 0)                 # signal 0: existence check only
-        return True
     except (OSError, ProcessLookupError):
         return False
+    # A ZOMBIE is not alive. The app is a child of the master (or the hub),
+    # and Python only reaps a finished child the next time its parent starts
+    # another process -- so an app that quit on SIGTERM in 0.3 s sat as a
+    # zombie, signal 0 still answered for it, and every Stop / Power off
+    # waited out the full timeout (10 s) and then reported "killed". Reading
+    # the state letter from /proc tells the two apart.
+    try:
+        with open(f"/proc/{pid}/stat", "rb") as f:
+            return f.read().rsplit(b") ", 1)[1][:1] != b"Z"
+    except FileNotFoundError:
+        return False                    # gone between the two looks
+    except (OSError, IndexError):
+        return True                     # no /proc: signal 0 is all there is
 
 
 # -- start/stop, driven by the control channel (app.start / app.stop) --------
