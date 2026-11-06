@@ -6055,3 +6055,251 @@ body.wf-fs-on .topbar { visibility: hidden; }
    nothing in the guide is saved. */
 .ng-sandbox .ng-sandbox-form { padding: 0; overflow: visible; }
 .ng-sandbox .wf-done { display: none; }
+
+/* ---- Nodes Guideline: the properties tour ---------------------------------- */
+.ng-sandbox { padding: 14px 16px 18px; scroll-behavior: smooth; }
+.ng-sandbox .wf-field {
+  position: relative; padding: 8px 10px; margin-left: -10px; margin-right: -10px;
+  /* No transition on margin: the space under the ringed field must be final the moment the
+     callout is placed, or the callout is measured mid-animation and lands too low. */
+  border-radius: 10px; transition: background .2s, box-shadow .2s;
+}
+.ng-sandbox .wf-field:hover { background: rgba(128,128,128,.06); }
+.ng-sandbox .wf-field.ng-hl {
+  background: color-mix(in srgb, var(--primary, #04bade) 7%, var(--surface, #fff));
+  box-shadow: 0 0 0 2px var(--primary, #04bade);
+}
+.ng-sandbox .wf-field.ng-hl .wf-field-label { color: var(--primary, #04bade); }
+/* The step number every explained setting wears. */
+.ng-sandbox .wf-field-label[data-ng-n]::before {
+  content: attr(data-ng-n); display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; margin-right: 6px; border-radius: 50%; font-size: 10.5px;
+  font-weight: 700; vertical-align: 1px; color: var(--primary, #04bade);
+  background: color-mix(in srgb, var(--primary, #04bade) 14%, transparent);
+}
+.ng-sandbox .wf-field.ng-hl .wf-field-label[data-ng-n]::before { background: var(--primary, #04bade); color: #fff; }
+/* The explanation, opened right under the ringed setting. */
+.ng-callout {
+  position: absolute; z-index: 3; box-sizing: border-box; padding: 0 14px 12px;
+  border-radius: 12px; background: var(--surface, #fff); overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--primary, #04bade) 45%, transparent);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .14);
+  animation: ng-callout-in .22s ease-out both;
+}
+.ng-callout::before {                /* the arrow, pointing up at the field */
+  content: ""; position: absolute; top: -7px; left: 22px; width: 12px; height: 12px;
+  transform: rotate(45deg); background: var(--surface, #fff);
+  border-left: 1px solid color-mix(in srgb, var(--primary, #04bade) 45%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--primary, #04bade) 45%, transparent);
+}
+.ng-callout-top { position: relative; margin-bottom: 14px; }
+.ng-callout-top::before { display: none; }
+@keyframes ng-callout-in { from { opacity: 0; transform: translateY(-4px); } }
+.ng-callout-progress { height: 3px; margin: 0 -14px 10px; background: rgba(128,128,128,.15); }
+.ng-callout-progress > span { display: block; height: 100%; background: var(--primary, #04bade);
+  transition: width .25s ease; }
+.ng-callout-head { display: flex; gap: 10px; align-items: flex-start; }
+.ng-callout-n {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; display: inline-flex;
+  align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+  background: var(--primary, #04bade); color: #fff; margin-top: 2px;
+}
+.ng-callout .ng-iprops-name { margin: 1px 0 4px; font-size: 15px; }
+.ng-callout .ng-iprops-text { margin: 4px 0 10px; font-size: 13px; line-height: 1.55; }
+.ng-callout-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ng-iprops-info .ng-callout-progress { margin: -14px -16px 12px; border-radius: 12px 12px 0 0; overflow: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .ng-callout { animation: none; }
+  .ng-sandbox .wf-field { transition: none; }
+}
+
+/* The tour callout: the choices in the ringed field's dropdown, and the info mark of a sub-setting. */
+.ng-choices { margin: 2px 0 10px; }
+.ng-choices-head { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted-text, #888); margin-bottom: 4px; }
+.ng-choices ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.ng-choices li { font-size: 12.5px; padding: 4px 8px; border-radius: 6px; background: rgba(128,128,128,.07);
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ng-choices li.on { background: color-mix(in srgb, var(--primary, #04bade) 14%, transparent); font-weight: 600; }
+.ng-choices-now { font-size: 10.5px; font-weight: 700; color: var(--primary, #04bade); white-space: nowrap; }
+.ng-callout-i { font-style: italic; font-family: Georgia, serif; }
+.ng-callout .ng-callout-nav:only-child, .ng-callout-nav:has(> :only-child) { justify-content: flex-start; }
+
+/* Reserve the scrollbar's room for good: a scrollbar that came and went as the callout made
+   space narrowed the fields, resized the callout, and the panel shook between two layouts. */
+.ng-sandbox { scrollbar-gutter: stable; overflow-y: auto; }
+
+/* ---- Workflow: quick add, a wire dropped on empty canvas --------------------- */
+.wf-quickadd {
+  position: absolute; z-index: 45; width: 280px; max-height: 380px; display: flex;
+  flex-direction: column; border-radius: 10px; overflow: hidden;
+  background: var(--surface, #fff); color: var(--text, #111);
+  border: 1px solid rgba(128,128,128,.3); box-shadow: 0 10px 30px rgba(0,0,0,.22);
+  animation: wf-qa-in .14s ease-out both;
+}
+@keyframes wf-qa-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
+.wf-quickadd-head { display: flex; align-items: center; gap: 8px; padding: 9px 11px;
+  border-bottom: 1px solid rgba(128,128,128,.2); color: var(--muted-text, #888); }
+.wf-quickadd-head input { flex: 1; border: 0; outline: none; background: transparent;
+  color: var(--text, #111); font-size: 13px; }
+.wf-quickadd-sub { font-size: 11px; color: var(--muted-text, #888); padding: 6px 12px 2px; }
+.wf-quickadd-list { overflow-y: auto; padding: 4px; flex: 1; }
+.wf-quickadd-cat { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted-text, #888); padding: 8px 8px 3px; }
+.wf-quickadd-row { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  border: 0; background: transparent; color: inherit; padding: 6px 8px; border-radius: 6px;
+  font-size: 13px; cursor: pointer; }
+.wf-quickadd-row.on { background: color-mix(in srgb, var(--primary, #04bade) 14%, transparent); }
+.wf-quickadd-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.wf-quickadd-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wf-quickadd-in { font-size: 10.5px; color: var(--muted-text, #888); white-space: nowrap; }
+.wf-quickadd-empty { padding: 14px 12px; font-size: 12.5px; color: var(--muted-text, #888); }
+.wf-quickadd-foot { font-size: 10.5px; color: var(--muted-text, #888); padding: 6px 12px;
+  border-top: 1px solid rgba(128,128,128,.2); }
+@media (prefers-reduced-motion: reduce) { .wf-quickadd { animation: none; } }
+
+/* The tour: one fixed explanation card above the real panel. */
+.ng-tour { display: flex; flex-direction: column; gap: 10px; }
+.ng-tourcard {
+  position: relative; border-radius: 12px; padding: 0 14px 12px; overflow: hidden;
+  background: var(--surface, #fff); min-height: 150px; display: flex; flex-direction: column;
+  border: 1px solid color-mix(in srgb, var(--primary, #04bade) 45%, transparent);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .08);
+}
+.ng-tourcard .ng-iprops-name { margin: 1px 0 4px; font-size: 15px; }
+.ng-tourcard .ng-iprops-text { margin: 4px 0 10px; font-size: 13px; line-height: 1.55; flex: 1; }
+.ng-tour .ng-sandbox { max-height: 440px; }
+
+/* The tour card: what the picked option does, and every option with its own words. */
+.ng-pick {
+  border-radius: 10px; padding: 8px 10px; margin: 0 0 10px;
+  background: color-mix(in srgb, var(--primary, #04bade) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary, #04bade) 35%, transparent);
+}
+.ng-pick-head { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--primary, #04bade); }
+.ng-pick-name { font-weight: 700; font-size: 13.5px; margin-top: 1px; }
+.ng-pick-text { margin: 4px 0 0; font-size: 12.5px; line-height: 1.5; }
+.ng-choices li { display: block; }
+.ng-choice-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ng-choice-text { font-size: 11.5px; line-height: 1.45; color: var(--muted-text, #777); margin-top: 2px; font-weight: 400; }
+.ng-tourcard .ng-choices { max-height: 230px; overflow-y: auto; }
+
+/* Nodes Guideline: what a pick did to the panel ("This choice adds ..."). */
+.ng-pick-effect { margin-top: 8px; padding-top: 8px; border-top: 1px dashed color-mix(in srgb, var(--primary, #04bade) 35%, transparent); }
+.ng-pick-effect-head { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--primary, #04bade); }
+.ng-pick-effect ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px; }
+.ng-pick-effect-go {
+  display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 6px; margin-left: -6px;
+  border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.ng-pick-effect-go:hover:not(:disabled) { background: color-mix(in srgb, var(--primary, #04bade) 10%, transparent); }
+.ng-pick-effect-n {
+  display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; flex: none;
+  border-radius: 50%; font-size: 10.5px; font-weight: 700; background: var(--primary, #04bade); color: #fff;
+}
+.ng-pick-effect-name { font-weight: 700; font-size: 13px; }
+.ng-pick-effect-arrow { margin-left: auto; opacity: .6; }
+.ng-pick-effect-text { font-size: 12px; line-height: 1.45; margin: 1px 0 0 24px; opacity: .85; }
+.ng-pick-effect-gone { margin-top: 6px; font-size: 12px; opacity: .75; }
+.ng-sandbox .wf-field.ng-new .wf-field-label::after {
+  content: "new"; margin-left: 6px; padding: 1px 6px; border-radius: 999px; font-size: 9.5px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; vertical-align: 1px;
+  background: color-mix(in srgb, #16a34a 16%, transparent); color: #16a34a;
+}
+.ng-sandbox .wf-field.ng-new:not(.ng-hl) { animation: ng-new-flash 1.2s ease-out 1; }
+@keyframes ng-new-flash { from { background: color-mix(in srgb, #16a34a 14%, transparent); } to { background: transparent; } }
+
+/* Modbus Read: Scan for devices (Unit-Id scan). */
+.wf-mbscan { display: grid; gap: 6px; margin-top: 6px; }
+.wf-mbscan-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wf-mbscan-row .btn { display: inline-flex; align-items: center; gap: 6px; }
+.wf-mbscan-bar { height: 4px; border-radius: 999px; background: rgba(128,128,128,.18); overflow: hidden; }
+.wf-mbscan-bar span { display: block; height: 100%; background: var(--primary, #04bade); transition: width .4s ease; }
+
+/* Modbus Read: which registers become output points (multi-select dropdown). */
+.wf-linkbtn {
+  border: 0; background: none; padding: 0; font: inherit; font-size: 12px; font-weight: 600;
+  color: var(--primary, #04bade); cursor: pointer;
+}
+.wf-linkbtn:disabled { color: var(--muted-text, #94a3b8); opacity: .6; cursor: default; }
+.wf-regdd { position: relative; }
+.wf-regdd .wf-regdd-btn.input { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; width: 100%; text-align: left; cursor: pointer; }
+.wf-regdd-sum { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.wf-regdd-count { flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px;
+  color: var(--primary, #04bade); background: color-mix(in srgb, var(--primary, #04bade) 12%, transparent); }
+.wf-regdd-chev { flex: none; opacity: .6; transition: transform .15s; }
+.wf-regdd.open .wf-regdd-chev { transform: rotate(180deg); }
+.wf-regdd-menu {
+  position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px);
+  background: var(--surface, #fff); border: 1px solid var(--border, rgba(128,128,128,.25));
+  border-radius: 10px; box-shadow: 0 10px 28px rgba(15, 23, 42, .16); overflow: hidden;
+}
+.wf-regdd-tools { display: flex; justify-content: space-between; padding: 7px 10px;
+  border-bottom: 1px solid var(--border, rgba(128,128,128,.18)); }
+.wf-regdd-list { max-height: 240px; overflow-y: auto; padding: 4px; }
+.wf-regdd-row {
+  display: flex; align-items: center; gap: 9px; width: 100%; padding: 6px 8px; border: 0; border-radius: 7px;
+  background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.wf-regdd-row:hover:not(:disabled) { background: color-mix(in srgb, var(--primary, #04bade) 8%, transparent); }
+.wf-regdd-row:disabled { cursor: default; }
+.wf-regdd-box {
+  flex: none; width: 16px; height: 16px; border-radius: 5px; display: inline-flex; align-items: center;
+  justify-content: center; border: 1.5px solid rgba(128,128,128,.5); color: #fff;
+}
+.wf-regdd-row.on .wf-regdd-box { background: var(--primary, #04bade); border-color: var(--primary, #04bade); }
+.wf-regdd-n { font-weight: 700; font-size: 12.5px; font-family: var(--mono, ui-monospace, monospace); min-width: 30px; }
+.wf-regdd-addr { font-size: 12px; color: var(--muted-text, #94a3b8); }
+
+/* Modbus Read: Advanced button + "Custom frame" badge. */
+.wf-mbadv { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.wf-mbadv .btn { padding: 2px 8px; }
+
+/* Modbus frame builder (ModbusFrameEditor.jsx): the app's own .ui-dialog,
+   with neutral rows -- a lock for the fixed fields, the accent edge for the
+   movable ones, amber for a manufacturer-specific one. */
+.fb-backdrop { z-index: 80; }
+.fb-dialog { width: min(780px, 100%); }
+.fb-section { display: flex; flex-direction: column; gap: 6px; }
+.fb-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.fb-section-head .btn { display: inline-flex; align-items: center; gap: 4px; }
+.fb-cols, .fb-row {
+  display: grid; grid-template-columns: 22px minmax(120px, 1.3fr) 64px 92px minmax(110px, 1fr) auto;
+  align-items: center; gap: 8px;
+}
+.fb-cols { font-size: 11px; padding: 0 10px; }
+.fb-row { padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
+  border-left: 3px solid var(--accent); }
+.fb-row.is-locked { border-left-color: var(--line); background: transparent; }
+.fb-row.is-custom { border-left-color: #d97706; }
+.fb-row.is-dragging { box-shadow: var(--card-shadow-hover); }
+.fb-list { display: flex; flex-direction: column; gap: 6px; }
+.fb-grip { display: inline-flex; justify-content: center; color: var(--muted-text); }
+.fb-handle { cursor: grab; touch-action: none; padding: 6px 0; }
+.fb-row.is-dragging .fb-handle { cursor: grabbing; }
+.fb-name { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.fb-name strong { font-family: var(--mono); font-size: 13px; }
+.fb-name .muted { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fb-namein { max-width: 130px; }
+.fb-fixed { font-family: var(--mono); font-size: 12px; color: var(--muted-text); padding-left: 2px; }
+.fb-val { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fb-val .c-warn, .fb-warnings .c-warn { margin: 0; }
+.fb-acts { display: flex; gap: 4px; align-items: center; justify-content: flex-end; }
+.fb-ico { padding: 3px 6px; display: inline-flex; }
+.fb-warnings { display: flex; flex-direction: column; gap: 4px; }
+.fb-bytes { display: flex; flex-wrap: wrap; gap: 6px; }
+.fb-byte { min-width: 48px; padding: 4px 6px; border-radius: 8px; text-align: center; display: flex;
+  flex-direction: column; border: 1px solid var(--line); border-top: 3px solid var(--accent); background: var(--panel); }
+.fb-byte.is-locked { border-top-color: var(--line); }
+.fb-byte.is-custom { border-top-color: #d97706; }
+.fb-byte strong { font-size: 14px; }
+.fb-bi { font-size: 10px; color: var(--muted-text); }
+.fb-bn { font-size: 10px; color: var(--muted-text); white-space: nowrap; }
+.fb-hex { user-select: all; word-break: break-word; }
+@media (max-width: 720px) {
+  .fb-cols { display: none; }
+  .fb-row { grid-template-columns: 22px 1fr 1fr; }
+  .fb-row .fb-name, .fb-row .fb-val, .fb-row .fb-acts { grid-column: 2 / 4; }
+}
+.fb-sample { gap: 4px; }

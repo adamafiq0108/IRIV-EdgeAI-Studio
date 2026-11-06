@@ -294,7 +294,8 @@ export const NODE_PROPS = {
     { title: "Where to read", items: [
       { name: "Unit-Id", text: "The device's address on the line. Blank uses the server's own address." },
       { name: "Address", text: "Where in the device to start reading. A datasheet's 40001 usually means 0 here." },
-      { name: "Quantity", text: "How many registers to read, counting up from the address. The default is 1." },
+      { name: "Quantity", text: "How many registers to read, counting up from the address, up to 32. [0] is the address itself, [1] the next one, and so on. The default is 1." },
+      { name: "Output points", text: "Shown when Quantity is 2 or more. Tick the registers you want to use: each ticked one becomes its own output point on the node, so you drag from the register you need. The others are still read but not shown. Starts with only [0] ticked." },
     ] },
     { title: "Timing", items: [
       { name: "How often to read", text: "Seconds between reads. 2 is the lowest. 0 reads only when something wired into its Trigger port fires. The default is 5." },

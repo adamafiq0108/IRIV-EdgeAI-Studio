@@ -4723,6 +4723,71 @@ def _condition_alias(node, preds_map, hops=0, bases=None):
     return None
 
 
+def modbus_frame_hex(data):
+    """The request frame of a Modbus Read with a CUSTOM layout, as hex WITHOUT
+    the CRC (the app appends it), or "" for the standard layout.
+
+    Same rules as frontend/src/workflow/modbusFrame.js buildFrame, which draws
+    the preview: ID (1 byte), FC (1 byte, the layout's own), then each field in
+    the saved order -- ST carries the node's address, Q its quantity, a vendor
+    field its own hex value -- at its size, high or low byte first.
+    """
+    frame = (data or {}).get("frame")
+    if not isinstance(frame, dict) or not frame.get("custom"):
+        return ""
+    fields = frame.get("fields") if isinstance(frame.get("fields"), list) else []
+    try:
+        unit = int(data.get("unit"))
+        fc = int(str(frame.get("fc") or "03"), 16)
+    except (TypeError, ValueError):
+        raise ValueError("custom frame: the Unit-Id must be set (Advanced)")
+    if not 0 <= unit <= 255 or not 0 <= fc <= 255:
+        raise ValueError("custom frame: ID is 0-255 and FC is 00-FF")
+    out = bytearray([unit, fc])
+    for f in fields[:10]:
+        if not isinstance(f, dict):
+            continue
+        size = int(f.get("size") or 2)
+        if size not in (1, 2, 3, 4, 6, 8):
+            raise ValueError(f"custom frame: field size {size} is not 1, 2, 3, 4, 6 or 8")
+        key = str(f.get("key") or "")
+        if key == "st":
+            value = int(data.get("address") or 0)
+        elif key == "q":
+            value = int(data.get("quantity") or 1)
+        else:
+            raw = re.sub(r"\s+", "", str(f.get("hex") or "0"))
+            if not re.fullmatch(r"[0-9a-fA-F]{1,16}", raw):
+                raise ValueError(f"custom frame: field {f.get('name') or '?'} is not hex")
+            value = int(raw, 16)
+        chunk = (value & ((1 << (8 * size)) - 1)).to_bytes(size, "big")
+        out += chunk[::-1] if f.get("order") == "lo" else chunk
+    return out.hex().upper()
+
+
+def register_port(node, handle):
+    """"r2" for a wire leaving the third register port of a Modbus Read, else "".
+
+    A Modbus Read with Quantity > 1 reads a BLOCK of registers and the app
+    publishes each one as its own stat, r0..rN-1 counting up from the start
+    address (fn_<id>_r0, fn_<id>_r1, ...). The node draws one output point per
+    register, so dragging from point 2 IS the choice of register 2 -- the same
+    way a Line Counter's named ports pick in / out. A port past the Quantity
+    (the Quantity was lowered after wiring) answers nothing, and the caller
+    falls back to its default (`value`, the first register).
+    """
+    if (node or {}).get("type") != "variable.rs485":
+        return ""
+    m = re.fullmatch(r"r(\d+)", str(handle or ""))
+    if not m:
+        return ""
+    try:
+        quantity = int((node.get("data") or {}).get("quantity") or 1)
+    except (TypeError, ValueError):
+        quantity = 1
+    return f"r{int(m.group(1))}" if quantity > 1 and int(m.group(1)) < quantity else ""
+
+
 def input_alias(node, edge=None, bases=None, preds_map=None):
     """The name a node wired into a formula answers to, and the stat key it
     stands for: ("people_in_bay", "fn_people_in_bay_count"), or None.
@@ -4739,6 +4804,11 @@ def input_alias(node, edge=None, bases=None, preds_map=None):
         got = branch_alias(edge, node, bases)
         if got:
             return got
+    # One register of a Modbus Read block, by the point the wire left from.
+    reg = register_port(node, (edge or {}).get("sourceHandle")) if edge is not None else ""
+    if reg:
+        fid = _slug((node.get("data") or {}).get("fnId"))
+        return (f"{fid}_{reg}", f"fn_{fid}_{reg}") if fid else None
     spec = REGISTRY.get(node.get("type")) or {}
     # A Trigger with an Advanced output publishes it as its own key, stamped
     # before any wire resolves (trigger_out.stamp_out_keys).
@@ -4798,6 +4868,9 @@ def formula_inputs(node_id, preds, bases=None, preds_map=None):
         fid, key = alias
         out[fid] = key
         friendly = _slug((src.get("data") or {}).get("name"))
+        reg = register_port(src, (_edge or {}).get("sourceHandle"))
+        if friendly and reg:
+            friendly = f"{friendly}_{reg}"[:40]
         if friendly and friendly not in out:
             out[friendly] = key
         # The plain name of a variable (fn_test_value -> test): the editor
@@ -5541,6 +5614,10 @@ def dataset_columns(node, node_preds, table=None, zone_of=None):
             continue
         alias = input_alias(src_node)
         if not alias:
+            continue
+        reg = register_port(src_node, source)
+        if reg:
+            wired[column] = f"fn_{alias[0]}_{reg}"
             continue
         # A node that publishes several numbers can hand out any of them by
         # name: `new` on a counter is the +1 the instant a new object is
@@ -8252,6 +8329,16 @@ def compile_graph(graph, zones, classes=None, active_classes=None, capture=None,
             params["fc"] = d.get("fc", 3)
             params["address"] = d.get("address", 0)
             params["quantity"] = d.get("quantity", 1)
+            # A custom request frame (the Advanced editor), built here once so
+            # the app only sends bytes. Sent on an RTU server; over TCP the
+            # node reads the standard way (the editor says so).
+            try:
+                frame_hex = modbus_frame_hex(d)
+            except ValueError as exc:
+                err(n["id"], str(exc))
+                frame_hex = ""
+            if frame_hex:
+                params["frame"] = frame_hex
             params["interval_s"] = d.get("interval_s", 5)
             # Interval 0 = read ON A TRIGGER (client UAT 2026-10-04, item
             # 5): the node reads once each time the wire into its trigger
@@ -9032,7 +9119,7 @@ def compile_graph(graph, zones, classes=None, active_classes=None, capture=None,
         """
         for edge, src in preds.get(node["id"], ()):
             handle = str(edge.get("sourceHandle") or "")
-            if handle in metrics and (fn_meta.get(src["id"]) or {}).get("id") \
+            if (handle in metrics or register_port(src, handle)) and (fn_meta.get(src["id"]) or {}).get("id") \
                     == fn["id"]:
                 return handle
         return ""
@@ -11728,6 +11815,17 @@ def compile_graph(graph, zones, classes=None, active_classes=None, capture=None,
                       "delay_start", "start_delay_s"):
                 if k in d:
                     doc[k] = d[k]
+            # A custom request layout (the Advanced editor). The value is only
+            # known when the write happens, so the app builds the bytes then.
+            if isinstance(d.get("frame"), dict) and d["frame"].get("custom"):
+                try:
+                    doc["frame"] = dc.clean_modbus_write_frame(d["frame"])
+                except ValueError as exc:
+                    err(n["id"], str(exc))
+                    continue
+                if d.get("unit") in (None, ""):
+                    err(n["id"], "custom frame: set the Unit-Id (Advanced)")
+                    continue
             if wired_trig:
                 trig_fn = upstream_fn(n, handle="trig")
                 if trig_fn is None:

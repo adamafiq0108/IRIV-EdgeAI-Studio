@@ -343,14 +343,11 @@ function NodeShell({ id, type, selected, children, title, targetHandles: rawTarg
                      // the Call.
                      targetHeading = "Inputs", sourceHeading = "Outputs" }) {
   const { registry, errors, warnings, offNodes, wired, incoming,
-          pinNode, aiStatus, values, appRunning, brokerUp,
+          aiStatus, values, appRunning, brokerUp,
           runsWhen } = useContext(WorkflowCtx);
   // The MQTT dot: is the broker this node talks to online? Null on every
   // node that is not an MQTT node (nodeStatus.js).
   const mq = mqttDot({ type, data, values, appRunning, brokerUp });
-  // Read off the node's own data (every caller spreads its React Flow props
-  // in), so a star costs no plumbing at fourteen call sites.
-  const pinned = !!(data || {}).pinned;
   // "Is a wire on THIS port." The default single source handle carries no id,
   // and React Flow records that edge with sourceHandle null, so "" is its key.
   // An output named "out" is wired either way an edge ever recorded it: by
@@ -464,28 +461,8 @@ function NodeShell({ id, type, selected, children, title, targetHandles: rawTarg
               {spec.badge}
             </span>
           )}
-          {/* The STAR: "one of the numbers I am watching". Offered only on
-              nodes that publish something to watch -- a rule, or a variable --
-              because starring a Comment or a siren would promise a Debug row
-              that can never appear. Saved with the graph, so what somebody
-              pinned while tuning a line is still pinned tomorrow.
-              LAST and larger: at 12px between the title and the type code it
-              read as punctuation, and it is a control -- the only one on the
-              header -- so it takes the corner. */}
-          {pinNode && (registry[type]?.metrics
-                       || registry[type]?.category === "variable") && (
-            <button type="button" className="nodrag"
-                    title={pinned ? "Unpin - stop showing this first in Debug"
-                                  : "Pin - show this first in Debug"}
-                    onClick={(e) => { e.stopPropagation(); pinNode(id); }}
-                    style={{ flexShrink: 0, cursor: "pointer",
-                             background: "none", border: "none", padding: 0,
-                             lineHeight: 1, fontSize: 17,
-                             color: pinned ? "#f59e0b" : "var(--muted, #8b93a1)",
-                             opacity: pinned ? 1 : 0.65 }}>
-              {pinned ? "★" : "☆"}
-            </button>
-          )}
+          {/* No star on the header (removed on request): a node's header carries its name and
+              its type code only. A star saved on an older graph stays in its data, unused. */}
         </span>
       </div>
       {/* Plain padding, the same on every node.
@@ -1329,6 +1306,16 @@ const VariableNode = memo(function VariableNode(props) {
                // Read set to interval 0: it reads WHEN the trigger port
                // rises (an Inject, a Schedule, a Condition), so that port
                // exists exactly while the interval is 0 (client UAT item 5).
+               // A Modbus Read of a BLOCK (Quantity > 1): one output point per
+               // register, r0..rN-1 counting up from the start address -- the
+               // app publishes each as its own value (fn_<id>_r0 ...), so the
+               // point a wire leaves from picks the register.
+               // One ticked register: a plain dot (its chip sat on top of the
+               // value); which register it is goes in the summary line below.
+               sourceHandles={(() => {
+                 const ports = modbusRegisterPorts(props.type, d);
+                 return ports && ports.length === 1 ? [{ id: ports[0].id }] : ports;
+               })()}
                targetHandles={props.type === "variable.ref" && io !== "in"
                  ? ["in"]
                  : props.type === "variable.rs485" && Number(d.interval_s ?? 5) === 0
@@ -1379,8 +1366,19 @@ const VariableNode = memo(function VariableNode(props) {
           FC{d.fc ?? 3} · unit {d.unit === "" || d.unit == null
             ? ("server" in d ? "server's" : 1) : d.unit} · addr {d.address ?? 0}
           {(d.quantity ?? 1) > 1 ? ` ×${d.quantity}` : ""}
+          {(() => {
+            const ports = modbusRegisterPorts(props.type, d);
+            return ports && ports.length === 1 ? ` · out [${ports[0].id.slice(1)}]` : "";
+          })()}
           {Number(d.interval_s ?? 5) === 0 ? " · on trigger" : ""}
           {"server" in d && !d.server ? " · no server" : ""}
+          {d.frame?.custom ? " · custom frame" : ""}
+          {/* The reader keeps its LAST values through a failure (a bus
+              hiccup is not a reading of zero), so a stale number looked like
+              a live one. `ok` is 0 once the device has stopped answering. */}
+          {d.fnId && values?.[`fn_${d.fnId}_ok`] === 0 && (
+            <span style={{ color: "var(--alert, #dc2626)", fontWeight: 600 }}> · no answer (last value)</span>
+          )}
         </div>
       )}
       {props.type === "variable.schedule" && (
@@ -1400,6 +1398,28 @@ const VariableNode = memo(function VariableNode(props) {
     </NodeShell>
   );
 });
+
+/** The output points of a Modbus Read: none of its own for one register (the
+ *  plain value point), one per register for a block -- [{id: "r0", label}]. */
+export function modbusRegisterPorts(type, d) {
+  if (type !== "variable.rs485") return undefined;
+  const q = Math.max(1, Math.min(32, parseInt(d?.quantity, 10) || 1));
+  if (q < 2) return undefined;
+  const start = parseInt(d?.address, 10) || 0;
+  // Only the registers ticked in Properties ("Output points") get a point;
+  // nothing ticked yet = the first one, so the node is never left with none.
+  return modbusPicked(d).map((k) => ({ id: `r${k}`, label: `[${k}] addr ${start + k}` }));
+}
+
+/** The register indexes ticked as output points, sorted, within Quantity;
+ *  [0] when none are (or the node predates the choice). */
+export function modbusPicked(d) {
+  const q = Math.max(1, Math.min(32, parseInt(d?.quantity, 10) || 1));
+  const raw = Array.isArray(d?.ports) ? d.ports : [];
+  const ok = [...new Set(raw.map((k) => parseInt(k, 10)))]
+    .filter((k) => Number.isInteger(k) && k >= 0 && k < q).sort((a, b) => a - b);
+  return ok.length ? ok : [0];
+}
 
 //: Weekday names for a Schedule, Monday first -- the order params.weekday
 //: counts in (0 = Monday), shared with the inspector so the node and the

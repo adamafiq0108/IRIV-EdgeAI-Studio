@@ -39,6 +39,10 @@ import { TypedInput } from "../workflow/TypedInput.jsx";
 import { CALL as FN_CALL, END as FN_END, FRAME as FN_FRAME, GROUP, START as FN_START, assignDropped, expandFrameDrag, fitGroups, groupMinSize, seedGroups, expandGroupDrag, fnKey, frameMembership, frameMinSize, frameOf, framePins, hiddenByFrames, legacyFrames, pinPositions, syncFrames, wireStaysInside } from "../workflow/functionFrame.js";
 import { edgeTypes } from "../workflow/ProblemEdge.jsx";
 import FunctionPicker from "../workflow/FunctionPicker.jsx";
+import QuickAdd from "../workflow/QuickAdd.jsx";
+import ModbusScan from "../workflow/ModbusScan.jsx";
+import RegisterPicker from "../workflow/RegisterPicker.jsx";
+import ModbusFrameEditor from "../workflow/ModbusFrameEditor.jsx";
 import { CATEGORY_STYLE, COUNTER, COUNTER_LINE_PORT, COUNTER_MODE_LABEL, FUNCTION_NODES, LINE_COUNTER, PORT_LABELS, STAGES, branchCtype, camLabel, classFilterNaming, classesFor, counterMode, counterSwaps, counterToLine, edgeAllowed, isBranch, isCounter, isStatePoint, lineToCounter, metricsForSpec, metricsOf, mintId, mintFnId, migrateStateEdges, recordedMode, statePointFn, statePointKeys } from "../workflow/registry.js";
 
 /** A palette drawer, preceded by its stage heading when it starts one. */
@@ -53,7 +57,7 @@ import { closestPlaceholder, csvNames, csvTokens, unknownPlaceholders }
 import { ArrowRight } from "lucide-react";
 import {
   WorkflowCtx, buildNodeTypes, scheduleSentence, WEEKDAYS, slug,
-  triggerAdvanced,
+  triggerAdvanced, modbusRegisterPorts, modbusPicked,
   WHEN_MODES, WHEN_NEEDS_VALUE, WHEN_NEEDS_VALUE2, GRAPH_SERIES_HANDLES,
 } from "../workflow/nodes.jsx";
 // One list of treatments for the whole product: the Builder inspector and this
@@ -365,10 +369,26 @@ function plainName(key) {
   return m ? m[1] : String(key || "");
 }
 
-function inputAlias(node, registry) {
+//: The register a wire leaving a Modbus Read block's point carries ("r2"), or
+//: "". Mirrors register_port() on the server: only a point the node still draws.
+function registerPort(node, handle) {
+  const ports = modbusRegisterPorts((node || {}).type, (node || {}).data);
+  const h = String(handle || "");
+  return ports && ports.some((p) => p.id === h) ? h : "";
+}
+
+function inputAlias(node, registry, handle) {
   const nd = (node || {}).data || {};
   const spec = registry[(node || {}).type] || {};
   if (!["analytics", "variable"].includes(spec.category)) return null;
+  // One register of a Modbus Read block: the point the wire left from.
+  const reg = registerPort(node, handle);
+  if (reg) {
+    return nd.fnId
+      ? { name: `${nd.fnId}_${reg}`, label: `${nd.name || nd.fnId} [${reg.slice(1)}]`,
+          key: `fn_${nd.fnId}_${reg}` }
+      : null;
+  }
   // A Variable node stands for a value that already exists: it answers to its
   // own label and resolves to that key, not to one of its own.
   if (node.type === "variable.ref") {
@@ -1300,6 +1320,9 @@ function Editor() {
   const [warnings, setWarnings] = useState({});
   const [search, setSearch] = useState("");
   const [menu, setMenu] = useState(null);        // {x, y, variant, nodeId|null, flowPos}
+  // A wire let go on empty canvas: where, and what it was dragged out of
+  // ({x, y, flowPos, nodeId, handleId, from: "source"|"target"}). See QuickAdd.
+  const [quickAdd, setQuickAdd] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
   // Palette width is a preference like auto-save: a long zone list wants room,
@@ -2120,12 +2143,53 @@ function Editor() {
     scheduleSave();
   }, [history, scheduleSave, toast, meta]);
 
-  const onConnectEnd = useCallback((_evt, connectionState) => {
+  const onConnectEnd = useCallback((evt, connectionState) => {
+    // Let go on EMPTY canvas: offer the nodes this wire can reach, right there.
+    if (editable && connectionState && !connectionState.toNode && connectionState.fromNode) {
+      const pt = evt?.changedTouches?.[0] || evt;
+      const rect = wrapperRef.current?.getBoundingClientRect();
+      if (pt && rect && Number.isFinite(pt.clientX)) {
+        invalidReason.current = "";
+        setMenu(null);
+        setQuickAdd({
+          x: Math.min(pt.clientX - rect.left, Math.max(0, rect.width - 290)),
+          y: Math.min(pt.clientY - rect.top, Math.max(0, rect.height - 380)),
+          flowPos: rf.screenToFlowPosition({ x: pt.clientX, y: pt.clientY }),
+          nodeId: connectionState.fromNode.id,
+          handleId: connectionState.fromHandle?.id ?? null,
+          from: connectionState.fromHandle?.type === "target" ? "target" : "source",
+        });
+        return;
+      }
+    }
     if (connectionState && connectionState.isValid === false && invalidReason.current) {
       toast.error("Invalid connection", invalidReason.current);
       invalidReason.current = "";
     }
-  }, [toast]);
+  }, [toast, editable, rf]);
+
+  // The nodes a wire dropped on empty canvas may go to: the same rule the canvas
+  // enforces (edgeAllowed; an ON / OFF point reaches anything but a Comment or a
+  // Link in), asked of every type the palette offers.
+  const quickAddItems = useMemo(() => {
+    if (!quickAdd || !registry) return [];
+    const from = nodes.find((n) => n.id === quickAdd.nodeId);
+    if (!from) return [];
+    const furniture = ["note.comment", "note.group", "function.frame", "common.link_in", "common.link_out"];
+    const out = [];
+    for (const [type, sp] of Object.entries(registry)) {
+      if (!sp || sp.hidden || sp.deprecated || furniture.includes(type)) continue;
+      let ok;
+      if (quickAdd.from === "source") {
+        ok = isStatePoint(from.type, quickAdd.handleId)
+          ? true : edgeAllowed(registry, from.type, type, undefined)[0];
+      } else {
+        ok = edgeAllowed(registry, type, from.type, quickAdd.handleId)[0];
+      }
+      if (ok) out.push({ type, label: sp.label, sub: sp.description || "", cat: sp.palette?.cat || sp.category });
+    }
+    return out;
+  }, [quickAdd, registry, nodes]);
 
   // -- the ONE Counter: a line on or off changes what it is -----------------
   //
@@ -2270,6 +2334,7 @@ function Editor() {
     setInspectId(id);
     scheduleSave();
     if (NAME_FIRST[type] && !String(data[NAME_FIRST[type].field] || "").trim()) nameNode(id, type);
+    return id;
   }, [registry, history, scheduleSave, nameNode, addFunctionFrame]);
 
   // A SAVED query dropped from the palette: the Query node plus the wires
@@ -2788,7 +2853,7 @@ function Editor() {
         if (e.target !== n.id) continue;
         const held = String(e.targetHandle || "");
         if (held && held !== "in") continue;
-        const alias = inputAlias(byId.get(e.source), registry);
+        const alias = inputAlias(byId.get(e.source), registry, e.sourceHandle);
         if (!alias || !names.includes(alias.name)) continue;
         const slot = `p_${alias.name}`;
         if (edges.some((x) => x.target === n.id && x.targetHandle === slot)) continue;
@@ -2801,6 +2866,38 @@ function Editor() {
     scheduleSave();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, edges, registry, editable]);
+
+  // A Modbus Read's wires follow its Quantity. One register draws the plain
+  // output point (id-less); a block draws one point per register (r0..rN-1).
+  // Changing the Quantity would leave wires on points the node no longer has
+  // -- React Flow then hides them and the compile reads nothing -- so: a plain
+  // wire moves onto r0 when the node becomes a block, r0 goes back to the plain
+  // point when it becomes one register again, and a wire on a register past
+  // the new Quantity is removed.
+  useEffect(() => {
+    if (!editable) return;
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    let changed = false;
+    const next = [];
+    for (const e of edges) {
+      const src = byId.get(e.source);
+      if (!src || src.type !== "variable.rs485") { next.push(e); continue; }
+      const ports = modbusRegisterPorts(src.type, src.data);
+      const h = e.sourceHandle || "";
+      if (ports) {
+        if (!h) { next.push({ ...e, sourceHandle: ports[0].id }); changed = true; continue; }
+        if (!ports.some((p) => p.id === h)) { changed = true; continue; }
+      } else if (h) {
+        if (h === "r0") { next.push({ ...e, sourceHandle: null }); changed = true; continue; }
+        if (/^r\d+$/.test(h)) { changed = true; continue; }
+      }
+      next.push(e);
+    }
+    if (!changed) return;
+    setEdges(next);
+    scheduleSave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, editable]);
 
   // -- palette drag-drop -----------------------------------------------------
   const onDrop = useCallback((evt) => {
@@ -3143,7 +3240,7 @@ function Editor() {
         if (["zone", "oid", "cur_oid", "cur_value"].includes(String(e.targetHandle || ""))) continue;
         const p = nodeById.get(e.source);
         if (!p) continue;
-        const alias = inputAlias(p, registry);
+        const alias = inputAlias(p, registry, e.sourceHandle);
         if (alias) return alias;
         const base = isBranch(p.type)
           && (slug(p.data?.fnId) || slug(p.data?.name));
@@ -3238,7 +3335,7 @@ function Editor() {
                         node: src.id });
         continue;
       }
-      const alias = inputAlias(src, registry);
+      const alias = inputAlias(src, registry, wire.sourceHandle);
       out.set(n.id, alias
         ? { kind: "value", key: alias.key, label: alias.label, node: src.id }
         : { kind: "none", why: `${name} publishes nothing to read` });
@@ -3971,6 +4068,30 @@ function Editor() {
                 rf.fitView({ nodes: [{ id }], duration: 300, maxZoom: 1.2 });
               }} />
 
+            {quickAdd && (
+              <QuickAdd at={quickAdd} items={quickAddItems} order={PALETTE_ORDER}
+                        title={(() => {
+                          const n = nodes.find((x) => x.id === quickAdd.nodeId);
+                          const name = n ? (n.data?.name || registry[n.type]?.label || n.type) : "";
+                          return quickAdd.from === "source" ? `Connect from ${name}` : `Connect into ${name}`;
+                        })()}
+                        onClose={() => setQuickAdd(null)}
+                        onPick={(type) => {
+                          const qa = quickAdd;
+                          setQuickAdd(null);
+                          // Placed so the wire runs left to right: after the node it came
+                          // out of, before the one it goes into.
+                          const pos = qa.from === "source" ? qa.flowPos
+                            : { x: qa.flowPos.x - 240, y: qa.flowPos.y };
+                          const id = addNode(type, pos);
+                          if (!id) return;
+                          // Wired once the new node is on the canvas (onConnect reads it
+                          // from the latest state, which the next render brings).
+                          setTimeout(() => onConnect(qa.from === "source"
+                            ? { source: qa.nodeId, sourceHandle: qa.handleId, target: id, targetHandle: null }
+                            : { source: id, sourceHandle: null, target: qa.nodeId, targetHandle: qa.handleId }), 60);
+                        }} />
+            )}
             <ContextMenu
               menu={menu} registry={registry} order={PALETTE_ORDER}
               zoneList={zoneList} models={modelList} editable={editable}
@@ -7597,10 +7718,10 @@ export function Inspector({ node, registry, meta, nodes, edges, editable, errors
   // Class Filter publishes nothing a formula could read.
   const wiredInputs = (edges || [])
     .filter((e) => e.target === node.id)
-    .map((e) => (nodes || []).find((n) => n.id === e.source))
-    .filter((n) => n && ["analytics", "variable"].includes(
+    .map((e) => [e, (nodes || []).find((n) => n.id === e.source)])
+    .filter(([, n]) => n && ["analytics", "variable"].includes(
       (registry[n.type] || {}).category))
-    .map((n) => inputAlias(n, registry))
+    .map(([e, n]) => inputAlias(n, registry, e.sourceHandle))
     .filter(Boolean);
   // A QUERY wired in is a store too, but it cannot appear above: that list is
   // values the engine already publishes, and a Query publishes nothing until
@@ -7632,9 +7753,9 @@ export function Inspector({ node, registry, meta, nodes, edges, editable, errors
   // is no value), so a chip for one could never resolve.
   const msgWiredInputs = (edges || [])
     .filter((e) => e.target === node.id)
-    .map((e) => (nodes || []).find((n) => n.id === e.source))
-    .filter((n) => n && !CLOCK_FN_TYPES.includes((registry[n.type] || {}).fn_type))
-    .map((n) => inputAlias(n, registry))
+    .map((e) => [e, (nodes || []).find((n) => n.id === e.source)])
+    .filter(([, n]) => n && !CLOCK_FN_TYPES.includes((registry[n.type] || {}).fn_type))
+    .map(([e, n]) => inputAlias(n, registry, e.sourceHandle))
     .filter(Boolean);
   // AI detection is OFF and this message waits for it: the compile's own
   // waits_for_detection (the nodes the app holds while the AI is off), so the
@@ -7647,11 +7768,14 @@ export function Inspector({ node, registry, meta, nodes, edges, editable, errors
   // their "1" is not a value). Both the fnId and the node's own name work.
   const msgNames = [...new Set((edges || [])
     .filter((e) => e.target === node.id)
-    .map((e) => (nodes || []).find((n) => n.id === e.source))
-    .filter((n) => n && !CLOCK_FN_TYPES.includes((registry[n.type] || {}).fn_type))
-    .flatMap((n) => {
-      const a = inputAlias(n, registry);
-      return a ? [a.name, slugify((n.data || {}).name)].filter(Boolean) : [];
+    .map((e) => [e, (nodes || []).find((n) => n.id === e.source)])
+    .filter(([, n]) => n && !CLOCK_FN_TYPES.includes((registry[n.type] || {}).fn_type))
+    .flatMap(([e, n]) => {
+      const a = inputAlias(n, registry, e.sourceHandle);
+      const reg = registerPort(n, e.sourceHandle);
+      const friendly = slugify((n.data || {}).name);
+      return a ? [a.name, friendly && reg ? `${friendly}_${reg}`.slice(0, 40) : friendly]
+        .filter(Boolean) : [];
     }))];
 
   // What "Into variable" may store into: the DECLARED variables (made in the
@@ -8178,6 +8302,13 @@ export function Inspector({ node, registry, meta, nodes, edges, editable, errors
         {/* The READ node no longer offers it: where it reads is its own
             Server row (a Modbus Server connection), and these settings are
             the box answering a PLC -- a different conversation. */}
+        {/* Modbus Read: the frame builder, on the title row like Bus settings. */}
+        {node.type === "variable.rs485" && (
+          <ModbusAdvancedBar d={d} editable={editable} onChange={onChange} />
+        )}
+        {node.type === "output.modbus_write" && (
+          <ModbusAdvancedBar d={d} editable={editable} onChange={onChange} mode="write" />
+        )}
         {node.type === "output.modbus_reg" && (
           <button type="button" className="btn btn-sm"
                   onClick={() => setShowBus(true)}
@@ -9059,6 +9190,12 @@ export function Inspector({ node, registry, meta, nodes, edges, editable, errors
                        value={d.unit ?? ("server" in d ? "" : 1)} disabled={!editable}
                        placeholder={"server" in d ? "server's" : undefined}
                        onChange={(e) => onChange({ unit: e.target.value === "" ? "" : +e.target.value })} />
+                {/* Which Unit-Ids are on this bus at all: asks every id once
+                    (read-only) and offers the ones that answered. */}
+                {"server" in d && (
+                  <ModbusScan server={d.server || ""} editable={editable} value={d.unit}
+                              onPick={(u) => onChange({ unit: u })} />
+                )}
               </Field>
               <Field label="Address"
                      hint="Raw protocol address: a datasheet's 40001 usually means holding register 0.">
@@ -9067,11 +9204,20 @@ export function Inspector({ node, registry, meta, nodes, edges, editable, errors
                        onChange={(e) => onChange({ address: +e.target.value })} />
               </Field>
               <Field label="Quantity"
-                     hint="How many registers to read, counting up from the address.">
+                     hint="How many registers to read, counting up from the address ([0] = the address, [1] = the next one). Up to 32. With 2 or more, pick which ones become output points below.">
                 <input className="input" type="number" min="1" max="32"
                        value={d.quantity ?? 1} disabled={!editable}
                        onChange={(e) => onChange({ quantity: +e.target.value })} />
               </Field>
+              {(parseInt(d.quantity, 10) || 1) > 1 && (
+                <Field label="Output points"
+                       hint="Pick the registers you want to use. Each one picked becomes its own output point on the node; the rest are read but not shown. At least one stays picked.">
+                  <RegisterPicker count={Math.min(32, parseInt(d.quantity, 10) || 1)}
+                                  start={parseInt(d.address, 10) || 0}
+                                  picked={modbusPicked(d)} editable={editable}
+                                  onChange={(ports) => onChange({ ports })} />
+                </Field>
+              )}
               {!("server" in d) && (
                 <Field label="Baud rate"
                        hint="Must match the device - a mismatch is silence on the wire, not an error.">
@@ -12095,6 +12241,33 @@ function QueryRunner({ sql }) {
 // runs the motor only for a moment. The fix lives on the CONNECTION
 // (ModbusServerEditor.jsx, DriveWatchdog), not on each node, so the node only
 // says where it is -- and, when the switch is on, what that does here.
+// Modbus Read: the Advanced button (top right of its properties) that opens
+// the frame builder, and the "Custom frame" badge once a layout is saved.
+function ModbusAdvancedBar({ d, editable, onChange, mode = "read" }) {
+  const [open, setOpen] = useState(false);
+  const servers = useModbusServers();
+  const conn = (servers?.clients || []).find((c) => c.id === d.server);
+  // No server (an old node on the bare RS485 port) is serial too.
+  const serial = !("server" in d) || !d.server || conn?.type === "serial";
+  const custom = !!d.frame?.custom;
+  return (
+    <div className="wf-mbadv" data-wf-mbadv>
+      {custom && (
+        <span className="ui-badge ui-badge-warn" title="This node sends a custom request frame, not the standard Modbus layout">
+          Custom frame
+        </span>
+      )}
+      <button type="button" className="btn btn-sm" onClick={() => setOpen(true)}>
+        Advanced
+      </button>
+      {open && (
+        <ModbusFrameEditor data={d} editable={editable} serial={serial} mode={mode}
+                           onSave={(patch) => onChange(patch)} onClose={() => setOpen(false)} />
+      )}
+    </div>
+  );
+}
+
 function ModbusWatchdogNote({ server }) {
   const servers = useModbusServers();
   const conn = (servers?.clients || []).find((c) => c.id === server);
@@ -12125,7 +12298,10 @@ function Field({ label, hint, children, style }) {
   // from this one component, so the rhythm between label and control is one
   // decision made once rather than an inline number per field.
   return (
-    <label className="wf-field" style={style}>
+    // data-hint: the same words as the (i) mark, readable by the Nodes Guideline tour,
+    // which explains every field it can find -- not only the ones it has its own text for.
+    <label className="wf-field" style={style}
+           data-hint={typeof hint === "string" ? hint : undefined}>
       <span className="wf-field-label">
         {label}
         {hint ? <InfoHint label={`About ${label}`}>{hint}</InfoHint> : null}

@@ -74,10 +74,10 @@ own ports. For the IT admin: whatever port is chosen is the one to allow from th
 to the box, alongside the systems' ports (sec 8).
 
 **The box name.** Each box answers on the LAN as `<name>.local` (mDNS, avahi). A new install names
-the box `iriv-<last 8 characters of its serial>`, so two boxes on one network never share a name.
-Boxes installed before 2026-10-05 are all called `iriv`: on a network with more than one, the
-second to start answers as `iriv-2.local`, the third `iriv-3.local`, in whatever order they boot.
-The front panel prints the name the box actually answers to. Master (or a developer) renames a box
+the box `IRIV-EdgeAI-Studio` (or `IRIV_DEFAULT_HOSTNAME` from `.env`, see
+[configuration.md](configuration.md)). On a network with more than one, the second to start answers
+as `IRIV-EdgeAI-Studio-2.local`, the third `-3.local`, in whatever order they boot. The front panel
+prints the name the box actually answers to. Master (or a developer) renames a box
 under Settings -> Network -> Box name; addresses do not change, but a browser that opened the page
 as `<old name>.local` is moved to the new name, and bookmarks using the old name stop working.
 Renaming needs the installer's hostname helper on the box; an over-the-air update does not rename

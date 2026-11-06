@@ -17,7 +17,7 @@ hub (5100)        one card per system, platform administration, store, OTA
           └ detection app    MJPEG on its own stream_port (5102 by default)
 ```
 
-Companion documents: [`srs.md`](srs.md) for what each capability is *for*,
+Companion documents: [`features.md`](features.md) for what each capability is *for*,
 [`contract-v1.md`](contract-v1.md) for the device side, [`conventions.md`](conventions.md) for the
 rules the routes are written under.
 
@@ -127,7 +127,7 @@ Paths that never need a session:
 
 ### `OPEN_EXACT`
 
-Paths open as themselves only, never as a prefix (`auth.is_open`; Pipi L1, 2026-10-07):
+Paths open as themselves only, never as a prefix (`auth.is_open`):
 
 ```
 /api/health   /api/health/box
@@ -164,7 +164,7 @@ Three details are deliberate:
 - **A request with neither header is allowed.** That is a CLI or `curl` caller, which has no
   ambient cookie and is therefore not a CSRF vector; the fleet's own tooling calls these
   endpoints.
-- **Over TLS the page must be `https` too** (Pipi, 2026-10-10, M3). HTTP stays open on the same
+- **Over TLS the page must be `https` too**. HTTP stays open on the same
   host, so an `http://` page there can be rewritten by anyone on the LAN; a write over HTTPS (or
   through the hub's relay with `X-Forwarded-Proto: https`) whose `Origin`/`Referer` is `http://`
   is refused even when the host matches. Plain HTTP is unchanged.
@@ -204,8 +204,8 @@ keeps a page's files to itself - but they are all thin wrappers over `core/servi
 | `_require_session` | any authenticated caller - a belt-and-braces re-check in `proxy.py` | 401 |
 
 In the tables below, **session** means *no gate beyond the middleware*: a valid session is still
-required. See [`srs.md`](srs.md) §4 for why role names grant nothing and the systems allowlist
-does.
+required. Role names grant nothing by themselves; what a caller may reach is decided by the
+gates above and the account's systems allowlist.
 
 ---
 
@@ -384,7 +384,7 @@ so far, plus the one open route in this file.
 |---|---|---|---|
 | POST | `/api/hub/network/ap` | site admin | Switch wlan0's job LIVE, no reboot (`core/services/wifiswitch.py`): `{on: true}` = access point on the stored name and key; `{on: false}` = Wi-Fi, with `{network}` (a saved profile), `{ssid, password, hidden}` (a new network, through the wifi-profile helper) or neither (any saved network in range). Answers at once with the `GET /api/hub/network` status, `switch.state` `switching`; poll it for `done` / `failed` with `message`, `reason` (`wrong_password`, `not_found`, `no_address`, `timeout`, `failed`) and `address`. A join that has not connected with a real address within 35 s is reported `failed` with `hotspot_off: true` and the message ending "The hotspot is off. Turn the hotspot on to reach this device without Wi-Fi."; the access point is NEVER raised by itself (2026-10-14). An AP that will not start puts the previous Wi-Fi back. `[ap].mode` becomes `wifi` as the hotspot is taken down for a join (whatever the join does) and `ap` once the hotspot broadcasts. A caller on wlan0 gets the reply before the radio moves (3 s). 400 in words for an unknown saved network, no network to join, or a switch already under way; other network writes answer 400 while one runs |
 | GET | `/api/health/box` | **open** (`OPEN_EXACT`), **cross-origin readable** | `{ok, box, switch}`: `box` is `hostinfo.box_id()` (16 hex characters of a hash of the serial), `switch` one word of `wifiswitch` state (`idle`, `switching`, `done`, `failed`). Nothing else: no address, name, version or network. The **only response on the hub readable from another origin** (`Access-Control-Allow-Origin: *`, set on this response alone; `Cache-Control: no-store`; a simple GET, no credentials, no preflight). The Network page, still running at the address the box left, probes every address in `switch.candidates` with it after a Wi-Fi / AP switch and opens the page at the first one answering with this box's `box_id` and a finished switch (`WifiSwitchOverlay.jsx`) |
-| POST | `/api/hub/network/ap/save` | site admin | `{ssid, password}` (either may be left out: kept as stored) -> saves `[ap].ssid` / `[ap].password` in `config/network.local.toml` (0600) through `core/services/apconf.py`. While the AP broadcasts the change is applied at once (the one AP profile restarted through the existing wifi-profile helper, key on stdin, or the legacy hotspot command); with AP mode off it is only stored. Answers the `GET /api/hub/network` status plus `ap_save: {applied, message}`, `applied` one of `unchanged`, `stored`, `now`, `scheduled` (the request came in over the AP itself: restarted a few seconds after the reply) or `failed` (saved, not restarted; used after a reboot). 400 with the reason in words for an invalid name (1-32 bytes, no control characters) or password (8-63 printable ASCII; the default `iriv1234` is accepted like any other). The key is never written to a log line |
+| POST | `/api/hub/network/ap/save` | site admin | `{ssid, password, address}` (any may be left out: kept as stored) -> saves `[ap].ssid` / `[ap].password` / `[ap].address` (the hotspot's own IPv4 address, default 192.168.1.1; a private host address, refused otherwise) in `config/network.local.toml` (0600) through `core/services/apconf.py`. While the AP broadcasts the change is applied at once (the one AP profile restarted through the existing wifi-profile helper, key on stdin, or the legacy hotspot command); with AP mode off it is only stored. Answers the `GET /api/hub/network` status plus `ap_save: {applied, message}`, `applied` one of `unchanged`, `stored`, `now`, `scheduled` (the request came in over the AP itself: restarted a few seconds after the reply) or `failed` (saved, not restarted; used after a reboot). 400 with the reason in words for an invalid name (1-32 bytes, no control characters) or password (8-63 printable ASCII; the default `iriv1234` is accepted like any other). The key is never written to a log line |
 
 ### 3.7 Inline on the hub app
 
@@ -440,8 +440,8 @@ prefixes. `audit`, `logs` and `capacity` are shared with the hub and are documen
 | DELETE | `/api/roles/{name}` | admin | Remove a role label |
 
 The account-management routes additionally refuse the built-in administrator row and every
-developer account (`_refuse_builtin`, `auth._refuse_if_developer`). See [`srs.md`](srs.md) FR-50
-for why.
+developer account (`_refuse_builtin`, `auth._refuse_if_developer`), so the account that can
+always recover the box cannot be locked out or deleted from the page.
 
 ### 4.2 `core/routes/spa.py` - the shell and its page payloads
 
@@ -483,6 +483,8 @@ Read-only by policy: nothing here writes.
 | GET | `/api/workflow` | session | The canvas, the node registry, variables, compile errors |
 | PUT | `/api/workflow` | admin + `_require_python_rights` | Save the canvas; apply the compiled artifacts if it compiles clean |
 | POST | `/api/workflow/compile` | admin | Dry-run compile, writing nothing |
+| POST | `/api/workflow/modbus-scan` | `workflow.edit` | `{server, action: "start"\|"stop", first?, last?}`: scan a Modbus Server for the Unit-Ids that answer (one FC3 read of register 0 per id, read-only). Runs in the system's app, which is started (AI off) if it is not up. Answers `{ok, seq}` |
+| GET | `/api/workflow/modbus-scan` | `workflow.edit` | The latest scan: `{scan: {seq, server, state: "scanning"\|"done"\|"stopped"\|"error", first, last, at, found: [unit ids], error}, app_running}` |
 | POST | `/api/workflow/class-filter` | `workflow.edit` | The dashboard's Class filter card: `{node, running}` runs or pauses one NAMED Class Filter (`core/routes/class_filter.py`) |
 
 **Class Filter names.** With more than one Class Filter on the canvas, each needs its own name
@@ -651,7 +653,7 @@ a destructive action slips through an operator session.
 
 The 503 on `PATCH /api/events/{event_id}` is the database degradation contract showing through:
 read paths return empty when Postgres is unreachable, write paths let it propagate
-([`master-db.md`](master-db.md)).
+([`database-schema.md`](database-schema.md)).
 
 ### 4.10 Integrations
 

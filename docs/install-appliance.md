@@ -351,7 +351,8 @@ laptop or phone can reach the dashboard with no site network at all:
 | | |
 |---|---|
 | Network name | `iriv-<serial>` (shown on the front panel's Wi-Fi page) |
-| Password | `iriv1234` |
+| Password | `iriv1234` (or `IRIV_AP_PASSWORD` from `.env`) |
+| Dashboard address on the hotspot | `http://192.168.1.1` (or `IRIV_AP_ADDRESS`; see [configuration.md](configuration.md)) |
 
 The default access point password is iriv1234 on every box, and it is printed
 in this manual, so anyone in Wi-Fi range can join it and reach the sign-in
@@ -546,7 +547,7 @@ later. After that, never again.
 
 Run it from a root-owned copy whose signature you checked, not from
 `/opt/irivai-systor`: that tree belongs to the service account, and a root
-script read from it is only as trustworthy as that account (Pipi F2). The
+script read from it is only as trustworthy as that account. The
 offline update file of the release the box runs (`irivai-update-v<version>.tar.gz`,
 on the same GitHub release) carries the bundle, the manifest and its signature:
 

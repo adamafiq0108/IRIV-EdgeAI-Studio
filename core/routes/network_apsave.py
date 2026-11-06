@@ -50,7 +50,7 @@ def _restart_ap_later(config_dir, delay=None):
 
 
 def save_and_apply(ssid, password, config_dir=None, broadcasting=None, via=None,
-                   later=_restart_ap_later):
+                   later=_restart_ap_later, address=None):
     """The Save button's work, off the event loop. Returns {applied, message}.
 
     `applied`:
@@ -64,7 +64,7 @@ def save_and_apply(ssid, password, config_dir=None, broadcasting=None, via=None,
     """
     if broadcasting is None:
         broadcasting = bool(netconf.ap_active())
-    result = apconf.save_ap(ssid, password, config_dir)
+    result = apconf.save_ap(ssid, password, config_dir, address)
     if not result["changed"]:
         return {"applied": "unchanged", "message": "Nothing to save."}
     if not broadcasting:
@@ -99,5 +99,7 @@ def _save_request(request, body, config_dir):
     if ssid is None:
         ssid = apconf.ap_ssid(config_dir)
     password = body.get("password")
+    address = body.get("address")
     return save_and_apply(str(ssid), None if password is None else str(password),
-                          config_dir, broadcasting, via)
+                          config_dir, broadcasting, via,
+                          address=None if address in (None, "") else str(address))

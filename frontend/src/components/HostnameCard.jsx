@@ -32,7 +32,8 @@ import { Copy, Globe, Info, Loader2, Tag, TriangleAlert } from "lucide-react";
 import { LastResult, NOT_OWN_SERVICE, Note, RestartNote, announceChange, appliesHere,
          askRestart, restartBox, useRestartEvent } from "./BoxRestartNote.jsx";
 
-const LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+// Capitals are kept (IRIV-EdgeAI-Studio): a hostname is case-insensitive on the network.
+const LABEL = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
 
 export default function HostnameCard() {
   const [data, setData] = useState(null);
@@ -59,8 +60,8 @@ export default function HostnameCard() {
 
   if (!data || data.hidden) return null;
 
-  const typed = String(name || "").trim().toLowerCase().replace(/\.local$/, "");
-  const valid = LABEL.test(typed) && !/^\d+$/.test(typed) && typed !== "localhost";
+  const typed = String(name || "").trim().replace(/\.local$/i, "");
+  const valid = LABEL.test(typed) && !/^\d+$/.test(typed) && typed.toLowerCase() !== "localhost";
   const unchanged = typed === (data.pending || data.hostname);
   const restart = data.restart || {};
   // Only irivai-hub.service applies a saved name; from any other hub Apply

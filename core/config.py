@@ -22,6 +22,12 @@ import sys
 import threading
 
 from core import tomlcache
+from core import envfile
+
+# The .env file first: it may point the config dir and the store elsewhere
+# (CYTRON_CONFIG_DIR, CYTRON_STORE), and every process the hub starts
+# inherits what it sets (core/envfile.py).
+envfile.load()
 
 try:
     import tomllib                     # Python 3.11+

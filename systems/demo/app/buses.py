@@ -950,6 +950,186 @@ def modbus_read(config, address, count=1, kind="holding"):
         _release(client, pooled, broken)
 
 
+# -- unit-id scan ---------------------------------------------------------------
+#
+# "Which devices are on this bus?" A Modbus bus has no discovery: the only way
+# to learn the Unit-Ids is to ask each one. A scan asks every id in turn for
+# ONE holding register (FC3, address 0) with a short timeout and no retries.
+# ANY frame back means a device is there -- data, or an exception reply such as
+# "illegal address" (a device without register 0 is still a device). Silence
+# (a timeout) means nobody answered at that id.
+#
+# Read-only: FC3 changes nothing on any device. The bus lock is taken per id,
+# not for the whole scan, so the Modbus Read pollers and the Write worker keep
+# their turns while it runs.
+
+#: Seconds to wait for one id's answer. A 9600-baud RTU device answers in tens
+#: of milliseconds; a TCP gateway forwarding to RS485 needs a little longer.
+SCAN_TIMEOUT_RTU_S = 0.2
+SCAN_TIMEOUT_TCP_S = 0.5
+
+
+def _probe_client(config, timeout_s):
+    """A client of its own for one probe: short timeout, NO retries (pymodbus
+    retries 3 times by default, which would make every silent id cost 4x)."""
+    mode = (config or {}).get("mode", "tcp")
+    if mode == "rtu":
+        from pymodbus.client import ModbusSerialClient       # noqa: PLC0415
+
+        extra = {k: config[k] for k in ("bytesize", "parity", "stopbits")
+                 if k in config}
+        return ModbusSerialClient(port=config.get("device", "/dev/ttyUSB0"),
+                                  baudrate=int(config.get("baudrate", 9600)),
+                                  timeout=timeout_s, retries=0, **extra)
+    from pymodbus.client import ModbusTcpClient              # noqa: PLC0415
+
+    return ModbusTcpClient(config.get("host", "127.0.0.1"),
+                           port=int(config.get("port", 502)),
+                           timeout=timeout_s, retries=0)
+
+
+def modbus_probe(config, unit, timeout_s=None):
+    """True when a device answers at `unit` (data OR an exception reply),
+    False when nothing does. Raises OSError when the bus itself cannot be
+    opened (no serial port, TCP host unreachable) -- that is not "no device
+    at this id", and a scan must stop and say so rather than report an empty
+    bus."""
+    config = config or {}
+    if timeout_s is None:
+        timeout_s = (SCAN_TIMEOUT_RTU_S if config.get("mode") == "rtu"
+                     else SCAN_TIMEOUT_TCP_S)
+    client = _probe_client(config, timeout_s)
+    try:
+        if not client.connect():
+            raise OSError(f"could not open {bus_key(config)}")
+        try:
+            result = client.read_holding_registers(0, count=1, slave=int(unit))
+        except Exception:                                    # noqa: BLE001
+            return False
+        if not result.isError():
+            return True
+        return not _lost(client, result)
+    finally:
+        try:
+            client.close()
+        except Exception:                                    # noqa: BLE001
+            pass
+
+
+def modbus_scan(config, first=1, last=247, on_progress=None, should_stop=None):
+    """Ask every Unit-Id from `first` to `last`; returns the ids that answered.
+
+    `on_progress(unit, found)` after each id; `should_stop()` is checked
+    before each, so a scan can be cancelled between ids. OSError (the bus
+    cannot be opened) propagates."""
+    key = bus_key(config)
+    found = []
+    # Silence is the expected answer for nearly every id, and pymodbus logs
+    # "No response received" for each one -- 200+ log lines per scan. Those
+    # lines are dropped while THIS thread scans; other threads' are kept.
+    me = threading.get_ident()
+
+    def quiet(record):
+        return not (record.thread == me
+                    and str(record.getMessage()).startswith("No response received"))
+
+    # pymodbus logs through this one logger (pymodbus.logging.Log); a filter
+    # on a logger only sees records logged ON it, not on its children.
+    plog = logging.getLogger("pymodbus.logging")
+    plog.addFilter(quiet)
+    for h in plog.handlers:
+        h.addFilter(quiet)
+    try:
+        for unit in range(int(first), int(last) + 1):
+            if should_stop and should_stop():
+                break
+            with bus_lock(key):
+                present = modbus_probe(config, unit)
+            if present:
+                found.append(unit)
+            if on_progress:
+                on_progress(unit, list(found))
+    finally:
+        plog.removeFilter(quiet)
+        for h in plog.handlers:
+            h.removeFilter(quiet)
+    return found
+
+
+def modbus_read_frame(config, frame, count=1, kind="holding"):
+    """Read with a CUSTOM request frame (the Modbus Read's Advanced editor).
+
+    `frame` is the request without its CRC; CRC-16/MODBUS is appended here
+    (low byte first). The reply is read as a standard one -- ID, FC, byte
+    count, data, CRC -- and checked: a wrong CRC or ID is no reading. An
+    exception reply (FC | 0x80) is a device answering "no": None, like any
+    failed read. RTU only: over TCP the caller reads the standard way.
+
+    Returns a list (registers, or bits for coils / discrete inputs) or None.
+    """
+    config = config or {}
+    if config.get("mode") != "rtu":
+        return None
+    try:
+        import serial                                        # noqa: PLC0415
+    except ImportError:
+        return None
+    req = bytes(frame) + _crc16(bytes(frame)).to_bytes(2, "little")
+    parity = {"N": serial.PARITY_NONE, "E": serial.PARITY_EVEN,
+              "O": serial.PARITY_ODD}.get(str(config.get("parity") or "N"), serial.PARITY_NONE)
+    try:
+        with serial.Serial(port=config.get("device", "/dev/ttyACM0"),
+                           baudrate=int(config.get("baudrate", 9600)),
+                           bytesize=int(config.get("bytesize", 8)), parity=parity,
+                           stopbits=int(config.get("stopbits", 1)),
+                           timeout=float(config.get("timeout_s", 1))) as port:
+            port.reset_input_buffer()
+            port.write(req)
+            port.flush()
+            head = port.read(3)
+            if len(head) < 3:
+                _note_rtu(config, False, "no answer to the custom frame")
+                return None
+            if head[1] & 0x80:
+                rest = port.read(2)                          # exception code's CRC
+                _note_rtu(config, True, f"exception reply {head[2]:#04x}")
+                return None
+            body = port.read(head[2] + 2)
+    except (OSError, ValueError, serial.SerialException) as e:
+        _note_rtu(config, False, str(e))
+        return None
+    reply = head + body
+    if len(body) < head[2] + 2 or _crc16(reply[:-2]) != int.from_bytes(reply[-2:], "little") \
+            or reply[0] != frame[0]:
+        _note_rtu(config, False, "bad reply to the custom frame")
+        return None
+    data = reply[3:-2]
+    if kind in ("coil", "discrete"):
+        values = [(data[i // 8] >> (i % 8)) & 1 for i in range(len(data) * 8)][:count]
+    else:
+        values = [int.from_bytes(data[i:i + 2], "big") for i in range(0, len(data) - 1, 2)][:count]
+    # A valid frame carrying FEWER values than the node reads is not a
+    # reading. A frame the device takes differently from what was meant (Q
+    # and ST swapped asks for 0 registers) gets a perfectly well-formed EMPTY
+    # reply, and taking that as success kept the old values on the canvas as
+    # if the custom frame still read the sensor.
+    if len(values) < count:
+        _note_rtu(config, True, f"reply carried {len(values)} of {count} values")
+        return None
+    _note_rtu(config, True)
+    return values
+
+
+def _crc16(data):
+    """CRC-16/MODBUS: init 0xFFFF, reflected polynomial 0xA001."""
+    crc = 0xFFFF
+    for b in data:
+        crc ^= b
+        for _ in range(8):
+            crc = (crc >> 1) ^ 0xA001 if crc & 1 else crc >> 1
+    return crc
+
+
 def modbus_write(config, address, value, kind="holding"):
     """Write one coil or register. Returns (ok, message)."""
     try:
@@ -1039,6 +1219,96 @@ def modbus_write_fc(config, fc, address, values, unit=None):
         return False, str(e) or e.__class__.__name__
     finally:
         _release(client, pooled, broken)
+
+
+def modbus_write_frame(config, frame, address, quantity, values, fc_std, unit):
+    """One write with a CUSTOM request layout (the Modbus Write's Advanced
+    editor). Returns (ok, message).
+
+    The bytes are built here, per write, because the value is only known now:
+    ID, the layout's FC, then each field -- st = address, q = quantity, val =
+    the data (FF00/0000 for one coil, the register for FC 6, packed bits for
+    coils, 2 bytes per register otherwise), bc = the data's byte count, a
+    custom field its own hex -- each at its size, high or low byte first, and
+    the CRC-16/MODBUS last, low byte first. Any CRC-valid reply from the same
+    ID that is not an exception is a success. RTU only.
+    """
+    config = config or {}
+    if config.get("mode") != "rtu":
+        return False, "a custom frame is only sent on an RTU (serial) server"
+    try:
+        import serial                                        # noqa: PLC0415
+    except ImportError:
+        return False, "pyserial not installed"
+    # The data, as the standard write of fc_std would carry it.
+    if fc_std == 5:
+        data = b"\xff\x00" if values and values[0] else b"\x00\x00"
+    elif fc_std == 15:
+        bits = [1 if v else 0 for v in values]
+        data = bytes(sum(b << i for i, b in enumerate(bits[k:k + 8]))
+                     for k in range(0, len(bits), 8))
+    else:
+        data = b"".join(int(v & 0xFFFF).to_bytes(2, "big") for v in values)
+    try:
+        fc_byte = int(str(frame.get("fc")), 16) if frame.get("fc") not in (None, "") else fc_std
+    except ValueError:
+        fc_byte = fc_std
+    out = bytearray([int(unit) & 0xFF, fc_byte & 0xFF])
+    for f in frame.get("fields") or []:
+        size, lo, key = int(f.get("size") or 2), f.get("order") == "lo", f.get("key")
+        if key == "val":
+            if fc_std in (15, 16):
+                # A block of values: each REGISTER is byte-swapped for Lo -> Hi;
+                # the length is the data's own.
+                chunk = (b"".join(data[i:i + 2][::-1] for i in range(0, len(data), 2))
+                         if lo and fc_std == 16 else data)
+                out += chunk
+                continue
+            value = int.from_bytes(data, "big")
+        elif key == "st":
+            value = int(address)
+        elif key == "q":
+            value = int(quantity)
+        elif key == "bc":
+            value = len(data)
+        else:
+            value = int(str(f.get("hex") or "0"), 16)
+        chunk = (value & ((1 << (8 * size)) - 1)).to_bytes(size, "big")
+        out += chunk[::-1] if lo else chunk
+    req = bytes(out) + _crc16(bytes(out)).to_bytes(2, "little")
+    parity = {"N": serial.PARITY_NONE, "E": serial.PARITY_EVEN,
+              "O": serial.PARITY_ODD}.get(str(config.get("parity") or "N"), serial.PARITY_NONE)
+    try:
+        with serial.Serial(port=config.get("device", "/dev/ttyACM0"),
+                           baudrate=int(config.get("baudrate", 9600)),
+                           bytesize=int(config.get("bytesize", 8)), parity=parity,
+                           stopbits=int(config.get("stopbits", 1)),
+                           timeout=float(config.get("timeout_s", 1))) as port:
+            port.reset_input_buffer()
+            port.write(req)
+            port.flush()
+            head = port.read(2)
+            if len(head) < 2:
+                _note_rtu(config, False, "no answer to the custom frame")
+                return False, f"no answer (sent {req.hex(' ').upper()})"
+            if head[1] & 0x80:
+                rest = port.read(3)
+                _note_rtu(config, True, "exception reply")
+                return False, (f"device refused it (exception "
+                               f"{rest[0] if rest else 0:#04x}); sent {req.hex(' ').upper()}")
+            # The standard write reply is 8 bytes; a device that answers a
+            # custom frame differently ends at the timeout.
+            port.timeout = 0.15
+            reply = head + port.read(254)
+    except (OSError, ValueError, serial.SerialException) as e:
+        _note_rtu(config, False, str(e))
+        return False, str(e)
+    if len(reply) < 4 or reply[0] != req[0] \
+            or _crc16(reply[:-2]) != int.from_bytes(reply[-2:], "little"):
+        _note_rtu(config, False, "bad reply to the custom frame")
+        return False, f"bad reply {reply.hex(' ').upper()} (sent {req.hex(' ').upper()})"
+    _note_rtu(config, True)
+    return True, f"ok (sent {req.hex(' ').upper()})"
 
 
 def inventory(config=None):

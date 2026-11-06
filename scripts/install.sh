@@ -47,7 +47,7 @@ DB_HOST=""
 #: into "connection refused". Local only (see 7e).
 INSTALL_MQTT=1
 #: What the board answers to, and therefore what <name>.local resolves to.
-#: Empty = iriv-<last 8 of the serial>, the same rule as
+#: Empty = IRIV-EdgeAI-Studio, the same as
 #: core/services/hostinfo.default_hostname(). Every box called "iriv" made
 #: iriv.local a race that avahi settled in boot order (iriv-2, iriv-3)
 #: (docs/team/kokoci/2026-10-05-hostname.md).
@@ -627,6 +627,24 @@ rsync -a --delete \
     --exclude '/docs' \
     "${BENCH_EXCLUDE[@]}" \
     "${SRC_DIR}/" "${TARGET}/"
+
+# The .env file: install-time defaults (hostname, hotspot address and key,
+# store paths, the hardware check -- core/envfile.py). Kept OUTSIDE the
+# release folder at /etc/irivai/studio.env so an update keeps it; written
+# once, from the checkout's .env if it has one, else from .env.example, and
+# never overwritten afterwards (edit it there, then restart irivai-hub).
+install -d -m 755 /etc/irivai
+if [[ ! -f /etc/irivai/studio.env ]]; then
+    if [[ -f "${SRC_DIR}/.env" ]]; then
+        install -m 600 "${SRC_DIR}/.env" /etc/irivai/studio.env
+        note "settings: /etc/irivai/studio.env written from .env"
+    elif [[ -f "${SRC_DIR}/.env.example" ]]; then
+        install -m 600 "${SRC_DIR}/.env.example" /etc/irivai/studio.env
+        note "settings: /etc/irivai/studio.env written from .env.example"
+    fi
+    chown "${SERVICE_USER}:${SERVICE_USER}" /etc/irivai/studio.env 2>/dev/null || true
+fi
+rm -f "${TARGET}/.env"          # the box reads /etc/irivai/studio.env
 
 # Only the built-in systems, named one by one -- never the whole systems/ dir,
 # which on a developer box also holds workbenches and unpublished work.
@@ -1863,9 +1881,16 @@ fi
 # first, which turns a working box into a slow one.
 if [[ $SET_HOSTNAME -eq 1 && $EUID -eq 0 ]]; then
     if [[ -z "$WANT_HOSTNAME" ]]; then
-        serial="$(sed -n 's/^Serial[[:space:]]*:[[:space:]]*\([^[:space:]]*\).*/\1/p' /proc/cpuinfo \
-                  | tr 'A-Z' 'a-z')"
-        WANT_HOSTNAME="iriv${serial:+-${serial: -8}}"
+        # .env IRIV_DEFAULT_HOSTNAME, else the same default as
+        # core/services/hostinfo.DEFAULT_HOSTNAME.
+        env_host=""
+        for envf in /etc/irivai/studio.env "${SRC_DIR}/.env"; do
+            if [[ -f "$envf" ]]; then
+                env_host="$(sed -n 's/^[[:space:]]*\(export[[:space:]]\+\)\?IRIV_DEFAULT_HOSTNAME[[:space:]]*=[[:space:]]*["'"'"']\?\([A-Za-z0-9-]*\).*/\2/p' "$envf" | tail -1)"
+                break
+            fi
+        done
+        WANT_HOSTNAME="${env_host:-IRIV-EdgeAI-Studio}"
     fi
     current_host="$(hostname)"
     if [[ "$current_host" == "$WANT_HOSTNAME" ]]; then

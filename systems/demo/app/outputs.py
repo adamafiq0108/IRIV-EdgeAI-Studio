@@ -2729,8 +2729,14 @@ def _modbus_write_run(entry):
     ok, message = False, ""
     for attempt in (0, 1):
         with buses.bus_lock(entry["key"]):
-            ok, message = buses.modbus_write_fc(cfg, job["fc"], job["address"],
-                                                values, cfg["unit"])
+            if isinstance(o.get("frame"), dict) and cfg.get("mode") == "rtu":
+                # A custom request layout (the node's Advanced editor).
+                ok, message = buses.modbus_write_frame(
+                    cfg, o["frame"], job["address"], job["quantity"], values,
+                    job["fc"], cfg["unit"])
+            else:
+                ok, message = buses.modbus_write_fc(cfg, job["fc"], job["address"],
+                                                    values, cfg["unit"])
         if ok or attempt or not conn.get("reconnect_on_timeout", True):
             break
         time.sleep(max(0.1, float(conn.get("reconnect_timeout_ms") or 2000)

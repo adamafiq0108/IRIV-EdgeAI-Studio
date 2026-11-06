@@ -6,8 +6,8 @@ it deliberately refuses to do.
 
 Companion docs: [`contract-v1.md`](contract-v1.md) (device contract),
 [`conventions.md`](conventions.md) (rules), [`setup.md`](setup.md) (install),
-[`master-db.md`](master-db.md) (schema). Task-scoped guides:
-[`../.claude/skills/`](../.claude/skills/README.md).
+[`database-schema.md`](database-schema.md) (schema), [`configuration.md`](configuration.md)
+(`.env`, hotspot, hostname).
 
 ---
 
@@ -230,6 +230,73 @@ Skill: `auth-and-users`.
 - `LICENSE` - **placeholder**: no rights granted until one is chosen.
 
 ---
+
+## 12. Workflow builder
+
+A node-based canvas (Workflow page) that turns camera detections, sensors and
+schedules into actions, with no code.
+
+- **Palette.** Nodes grouped by drawer: AI and analytics, logic (Condition,
+  Trigger, Recorded Trigger, If / Else if), variables, integrations (Modbus,
+  MQTT, HTTP), outputs (Send Command, Send Images, Send Message, Image Snapshot,
+  Recording Clip, Zones), Dashboard & Analytics (Card Widget, Chart Widget) and
+  Common (Comment, Group, Function, Link).
+- **On this canvas.** Each drawer lists what is already on the canvas - custom
+  formulas, cards, charts and the main node types. Drag one to copy it,
+  double-click to jump to it.
+- **Quick add.** Drag a wire out of a port and let go on empty canvas: a
+  searchable list offers only the nodes that wire can legally connect to, and
+  the picked node is added with the wire already on it.
+- **Function.** A frame that holds a reusable piece of flow with input and
+  output pins; a Call node runs it from anywhere. Nodes join a frame only when
+  dropped inside it.
+- **Group.** A coloured, named box for tagging nodes. It grows to fit what is
+  in it and cannot shrink smaller than its nodes.
+- **Wires.** Live wires animate; a wire with a problem shows a red ✕.
+- **Names.** Nodes that need an identity ask for one when added
+  ("Trigger Name", "Card Widget Name" ...).
+- **Guides.** Built-in step-by-step guides (Basic AI System, Condition &
+  Trigger, Database) and a **Nodes Guideline** page: every node's real
+  properties panel as a numbered tour, with an explanation for every setting
+  and every dropdown choice, including the settings a choice adds.
+
+## 13. Modbus
+
+- **Modbus Read** reads registers or coils from a Modbus Server (RTU over the
+  RS485 port, or TCP). With **Quantity** above 1 it reads a block;
+  **Output points** picks which registers get their own output point on the
+  node (`[0] addr 100`, `[1] addr 101` ...), each wire carrying that register.
+  The node says **no answer (last value)** when the device stops answering.
+- **Scan for devices** (under Unit-Id) asks every Unit-Id 1-247 on the server
+  for one register and lists the ones that answer; pick one to fill Unit-Id.
+  Read-only; it takes turns with the other Modbus nodes on the same wire. A
+  full scan takes about 50 seconds at 9600 baud.
+- **Modbus Write** writes coils or registers (FC 5, 6, 15, 16) when its
+  trigger fires or its value changes.
+- **Advanced** (top right of both nodes' properties) opens the **Modbus frame
+  builder** for devices that need a non-standard request: ID, FC and CRC stay
+  fixed by the standard; the fields between them can be reordered, resized,
+  byte-swapped and joined by vendor fields such as a password. A live byte map,
+  the CRC (CRC-16/MODBUS) and the exact hex frame update as you edit, with
+  warnings for non-standard layouts. On a Write the value is filled in at the
+  moment of each write. Custom frames are sent on RTU (serial) servers; over
+  TCP the node keeps the standard frame. A saved layout shows a
+  **Custom frame** badge.
+
+## 14. Device and network
+
+- **Device lock.** The software runs only on an IRIV Edge AI device (CM5 or
+  ATECC present) with an AI HAT. It is checked at install, at sign-in and when
+  detection starts, with a plain message saying what is missing.
+- **Hotspot (AP mode).** The device's own Wi-Fi hotspot, at **192.168.1.1** by
+  default; the address can be changed under Network. If a cable is on the same
+  network range, the hotspot uses 10.42.0.1 instead and the page says why.
+- **Hostname.** A new device is `IRIV-EdgeAI-Studio.local`; renamed under
+  Network.
+- **`.env`.** The defaults a device starts with (hostname, hotspot address and
+  password, storage paths) in one file - see [configuration.md](configuration.md).
+- **Shut down / restart.** The software is stopped first, then the device
+  powers off, so it shuts down quickly and cleanly.
 
 ## Endpoint map (added by this work)
 

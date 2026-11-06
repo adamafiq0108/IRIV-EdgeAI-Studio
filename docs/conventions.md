@@ -1,7 +1,7 @@
 # Cytron Dashboard - code conventions
 
-Rules every skill in `.claude/skills/` enforces. Referenced, never copied - if a rule lives in
-five SKILL.md files it will mean five different things within a month.
+The rules the code is written under. Referenced, never copied - if a rule lives in five places
+it will mean five different things within a month.
 
 ## Why these exist
 

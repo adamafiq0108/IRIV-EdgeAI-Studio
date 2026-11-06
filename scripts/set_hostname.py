@@ -24,7 +24,7 @@ import re
 import subprocess
 import sys
 
-LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
+LABEL = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
 
 
 def fail(msg):
@@ -60,7 +60,7 @@ def main():
     if os.geteuid() != 0:
         return fail("must run as root")
     name = sys.stdin.readline(80).strip()
-    if not LABEL.match(name) or name.isdigit() or name == "localhost":
+    if not LABEL.match(name) or name.isdigit() or name.lower() == "localhost":
         return fail("invalid name")
     old = os.uname().nodename.split(".")[0]
     r = subprocess.run(["/usr/bin/hostnamectl", "set-hostname", name],

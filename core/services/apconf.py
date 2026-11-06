@@ -103,7 +103,7 @@ def ap_user_set(config_dir=None):
     return bool((config.load("network", config_dir).get("ap") or {}).get("user_set"))
 
 
-def save_ap(ssid, password=None, config_dir=None):
+def save_ap(ssid, password=None, config_dir=None, address=None):
     """Store the access point's name and key. Applies NOTHING to the radio.
 
     `password` None keeps the stored key. Both are validated before anything
@@ -127,7 +127,11 @@ def save_ap(ssid, password=None, config_dir=None):
     if not password:
         raise NetError("The password needs at least %d characters."
                        % netconf.MIN_AP_PASSWORD)
-    changed = ssid != ap_ssid(config_dir) or password != stored_key
+    # The hotspot's own address; None keeps the stored one.
+    stored_addr = netconf.ap_address(config_dir)
+    address = stored_addr if address in (None, "") else netconf.check_ap_address(address)
+    changed = (ssid != ap_ssid(config_dir) or password != stored_key
+               or address != stored_addr)
     if changed:
         local = dict(config.load_local("network", config_dir))
         ap = dict(local.get("ap") or {})
@@ -136,6 +140,11 @@ def save_ap(ssid, password=None, config_dir=None):
         else:
             ap["ssid"] = ssid
         ap["password"] = password
+        # Not stored when it IS the default, so a later default change follows.
+        if address == netconf.DEFAULT_AP_ADDRESS:
+            ap.pop("address", None)
+        else:
+            ap["address"] = address
         # The flag follows the KEY only: a rename leaves it as it was, the
         # default clears it, any other new key is a person's choice.
         if password == netconf.DEFAULT_AP_PASSWORD:

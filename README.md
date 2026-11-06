@@ -40,9 +40,10 @@ Then open **`http://<board-ip>`** in your browser and sign in with the account t
 prints at the end. The first sign-in asks you to choose your own password.
 
 > [!TIP]
-> Not sure of the board's address? Each board names itself `iriv-` plus the end of its serial
-> number, so try **`http://iriv-xxxxxxxx.local`** using the name on the board's front-panel
-> screen, or look the board up in your router's list of devices.
+> Not sure of the board's address? A new board is called `IRIV-EdgeAI-Studio`, so try
+> **`http://IRIV-EdgeAI-Studio.local`** (a second board on the same network is
+> `IRIV-EdgeAI-Studio-2.local`, and so on - the front-panel screen shows the name), or look the
+> board up in your router's list of devices.
 
 ---
 
@@ -345,9 +346,10 @@ HAT is seated, then restart the board. On a development machine, set `IRIV_HW_CH
 <details>
 <summary><b>I can't find the board's address</b></summary>
 
-The board's front-panel screen shows its name and address. It names itself `iriv-` plus the
-end of its serial number, so `http://iriv-xxxxxxxx.local` works from most computers on the same
-network. Your router's list of connected devices shows it too.
+The board's front-panel screen shows its name and address. A new board is called
+`IRIV-EdgeAI-Studio`, so `http://IRIV-EdgeAI-Studio.local` works from most computers on the same
+network. On its own hotspot the board is at `http://192.168.1.1`. Your router's list of connected
+devices shows it too.
 </details>
 
 <details>
@@ -370,9 +372,17 @@ an error carries the same ID, so one search finds it.
 | Doc | Covers |
 |---|---|
 | [`docs/setup.md`](docs/setup.md) | Installation, pairing, verification, troubleshooting |
-| [`docs/contract-v1.md`](docs/contract-v1.md) | How edge devices talk to the dashboard |
+| [`docs/install-appliance.md`](docs/install-appliance.md) | Installing onto an IRIV Edge AI device |
+| [`docs/configuration.md`](docs/configuration.md) | The `.env` file, hotspot address, hostname, where settings live |
+| [`docs/software-update.md`](docs/software-update.md) | Updating the software |
+| [`docs/features.md`](docs/features.md) | What the product does, feature by feature |
+| [`docs/architecture.md`](docs/architecture.md) | How it is built |
+| [`docs/api.md`](docs/api.md) | REST API reference |
+| [`docs/database-schema.md`](docs/database-schema.md) | Database schema |
+| [`docs/contract-v1.md`](docs/contract-v1.md) | How an AI system plugs into the dashboard |
 | [`docs/conventions.md`](docs/conventions.md) | Code structure and rules for contributors |
-| [`docs/master-db.md`](docs/master-db.md) | Database schema |
+
+All of them are indexed in [`docs/README.md`](docs/README.md).
 
 ## 🤝 Contributing
 

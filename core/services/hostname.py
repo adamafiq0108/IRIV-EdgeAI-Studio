@@ -53,7 +53,7 @@ HELPER = "/usr/local/lib/irivai/set-hostname.py"
 #: hostname.md); -I so the helper never imports from the caller's path.
 HELPER_ARGV = ("sudo", "-n", "/usr/bin/python3", "-I", HELPER)
 #: RFC 1123 label, lowercase. One label: <name>.local is the whole address.
-_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
+_LABEL = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
 _REFUSED = {"localhost": "localhost is this machine to every machine"}
 #: What a box without the helper says, on the card and on a refused save.
 NEEDS_INSTALLER = ("this box needs a one-time update by the installer before "
@@ -75,19 +75,21 @@ def local_name():
 
 def validate(name):
     """The name as it will be set, or HostnameError with the reason."""
-    name = str(name or "").strip().lower()
-    if name.endswith(".local"):
+    # Capitals are kept (IRIV-EdgeAI-Studio): a hostname is case-insensitive
+    # on the network, so they only change how it reads.
+    name = str(name or "").strip()
+    if name.lower().endswith(".local"):
         name = name[:-len(".local")]
     if not name:
         raise HostnameError("type a hostname for the box")
     if not _LABEL.match(name):
         raise HostnameError(
-            "use letters a-z, digits and '-' only, up to 63 characters, "
+            "use letters, digits and '-' only, up to 63 characters, "
             "not starting or ending with '-' (e.g. %s)" % hostinfo.default_hostname())
     if name.isdigit():
         raise HostnameError("a hostname of only digits reads as an address - add a letter")
-    if name in _REFUSED:
-        raise HostnameError(_REFUSED[name])
+    if name.lower() in _REFUSED:
+        raise HostnameError(_REFUSED[name.lower()])
     return name
 
 

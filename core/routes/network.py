@@ -75,6 +75,17 @@ def _defaults(payload):
     payload["ap_name"] = apconf.ap_ssid()
     payload["ap_name_factory"] = hostinfo.ap_name()
     payload["ap_password"] = netconf.ap_password()
+    # The hotspot's address: the one set, the one it really takes, and the
+    # cable whose network blocks it (netconf.ap_address_plan).
+    try:
+        plan = netconf.ap_address_plan()
+    except Exception:                                         # noqa: BLE001
+        plan = {"address": netconf.ap_address(), "wanted": netconf.ap_address(),
+                "conflict": ""}
+    payload["ap_ip"] = plan["wanted"]
+    payload["ap_ip_effective"] = plan["address"]
+    payload["ap_ip_conflict"] = plan["conflict"]
+    payload["ap_ip_default"] = netconf.DEFAULT_AP_ADDRESS
     # What wlan0 is SET to be against what it IS, and the live switch under
     # way or the last one's outcome (wifiswitch.py). A switch writes the mode
     # only once it worked, so a mismatch means the radio was moved by hand.

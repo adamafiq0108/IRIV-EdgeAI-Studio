@@ -919,6 +919,13 @@ def validate_function(f):
         clean_p["quantity"] = quantity
         if not server:
             clean_p["baudrate"] = baudrate
+        # A custom request frame (Advanced editor): ID .. last field as hex,
+        # CRC excluded -- the app computes and appends it.
+        frame = re.sub(r"\s+", "", str(p.get("frame") or ""))
+        if frame:
+            if not re.fullmatch(r"(?:[0-9A-Fa-f]{2}){2,64}", frame):
+                raise ValueError("frame must be 2 to 64 bytes of hex")
+            clean_p["frame"] = frame.upper()
         # Interval 0 = read once per rising edge of a trigger -- the app
         # watches fn_<fn>_<metric> (or that rule's alert) and kicks the
         # reader. Without a trigger a 0 would mean "never", and nothing on

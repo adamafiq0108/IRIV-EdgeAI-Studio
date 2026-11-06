@@ -9,8 +9,6 @@ workflow around it.
 - Read [`docs/conventions.md`](docs/conventions.md) §1–§4. Most rejected changes fail there.
 - Contract questions are settled by `tools/contract_check.py`, not by the docs. If the harness
   and [`docs/contract-v1.md`](docs/contract-v1.md) disagree, the doc is the bug.
-- Working with Claude Code? The `.claude/skills/` guides encode all of this - `check-conventions`
-  runs the audit below for you.
 
 ## Setup
 

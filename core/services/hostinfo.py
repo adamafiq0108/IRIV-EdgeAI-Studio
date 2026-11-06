@@ -329,10 +329,25 @@ def snapshot(force=False):
         return out
 
 
+#: What a new box is called on the LAN (IRIV-EdgeAI-Studio.local). Several
+#: boxes on one network share it, and avahi then answers the later ones as
+#: IRIV-EdgeAI-Studio-2.local, -3 ...; hostname.local_name() reads the name
+#: avahi actually won, so the page and the panel show the right one.
+DEFAULT_HOSTNAME = "IRIV-EdgeAI-Studio"
+
+
+def _env_hostname():
+    """IRIV_DEFAULT_HOSTNAME from .env when it is a usable name, else ""."""
+    import re                                                 # noqa: PLC0415
+    from core import envfile                                  # noqa: PLC0415
+    name = envfile.get("IRIV_DEFAULT_HOSTNAME")
+    ok = re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", name or "")
+    return name if ok and not name.isdigit() else ""
+
+
 def default_hostname():
-    """"iriv-<last 8 of serial>": all boxes "iriv" made iriv.local a race."""
-    serial = (_static.get("serial") or serial_number()).lower()
-    return "iriv-%s" % serial[-8:] if serial else "iriv"
+    """The name a new box gets: .env IRIV_DEFAULT_HOSTNAME, else DEFAULT_HOSTNAME."""
+    return _env_hostname() or DEFAULT_HOSTNAME
 
 
 def ap_name():

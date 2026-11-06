@@ -1068,6 +1068,52 @@ async def inject(request: Request):
     return {"ok": True, "seq": seq, "function": fn_id, "action": action}
 
 
+@router.post("/api/workflow/modbus-scan", name="workflow.modbus_scan")
+async def modbus_scan(request: Request):
+    """Scan a Modbus Server for the Unit-Ids that answer (the Scan button on a
+    Modbus Read). Read-only on the bus -- one FC3 read of register 0 per id --
+    but it does put frames on a live wire, so it is gated like an Inject press.
+
+    Runs in the app, which owns the serial port; an app that is not up is
+    started (AI off) the same way a press starts it. Poll GET for progress.
+    """
+    perm.require(request, "workflow.edit")
+    systems_dir, slug = _system_context(request)
+    try:
+        body = await request.json()
+    except Exception:                                       # noqa: BLE001
+        body = {}
+    body = body or {}
+    server = re.sub(r"[^A-Za-z0-9_.-]", "", str(body.get("server") or ""))[:40]
+    action = "stop" if body.get("action") == "stop" else "start"
+    if action == "start" and not server:
+        raise HTTPException(status_code=400, detail="pick a Modbus Server first")
+    try:
+        first = max(0, min(255, int(body.get("first") or 1)))
+        last = max(first, min(255, int(body.get("last") or 247)))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="first and last are Unit-Ids, 0-255")
+    if action == "start" and not _runtime_up(systems_dir, slug):
+        from core.services import app_supervisor               # noqa: PLC0415
+        word, why = app_supervisor.start_for_press(systems_dir, slug)
+        if word != "started":
+            raise HTTPException(status_code=409, detail=why)
+    try:
+        seq = dc.request_modbus_scan(systems_dir, slug, server, action, first, last)
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"could not reach the app: {exc}")
+    return {"ok": True, "seq": seq}
+
+
+@router.get("/api/workflow/modbus-scan", name="workflow.modbus_scan_result")
+def modbus_scan_result(request: Request):
+    """The latest scan's progress and the Unit-Ids found so far."""
+    perm.require(request, "workflow.edit")
+    systems_dir, slug = _system_context(request)
+    return {"ok": True, "scan": dc.modbus_scan_result(systems_dir, slug),
+            "app_running": _runtime_up(systems_dir, slug)}
+
+
 def csv_tokens(out, made):
     """The {csv...} tokens of a message, filled from built files the way the
     app fills them (systems/*/app/outputs.py _fill): {csv} / {csv_text} /

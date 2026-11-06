@@ -14,7 +14,7 @@
 // asks before it draws a wire (registry.edgeAllowed). The words that explain a
 // link are written by hand for the ones worth it (workflow/guidelineText.js);
 // any other gets a sentence made from the two nodes' own descriptions.
-import { Component, useEffect, useMemo, useRef, useState } from "react";
+import { Component, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Inspector } from "./Workflow.jsx";
 import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
@@ -26,9 +26,7 @@ import { FURNITURE, LISTED_FURNITURE, connectionsOf } from "../workflow/guideRul
 import { Drawer, PALETTE_ORDER, PaletteItem, SubHead, nodeMatches } from "../workflow/PaletteParts.jsx";
 import { LINKS, NODE_GUIDE, firstSentence, valueWords } from "../workflow/guidelineText.js";
 import { NODE_PROPS } from "../workflow/guidelineProps.js";
-// A picture of each node's own properties panel, taken from the real one (one file per node type).
-const PROP_SHOTS = import.meta.glob("../assets/guide-props/*.png", { eager: true, query: "?url", import: "default" });
-const shotOf = (type) => PROP_SHOTS[`../assets/guide-props/${type.replace(/\./g, "_")}.png`];
+import { choiceText } from "../workflow/guidelineChoices.js";
 
 /** What a node is drawn with in a diagram: its defaults, named. */
 const sampleData = (spec) => ({ ...(spec?.data || {}), name: spec?.data?.name || spec?.label });
@@ -101,63 +99,246 @@ class PanelBoundary extends Component {
 }
 
 /** The REAL properties panel of a node (the Workflow inspector), drawn for a sample node in a
- *  sandbox: every dropdown opens with its real choices, every tick box ticks, and nothing is
- *  saved. Clicking a field picks it in the guide; the guide highlights the field it is on. */
-function SandboxPanel({ type, meta, current, items, onPick }) {
+ *  sandbox -- every dropdown opens with its real choices, every tick box ticks, nothing is
+ *  saved -- and played as a tour. EVERY field the panel shows, for every node, is a numbered
+ *  step in the order it appears; the explanation stays in one fixed card above the panel and
+ *  changes when a field is clicked or Back / Next is pressed. The words come from the
+ *  guideline's own text for that setting when it has one, else from the field's (i) mark. */
+function SandboxPanel({ type, meta, items }) {
   const registry = meta.registry || {};
   const [node, setNode] = useState(() => ({
     id: "guide-sample", type, position: { x: 0, y: 0 },
     data: { ...(registry[type]?.data || {}), ...sampleData(registry[type]) },
   }));
   const box = useRef(null);
-  const labelOf = (field) => {
-    const el = field.querySelector(".wf-field-label");
-    if (!el) return "";
-    // The label's own text, without the (i) hint button inside it.
-    return norm([...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(" "));
+  const [steps, setSteps] = useState([]);        // [{label, hint}] -- the fields, in order
+  const [at, setAt] = useState(0);
+  const [choices, setChoices] = useState([]);
+  const [, bump] = useState(0);
+  // The dropdown last clicked or changed: a field can hold several (an If / Else if row has an
+  // input picker AND a comparison), and the card explains the one the user is working with.
+  const lastSel = useRef(null);
+  // What the last pick did to the panel: picking "Snapshot" in Capture adds "Camera between
+  // snaps", a Card Widget shape swaps a whole set of fields. Remembered per field + option so
+  // the card can say "this choice adds ..." and the new fields wear a "new" badge.
+  // {field, option, added: [label], removed: [label]} or null.
+  const [effect, setEffect] = useState(null);
+  const pending = useRef(null);      // {field, option, before: [label]} set on change
+
+  const labelEl = (field) => field.querySelector(".wf-field-label");
+  const rawLabel = (field) => {
+    const el = labelEl(field);
+    return el ? [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent)
+      .join(" ").replace(/\s+/g, " ").trim() : "";
   };
-  const indexOf = (label) => {
+  const fieldsOf = (root) => [...root.querySelectorAll(".wf-field")].filter((f) => rawLabel(f));
+  const itemFor = (label) => {
     const l = norm(label);
-    let i = items.findIndex((it) => norm(it.name) === l);
-    if (i < 0) i = items.findIndex((it) => l && (norm(it.name).startsWith(l) || l.startsWith(norm(it.name))));
-    return i;
+    if (!l) return null;
+    return items.find((it) => norm(it.name) === l)
+      || items.find((it) => norm(it.name).startsWith(l) || l.startsWith(norm(it.name))) || null;
   };
-  // Highlight the field the guide is on, and bring it into view inside the panel.
-  useEffect(() => {
+
+  // After every render: number the fields, ring the current one, and read its dropdown's
+  // choices. The list of steps follows the panel (picking "Snapshot" adds a field).
+  useLayoutEffect(() => {
     const root = box.current;
     if (!root) return;
-    root.querySelectorAll(".ng-hl").forEach((el) => el.classList.remove("ng-hl"));
-    const want = norm(current?.name);
-    const field = [...root.querySelectorAll(".wf-field")].find((f) => {
-      const l = labelOf(f);
-      return l && (l === want || want.startsWith(l) || l.startsWith(want));
-    });
-    if (field) {
-      field.classList.add("ng-hl");
-      const top = field.offsetTop - root.offsetTop - 40;
-      root.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    const fields = fieldsOf(root);
+    const list = fields.map((f) => ({ label: rawLabel(f), hint: f.getAttribute("data-hint") || "" }));
+    const sig = list.map((x) => x.label).join("|");
+    setSteps((cur) => (cur.map((x) => x.label).join("|") === sig ? cur : list));
+    // A pick just changed the panel: note which fields came and went.
+    const pend = pending.current;
+    if (pend) {
+      pending.current = null;
+      const now = list.map((x) => x.label);
+      const added = now.filter((l) => !pend.before.includes(l));
+      const removed = pend.before.filter((l) => !now.includes(l));
+      const next = { field: pend.field, option: pend.option, added, removed };
+      setEffect((e) => (JSON.stringify(e) === JSON.stringify(next) ? e : next));
     }
-    // Only when the guide moves to another setting: re-running on every
-    // render scrolled the panel back while somebody typed in it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current?.name]);
+    const fresh = effect && effect.added.length ? effect.added : [];
+    const i = Math.min(at, Math.max(0, fields.length - 1));
+    fields.forEach((f, k) => {
+      f.classList.toggle("ng-hl", k === i);
+      labelEl(f)?.setAttribute("data-ng-n", String(k + 1));
+      f.classList.toggle("ng-new", fresh.includes(list[k].label));
+    });
+    const hit = fields[i];
+    const own = hit ? [...hit.querySelectorAll("select")].filter((sel) => sel.closest(".wf-field") === hit) : [];
+    const sel = own.includes(lastSel.current) ? lastSel.current : own[0];
+    const opts = sel ? [...sel.options].map((o) => ({ text: o.text.replace(/\s+/g, " ").trim(), on: o.selected }))
+      .filter((o) => o.text) : [];
+    const key = JSON.stringify(opts);
+    setChoices((c) => (JSON.stringify(c) === key ? c : opts));
+  });
+
+  // A new pick in a dropdown changes which choice is marked; re-read it.
+  useEffect(() => {
+    const root = box.current;
+    if (!root) return undefined;
+    const again = (e) => {
+      if (e && e.target && e.target.tagName === "SELECT") {
+        lastSel.current = e.target;
+        if (e.type === "change") {
+          const field = e.target.closest(".wf-field");
+          const opt = e.target.options[e.target.selectedIndex];
+          pending.current = {
+            field: field ? rawLabel(field) : "",
+            option: opt ? opt.text.replace(/\s+/g, " ").trim() : "",
+            before: fieldsOf(root).map((f) => rawLabel(f)),
+          };
+        }
+      }
+      // Re-render AFTER the event has finished. A state update made right here runs (as a
+      // microtask) BEFORE React's own onChange for the select: React re-renders the controlled
+      // select with its old value, resets the DOM, and then its onChange reads the old value
+      // back -- a real click on "Snapshot" never stuck. (A scripted change does not do this,
+      // which is why tests passed.)
+      setTimeout(() => bump((n) => n + 1), 0);
+    };
+    root.addEventListener("change", again);
+    root.addEventListener("focusin", again);
+    return () => {
+      root.removeEventListener("change", again);
+      root.removeEventListener("focusin", again);
+    };
+  }, []);
+
+  // Bring the ringed field into view inside the panel when the tour moves.
+  useEffect(() => {
+    const root = box.current;
+    const hit = root && root.querySelector(".wf-field.ng-hl");
+    if (!hit) return;
+    const b = root.getBoundingClientRect(), r = hit.getBoundingClientRect();
+    if (r.top < b.top + 8 || r.bottom > b.bottom - 8) {
+      root.scrollTo({ top: Math.max(0, r.top - b.top + root.scrollTop - 16), behavior: "smooth" });
+    }
+  }, [at]);
+
+  const n = steps.length;
+  const i = Math.min(at, Math.max(0, n - 1));
+  const cur = steps[i];
+  const item = cur ? itemFor(cur.label) : null;
+  const text = item?.text || cur?.hint
+    || "Set this to suit your case. Its (i) mark in the real panel says more when there is more to say.";
+  const sometimes = /only shown|^shown (for|when|after)/i.test(text);
+
   return (
-    <div ref={box} className="ng-sandbox" data-ng-sandbox
-         onClickCapture={(e) => {
-           const field = e.target.closest?.(".wf-field");
-           if (!field || !box.current?.contains(field)) return;
-           const i = indexOf(labelOf(field));
-           if (i >= 0) onPick(i);
-         }}>
-      {/* The same wrapper classes as the Workflow page's right column: the
-          field layout (.rail-form) and the inspector's own rules (.wf-inspector)
-          only apply inside them -- without, every field ran onto one line. */}
-      <div className="wf-inspector rail-form ng-sandbox-form">
-      <Inspector node={node} registry={registry} meta={meta} nodes={[node]} edges={[]}
-                 editable errors={{}} warnings={{}} functions={meta.functions || []}
-                 customVars={[]} onCreateVar={() => {}} onRetype={() => {}} onFnData={() => {}}
-                 onOpenBlueprint={() => {}}
-                 onChange={(fields) => setNode((n) => ({ ...n, data: { ...n.data, ...fields } }))} />
+    <div className="ng-tour" data-ng-tour>
+      {/* The explanation: one fixed card, its content follows the tour. */}
+      <div className="ng-tourcard" aria-live="polite">
+        <div className="ng-callout-progress" aria-hidden="true">
+          <span style={{ width: n ? `${((i + 1) / n) * 100}%` : 0 }} />
+        </div>
+        {cur ? (
+          <>
+            <div className="ng-callout-head">
+              <span className="ng-callout-n">{i + 1}</span>
+              <div style={{ minWidth: 0 }}>
+                <div className="ng-iprops-step">{item?.group || "Setting"}</div>
+                <h4 className="ng-iprops-name">{cur.label}</h4>
+              </div>
+            </div>
+            {sometimes && <span className="ng-iprops-badge">Shown only in some cases</span>}
+            <p className="ng-iprops-text">{text}</p>
+            {choices.length > 1 && (() => {
+              // What the option picked now does, then every option with its own words, so the
+              // choice can be weighed before it is made.
+              const pick = choices.find((c) => c.on);
+              const pickText = pick ? choiceText(type, cur.label, pick.text) : "";
+              return (
+                <>
+                  {pick && (
+                    <div className="ng-pick" data-ng-pick>
+                      <div className="ng-pick-head">Your pick</div>
+                      <div className="ng-pick-name">{pick.text}</div>
+                      {pickText && <p className="ng-pick-text">{pickText}</p>}
+                      {effect && effect.field === cur.label && effect.option === pick.text
+                        && (effect.added.length > 0 || effect.removed.length > 0) && (
+                        <div className="ng-pick-effect" data-ng-pick-effect>
+                          {effect.added.length > 0 && (
+                            <>
+                              <div className="ng-pick-effect-head">This choice adds {effect.added.length === 1 ? "a setting" : `${effect.added.length} settings`}</div>
+                              <ul>
+                                {effect.added.map((l) => {
+                                  const k = steps.findIndex((x) => x.label === l);
+                                  const it = itemFor(l);
+                                  const hint = it?.text || steps[k]?.hint || "";
+                                  return (
+                                    <li key={l}>
+                                      <button type="button" className="ng-pick-effect-go"
+                                              disabled={k < 0} onClick={() => setAt(k)}>
+                                        {k >= 0 && <span className="ng-pick-effect-n">{k + 1}</span>}
+                                        <span className="ng-pick-effect-name">{l}</span>
+                                        <span className="ng-pick-effect-arrow" aria-hidden="true">→</span>
+                                      </button>
+                                      {hint && <div className="ng-pick-effect-text">{hint}</div>}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </>
+                          )}
+                          {effect.removed.length > 0 && (
+                            <div className="ng-pick-effect-gone">
+                              No longer shown: {effect.removed.join(", ")}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="ng-choices">
+                    <div className="ng-choices-head">All choices</div>
+                    <ul>
+                      {choices.map((c) => {
+                        const t = choiceText(type, cur.label, c.text);
+                        return (
+                          <li key={c.text} className={c.on ? "on" : ""}>
+                            <div className="ng-choice-row">
+                              <span>{c.text}</span>
+                              {c.on && <span className="ng-choices-now">your pick</span>}
+                            </div>
+                            {t && !c.on && <div className="ng-choice-text">{t}</div>}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </>
+              );
+            })()}
+          </>
+        ) : (
+          <p className="ng-iprops-text muted">This node has no settings to change.</p>
+        )}
+        <div className="ng-callout-nav" data-ng-props-nav>
+          <button type="button" className="btn btn-sm" disabled={i === 0}
+                  onClick={() => setAt(i - 1)} data-ng-props-prev>Back</button>
+          <span className="muted small">{n ? `${i + 1} of ${n}` : ""}</span>
+          <button type="button" className="btn btn-sm btn-accent" disabled={i >= n - 1}
+                  onClick={() => setAt(i + 1)} data-ng-props-next>Next</button>
+        </div>
+      </div>
+      {/* The real panel: click any field to read about it. */}
+      <div ref={box} className="ng-sandbox" data-ng-sandbox
+           onClickCapture={(e) => {
+             const field = e.target.closest?.(".wf-field");
+             if (!field || !box.current?.contains(field)) return;
+             const k = fieldsOf(box.current).indexOf(field);
+             if (k >= 0 && k !== i) setAt(k);
+           }}>
+        {/* The same wrapper classes as the Workflow page's right column: the field layout
+            (.rail-form) and the inspector's own rules (.wf-inspector) only apply inside them. */}
+        <div className="wf-inspector rail-form ng-sandbox-form">
+          <Inspector node={node} registry={registry} meta={meta} nodes={[node]} edges={[]}
+                     editable errors={{}} warnings={{}} functions={meta.functions || []}
+                     customVars={[]} onCreateVar={() => {}} onRetype={() => {}} onFnData={() => {}}
+                     onOpenBlueprint={() => {}}
+                     onChange={(fields) => setNode((nd) => ({ ...nd, data: { ...nd.data, ...fields } }))} />
+        </div>
       </div>
     </div>
   );
@@ -194,7 +375,6 @@ function MockPanel({ label, flat, pages, at, onPage }) {
 /** The node's own settings, to click through: its real properties panel (try every control --
  *  nothing is saved) beside what the chosen setting does. */
 function PropsGuide({ type, label, pages, page, onPage, meta }) {
-  const [showShot, setShowShot] = useState(false);
   if (!pages || !pages.length) {
     return (
       <div className="ng-step" data-ng-props>
@@ -213,50 +393,49 @@ function PropsGuide({ type, label, pages, page, onPage, meta }) {
       <div className="ng-step-head">
         <span className="ng-tag">Properties</span>
         <strong>{label}</strong>
-        <span className="muted small" style={{ marginLeft: "auto" }}>Setting {at + 1} of {flat.length}</span>
       </div>
       <p className="muted small" style={{ margin: "0 0 10px" }}>
-        This is the real panel you see when you double-click {label} on the Workflow canvas. Open
-        its lists and try its settings (nothing here is saved), and click a setting to see what it does.
+        The real panel you get when you double-click {label} on the Workflow canvas. Every setting
+        is numbered: follow them with Next, or click any one. Try the controls too, nothing is saved.
       </p>
-      <div className="ng-iprops" data-ng-iprops>
-        <PanelBoundary key={type} resetKey={type} fallback={mock}>
-          {meta ? <SandboxPanel key={type} type={type} meta={meta} current={cur} items={flat}
-                                onPick={onPage} /> : mock}
-        </PanelBoundary>
-        <div className="ng-iprops-info" aria-live="polite">
-          <div className="ng-iprops-step">{cur.group}</div>
-          <h4 className="ng-iprops-name">{cur.name}</h4>
-          {sometimes && <span className="ng-iprops-badge">Shown only in some cases</span>}
-          <p className="ng-iprops-text">{cur.text}</p>
-          <div className="ng-slider-nav" data-ng-props-nav>
-            <button type="button" className="btn btn-sm" disabled={at === 0}
-                    onClick={() => onPage(at - 1)} data-ng-props-prev>Back</button>
-            <div className="ng-dots" role="tablist" aria-label="Settings">
-              {flat.map((it, i) => (
-                <button key={`${it.group}-${it.name}`} type="button" role="tab" aria-selected={i === at}
-                        aria-label={`Setting ${i + 1}: ${it.name}`} title={it.name}
-                        className={"ng-dot" + (i === at ? " on" : "")} onClick={() => onPage(i)} />
-              ))}
+      {(() => {
+        // What the chosen setting does, with the way on: shown as a callout under the field
+        // in the real panel, or as a card beside the plain list when that is the fallback.
+        const explain = (
+          <>
+            <div className="ng-callout-progress" aria-hidden="true">
+              <span style={{ width: `${((at + 1) / flat.length) * 100}%` }} />
             </div>
-            <button type="button" className="btn btn-sm btn-accent" disabled={at === flat.length - 1}
-                    onClick={() => onPage(at + 1)} data-ng-props-next>Next</button>
+            <div className="ng-callout-head">
+              <span className="ng-callout-n">{at + 1}</span>
+              <div style={{ minWidth: 0 }}>
+                <div className="ng-iprops-step">{cur.group}</div>
+                <h4 className="ng-iprops-name">{cur.name}</h4>
+              </div>
+            </div>
+            {sometimes && <span className="ng-iprops-badge">Shown only in some cases</span>}
+            <p className="ng-iprops-text">{cur.text}</p>
+            <div className="ng-callout-nav" data-ng-props-nav>
+              <button type="button" className="btn btn-sm" disabled={at === 0}
+                      onClick={() => onPage(at - 1)} data-ng-props-prev>Back</button>
+              <span className="muted small">{at + 1} of {flat.length}</span>
+              <button type="button" className="btn btn-sm btn-accent" disabled={at === flat.length - 1}
+                      onClick={() => onPage(at + 1)} data-ng-props-next>Next</button>
+            </div>
+          </>
+        );
+        const fallback = (
+          <div className="ng-iprops" data-ng-iprops>
+            {mock}
+            <div className="ng-iprops-info" aria-live="polite">{explain}</div>
           </div>
-        </div>
-      </div>
-      {shotOf(type) && (
-        <div style={{ marginTop: 10 }}>
-          <button type="button" className="btn btn-sm" onClick={() => setShowShot((v) => !v)}
-                  aria-expanded={showShot}>
-            {showShot ? "Hide the screenshot" : "Show a screenshot"}
-          </button>
-          {showShot && (
-            <div className="ng-shot" data-ng-shot style={{ marginTop: 8 }}>
-              <img src={shotOf(type)} alt={`The ${label} properties panel`} loading="lazy" />
-            </div>
-          )}
-        </div>
-      )}
+        );
+        return (
+          <PanelBoundary key={type} resetKey={type} fallback={fallback}>
+            {meta ? <SandboxPanel key={type} type={type} meta={meta} items={flat} /> : fallback}
+          </PanelBoundary>
+        );
+      })()}
     </div>
   );
 }

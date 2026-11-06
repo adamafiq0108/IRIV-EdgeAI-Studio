@@ -84,6 +84,14 @@ INJECT_FILE = "inject-requests.json"
 #: fire. The age limit is what keeps a press from firing AGAIN when the app
 #: restarts and finds it still sitting in the file.
 INJECT_POLL_S = 0.25
+#: The Unit-Id scan of a Modbus Server (the Scan button on a Modbus Read):
+#: the master writes the request, this app -- the process that owns the bus --
+#: runs it and writes progress and the ids found to the result file.
+MODBUS_SCAN_REQUEST = "modbus-scan-request.json"
+MODBUS_SCAN_RESULT = "modbus-scan-result.json"
+#: A request older than this when first seen is ignored: one left behind by a
+#: restart must not start a scan nobody is waiting for.
+MODBUS_SCAN_FRESH_S = 30.0
 INJECT_STALE_S = 30.0
 
 #: Per-Inject state that outlives an engine: a workflow save rebuilds the
@@ -1106,6 +1114,7 @@ def _modbus_sig(fn):
     return (int(p.get("fc") or 3), int(p.get("unit") or 1),
             int(p.get("address") or 0), int(p.get("quantity") or 1),
             int(p.get("baudrate") or 9600),
+            str(p.get("frame") or ""),
             _read_every(p),
             str(p.get("server") or ""),
             # A triggered reader (interval 0) re-spawns when the thing it
@@ -1152,6 +1161,96 @@ def _modbus_target(params):
     return cfg, device, device
 
 
+_scan_lock = threading.Lock()
+_scan_job = {"seq": 0, "stop": None, "thread": None}
+
+
+def _write_json_atomic(path, doc):
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(doc, f)
+    os.replace(tmp, path)
+
+
+def _scan_worker(state_dir, req, stop):
+    """Run one Unit-Id scan and keep the result file current while it runs."""
+    from app import buses as _buses                         # noqa: PLC0415
+
+    out = os.path.join(state_dir, MODBUS_SCAN_RESULT)
+    first = max(0, min(255, int(req.get("first") or 1)))
+    last = max(first, min(255, int(req.get("last") or 247)))
+    doc = {"seq": int(req.get("seq") or 0), "server": str(req.get("server") or ""),
+           "state": "scanning", "first": first, "last": last, "at": first - 1,
+           "found": [], "error": "", "started": time.time(), "updated": time.time()}
+    conn = _buses.client(doc["server"])
+    if conn is None:
+        doc.update(state="error", error="That Modbus Server is not known to the "
+                   "running app yet - save the workflow, then scan again.")
+        _write_json_atomic(out, doc)
+        return
+    cfg = _buses.client_config(conn, None)
+    _write_json_atomic(out, doc)
+    written = {"at": 0.0, "found": []}
+
+    def progress(unit, found):
+        doc.update(at=unit, found=found, updated=time.time())
+        # Every id that answers is written at once; the rest about twice a
+        # second, so the file is not rewritten 247 times for nothing.
+        if found != written["found"] or time.time() - written["at"] > 0.5:
+            written.update(at=time.time(), found=list(found))
+            _write_json_atomic(out, doc)
+
+    try:
+        _buses.modbus_scan(cfg, first, last, progress, stop.is_set)
+        doc["state"] = "stopped" if stop.is_set() else "done"
+    except OSError as e:
+        doc.update(state="error", error=str(e))
+    except Exception as e:                                   # noqa: BLE001
+        log.warning("modbus scan on %s failed: %s", doc["server"], e)
+        doc.update(state="error", error=str(e))
+    doc["updated"] = time.time()
+    _write_json_atomic(out, doc)
+
+
+def check_modbus_scan(state_dir, now, cache):
+    """Start or stop a Unit-Id scan when the master's request file changes.
+    A stat on the engine's clock; the scan itself runs on its own thread."""
+    if not state_dir or now - cache.get("checked", 0.0) < 0.5:
+        return
+    cache["checked"] = now
+    path = os.path.join(state_dir, MODBUS_SCAN_REQUEST)
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        return
+    if mtime == cache.get("mtime"):
+        return
+    cache["mtime"] = mtime
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            req = json.load(f) or {}
+        seq = int(req.get("seq") or 0)
+    except (OSError, ValueError, TypeError, AttributeError):
+        cache["mtime"] = None            # half-written: read it next time
+        return
+    with _scan_lock:
+        job = _scan_job
+        if req.get("action") == "stop":
+            if job["stop"] is not None:
+                job["stop"].set()
+            return
+        if seq <= job["seq"] or time.time() - float(req.get("ts") or 0) > MODBUS_SCAN_FRESH_S:
+            return
+        if job["thread"] is not None and job["thread"].is_alive():
+            job["stop"].set()            # a new scan replaces the one running
+            job["thread"].join(timeout=2.0)
+        stop = threading.Event()
+        t = threading.Thread(target=_scan_worker, args=(state_dir, req, stop),
+                             name="modbus-scan", daemon=True)
+        job.update(seq=seq, stop=stop, thread=t)
+        t.start()
+
+
 def _modbus_loop(fn_id, params, sig, stop, kick=None):
     from app import buses as _buses                         # noqa: PLC0415
 
@@ -1178,9 +1277,15 @@ def _modbus_loop(fn_id, params, sig, stop, kick=None):
         rows = None
         if cfg is not None:
             with _bus_lock(key):
-                rows = _buses.modbus_read(cfg, int(params.get("address") or 0),
-                                          int(params.get("quantity") or 1),
-                                          _FC_KIND.get(fc, "holding"))
+                if params.get("frame") and cfg.get("mode") == "rtu":
+                    # A custom request frame (the node's Advanced editor).
+                    rows = _buses.modbus_read_frame(
+                        cfg, bytes.fromhex(params["frame"]),
+                        int(params.get("quantity") or 1), _FC_KIND.get(fc, "holding"))
+                else:
+                    rows = _buses.modbus_read(cfg, int(params.get("address") or 0),
+                                              int(params.get("quantity") or 1),
+                                              _FC_KIND.get(fc, "holding"))
         fails = fails + 1 if rows is None else 0
         with _modbus_lock:
             st = _modbus_state.get(fn_id)
@@ -2552,6 +2657,9 @@ class FunctionEngine:
         _reap_pollers(now)
         _reap_subscribers(now)
         _reap_modbus(now)
+        # The Scan button of a Modbus Read: run here, where the bus is owned.
+        check_modbus_scan(self._state_dir, now,
+                          self.__dict__.setdefault("_scan_cache", {}))
 
         # expr functions read everything computed above plus the zone stats --
         # evaluated last, in one pass (no cross-expr dependency ordering; an

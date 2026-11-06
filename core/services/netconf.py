@@ -29,6 +29,7 @@ import ipaddress
 import json
 import os
 import re
+import logging
 import subprocess
 import uuid
 
@@ -62,7 +63,18 @@ AP_DEVICE = "wlan0"
 #: 2026-10-05 to 10-07 every box made its own random key instead; the hub's
 #: start puts such a key back to this once (apdefault.py). Changeable on Settings ->
 #: Network like any other key, and allowed to be typed back.
+logger = logging.getLogger(__name__)
+
 DEFAULT_AP_PASSWORD = "iriv1234"
+# .env IRIV_AP_PASSWORD replaces it when it is a valid WPA2 key (8-63
+# printable characters); anything else keeps the built-in one.
+try:
+    from core import envfile as _envfile
+    _env_key = _envfile.get("IRIV_AP_PASSWORD")
+    if 8 <= len(_env_key) <= 63 and all(32 <= ord(c) <= 126 for c in _env_key):
+        DEFAULT_AP_PASSWORD = _env_key
+except Exception:                                             # noqa: BLE001
+    pass
 
 #: Autoconnect priority of a wired profile written AHEAD of its cable.
 #:
@@ -595,8 +607,91 @@ def _ipv4_settings(entry, dhcp, ip, prefix, gateway, dns, devs=None, role="local
 
 
 #: NetworkManager's hotspot subnet when the profile does not set one -- the
-#: `ipv4.method shared` default, 10.42.0.1/24 on wlan0.
+#: `ipv4.method shared` default, 10.42.0.1/24 on wlan0. Used now only when the
+#: box's own hotspot address would collide with a wired network (ap_address_plan).
 AP_DEFAULT_SUBNET = "10.42.0.0/24"
+NM_SHARED_ADDRESS = "10.42.0.1"
+
+#: The hotspot's own address unless network [ap].address says otherwise: the
+#: box answers its hotspot clients here, and they get 192.168.1.x leases.
+DEFAULT_AP_ADDRESS = "192.168.1.1"
+AP_PREFIX = 24
+# .env IRIV_AP_ADDRESS replaces it when it is a private IPv4 host address.
+try:
+    from core import envfile as _envfile
+    _env_ip = ipaddress.IPv4Address(_envfile.get("IRIV_AP_ADDRESS", DEFAULT_AP_ADDRESS))
+    _env_net = ipaddress.ip_network(f"{_env_ip}/{AP_PREFIX}", strict=False)
+    if _env_ip.is_private and not _env_ip.is_loopback and not _env_ip.is_link_local \
+            and _env_ip not in (_env_net.network_address, _env_net.broadcast_address):
+        DEFAULT_AP_ADDRESS = str(_env_ip)
+except Exception:                                             # noqa: BLE001
+    pass
+
+
+def check_ap_address(ip):
+    """A valid hotspot address (a private IPv4 host address in its /24), or
+    NetError saying what is wrong with it. Returns it normalised."""
+    raw = str(ip or "").strip()
+    try:
+        addr = ipaddress.IPv4Address(raw)
+    except ValueError:
+        raise NetError("The hotspot address must be an IPv4 address such as 192.168.1.1.")
+    net = ipaddress.ip_network(f"{addr}/{AP_PREFIX}", strict=False)
+    if not addr.is_private or addr.is_loopback or addr.is_link_local:
+        raise NetError("Use a private address (192.168.x.x, 10.x.x.x or 172.16-31.x.x).")
+    if addr in (net.network_address, net.broadcast_address):
+        raise NetError(f"{addr} is the network's own {'first' if addr == net.network_address else 'last'} "
+                       "address - pick one between .1 and .254.")
+    return str(addr)
+
+
+def ap_address(config_dir=None):
+    """The hotspot address this box is SET to use: network [ap].address, else
+    DEFAULT_AP_ADDRESS. A stored value that no longer validates reads as the
+    default rather than breaking the hotspot."""
+    from core import config                                   # noqa: PLC0415
+    ap = config.load("network", config_dir).get("ap") or {}
+    try:
+        return check_ap_address(ap.get("address") or DEFAULT_AP_ADDRESS)
+    except NetError:
+        return DEFAULT_AP_ADDRESS
+
+
+def _wired_subnets():
+    """[(device, ip_network)] every non-wlan interface holds now."""
+    out = []
+    try:
+        for dev in devices():
+            if dev.get("device") == AP_DEVICE or not dev.get("ip"):
+                continue
+            try:
+                out.append((dev["device"], ipaddress.ip_network(
+                    f"{dev['ip']}/{dev.get('prefix') or 24}", strict=False)))
+            except ValueError:
+                pass
+    except Exception:                                         # noqa: BLE001
+        pass
+    return out
+
+
+def ap_address_plan(config_dir=None, wanted=None):
+    """{"address", "wanted", "conflict"}: the address the hotspot will really
+    take, the one set, and the wired port that blocks it ("" if none).
+
+    The hotspot and a cable in the SAME subnet is two connected routes to one
+    network, and ethernet's wins: the box answers its hotspot clients out of
+    the wrong port and they lose the page (the reason _refuse_ap_overlap
+    exists, seen from the other side). So when the set address collides with
+    a network a cable is on now, the hotspot keeps NetworkManager's own
+    10.42.0.1 and the page says why, rather than taking the box off both.
+    """
+    wanted = wanted or ap_address(config_dir)
+    net = ipaddress.ip_network(f"{wanted}/{AP_PREFIX}", strict=False)
+    for device, wired in _wired_subnets():
+        if wired.overlaps(net):
+            return {"address": NM_SHARED_ADDRESS, "wanted": wanted,
+                    "conflict": f"{device} ({wired})"}
+    return {"address": wanted, "wanted": wanted, "conflict": ""}
 
 
 def _ap_subnets():
@@ -618,14 +713,14 @@ def _ap_subnets():
             except ValueError:
                 pass
         if not nets:
-            nets.append(ipaddress.ip_network(AP_DEFAULT_SUBNET))
+            nets.append(ipaddress.ip_network(f"{ap_address()}/{AP_PREFIX}", strict=False))
     else:
         try:
             staged = wifi_mode() == "ap"
         except Exception:                                     # noqa: BLE001
             staged = False
         if staged:
-            nets.append(ipaddress.ip_network(AP_DEFAULT_SUBNET))
+            nets.append(ipaddress.ip_network(f"{ap_address()}/{AP_PREFIX}", strict=False))
     return nets
 
 
@@ -820,8 +915,10 @@ def forget(name):
     return status()
 
 
-def ap_enable(ssid, password):
-    """Raise the box's own access point on wlan0.
+def ap_enable(ssid, password, address=None):
+    """Raise the box's own access point on wlan0, at `address` (default: the
+    one set, network [ap].address -- see ap_address_plan for when a cable's
+    network makes it fall back to 10.42.0.1).
 
     The password floor is enforced here rather than left to the supplicant:
     nmcli accepts a short one, the AP then fails to start, and the box
@@ -844,16 +941,33 @@ def ap_enable(ssid, password):
             _nmcli(["connection", "down", joined], sudo=True, timeout=30)
         except NetError:
             pass
+    # The EXISTING hotspot profile, brought up by the helper -- not re-created
+    # with the key on argv at every boot. The helper rewrites the keyfile only
+    # when the name, key or address changed, and leaves an unchanged AP that
+    # is already up alone, so this is safe to call at every hub start.
+    plan = ap_address_plan(wanted=check_ap_address(address) if address else None)
+    if plan["conflict"]:
+        logger.warning("[NET] hotspot address %s collides with %s - the hotspot "
+                       "uses %s until one of them changes", plan["wanted"],
+                       plan["conflict"], plan["address"])
+    # NetworkManager's own address needs no setting; anything else is written
+    # into the profile (shared mode serves DHCP on that /24).
+    cidr = "" if plan["address"] == NM_SHARED_ADDRESS else f"{plan['address']}/{AP_PREFIX}"
     if wifi_helper_installed():
-        # The EXISTING hotspot profile, brought up -- not re-created with the
-        # key on argv at every boot. The helper rewrites the keyfile only
-        # when the name or key changed, and leaves an unchanged AP that is
-        # already up alone, so this is safe to call at every hub start.
-        _wifi_profile({"kind": "ap", "ssid": ssid, "psk": password})
+        _wifi_profile({"kind": "ap", "ssid": ssid, "psk": password,
+                       **({"address": cidr} if cidr else {})})
         return status()
     # LEGACY (no helper yet): the key is on nmcli's argv.
     _nmcli(["device", "wifi", "hotspot", "ifname", AP_DEVICE,
             "ssid", ssid, "password", password], sudo=True, timeout=60)
+    name = ap_active()
+    if name:
+        try:
+            _nmcli(["connection", "modify", name, "ipv4.method", "shared",
+                    "ipv4.addresses", cidr], sudo=True, timeout=30)
+            _nmcli(["connection", "up", name], sudo=True, timeout=60)
+        except NetError as exc:
+            logger.warning("[NET] hotspot address not applied: %s", exc)
     return status()
 
 

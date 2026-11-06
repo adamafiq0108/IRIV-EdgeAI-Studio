@@ -622,7 +622,7 @@ would block every later plain-HTTP sign-in on the same host - a browser never le
 a Secure cookie - and HTTP stays open beside HTTPS. Over TLS only the `__Secure-` cookie is read
 (no fallback: a plain cookie planted by a forged `http://` response would be session fixation), a
 sign-out over TLS ends both cookies of the same account, and a write over TLS must come from an
-`https` page (Pipi's HTTPS review, 2026-10-10, L1 and M3). The consequence to know: in PORT mode the
+`https` page. The consequence to know: in PORT mode the
 systems are on their own plain-HTTP ports, so a sign-in made on the HTTPS hub is not sent to them
 and a system opened from there asks for a sign-in once. In reverse-proxy mode every system is under
 the hub's HTTPS address and one sign-in covers all.
@@ -639,7 +639,7 @@ reverse proxy, `core/services/remote.py`), not a tunnel.
   it may vouch only for `.local`, `localhost`, `home.arpa`, `.lan`, `.internal` and private,
   link-local, CGNAT (100.64/10) and loopback addresses; e-mail names only at `invalid` (so none),
   URIs only on those names. Never the bare hostname: a permitted DNS name is a whole subtree, so a
-  box named `ai` would have had a root for every `.ai` site (Pipi, 2026-10-10, M1). A client that
+  box named `ai` would have had a root for every `.ai` site. A client that
   trusts it therefore trusts nothing on the internet from it, even if the box's key leaks - but it
   does trust it for every local name and private address on the LAN, other devices included. The
   server certificate (fresh EC key every issue, at most 397 days, never past the root, serverAuth)

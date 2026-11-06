@@ -62,8 +62,19 @@ AP_BUDGET_S = 20.0
 #: A caller on wlan0 must get the reply before the radio moves under it.
 START_DELAY_S = 3.0
 POLL_S = 1.0
-#: NetworkManager's `ipv4.method shared` address: the AP's own, on wlan0.
+#: NetworkManager's `ipv4.method shared` address: the AP's own, on wlan0,
+#: when the box's set hotspot address cannot be used (see _ap_address).
 AP_ADDRESS = "10.42.0.1"
+
+
+def _ap_address():
+    """The address the hotspot takes: network [ap].address (192.168.1.1 by
+    default), or 10.42.0.1 when a cable's network collides with it."""
+    try:
+        from core.services import netconf                      # noqa: PLC0415
+        return netconf.ap_address_plan()["address"]
+    except Exception:                                         # noqa: BLE001
+        return AP_ADDRESS
 #: Where NetworkManager keeps each profile's last lease: internal-<uuid>-<dev>
 #: .lease (its own DHCP client, the Pi OS default) or dhclient-<uuid>-<dev>
 #: .lease. World-readable on Pi OS; an unreadable one only means one fewer
@@ -111,7 +122,7 @@ def state():
     """What the page and the panel show: the switch under way or the last one."""
     with _lock:
         return dict(_state, budget_s=int(JOIN_BUDGET_S + START_DELAY_S + 7),
-                    ap_address=AP_ADDRESS)
+                    ap_address=_ap_address())
 
 
 def busy():
@@ -203,7 +214,7 @@ def candidates(mode, network="", ssid="", devices=None):
             out.append({"host": host, "why": why, "own": bool(own)})
 
     if mode == "ap":
-        add(AP_ADDRESS, "the access point's own address", True)
+        add(_ap_address(), "the access point's own address", True)
     else:
         want = network or ssid
         try:
@@ -229,7 +240,7 @@ def candidates(mode, network="", ssid="", devices=None):
     # a docker or USB-gadget bridge is not an address a laptop reaches.
     for dev in devices or []:
         ip = dev.get("ip") or ""
-        if dev.get("type") == "ethernet" and ip and not ip.startswith("10.42."):
+        if dev.get("type") == "ethernet" and ip and ip != _ap_address():
             add(ip, f"its cable ({dev.get('device')})", True)
     try:
         from core.services import hostname                     # noqa: PLC0415

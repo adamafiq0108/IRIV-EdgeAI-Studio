@@ -3972,6 +3972,55 @@ MODBUS_WRITE_FCS = {5: 1, 6: 1, 15: 1968, 16: 123}
 MODBUS_WRITE_MODES = ("trigger", "change", "fire")
 
 
+def clean_modbus_write_frame(frame):
+    """The custom request layout of a Modbus Write (its Advanced editor), or
+    None for the standard frame. Unlike a Read's frame it cannot be built at
+    save time -- the VALUE arrives at run time -- so the app builds the bytes
+    on every write from this layout:
+
+        {"fc": 0-255, "fields": [{"key": st|q|bc|val|custom, "size", "order",
+                                  "hex" (custom only)}]}
+
+    st = the node's address, q = its quantity, bc = the byte count of the data,
+    val = the data itself (the value written), custom = fixed hex.
+    """
+    if not isinstance(frame, dict) or not frame.get("custom"):
+        return None
+    try:
+        fc = int(str(frame.get("fc") or "06"), 16)
+    except (TypeError, ValueError):
+        raise ValueError("custom frame: FC must be hex 00-FF")
+    if not 0 <= fc <= 255:
+        raise ValueError("custom frame: FC must be hex 00-FF")
+    fields = []
+    for f in (frame.get("fields") or [])[:10]:
+        if not isinstance(f, dict):
+            continue
+        key = str(f.get("key") or "")
+        if key not in ("st", "q", "bc", "val", "custom"):
+            raise ValueError(f"custom frame: unknown field {key!r}")
+        try:
+            size = int(f.get("size") or 2)
+        except (TypeError, ValueError):
+            size = 2
+        if size not in (1, 2, 3, 4, 6, 8):
+            raise ValueError("custom frame: a field is 1, 2, 3, 4, 6 or 8 bytes")
+        row = {"key": key, "size": size,
+               "order": "lo" if f.get("order") == "lo" else "hi",
+               "name": str(f.get("name") or key).strip()[:16]}
+        if key == "custom":
+            raw = re.sub(r"\s+", "", str(f.get("hex") or ""))
+            if not re.fullmatch(r"[0-9A-Fa-f]{1,16}", raw):
+                raise ValueError(f"custom frame: field {row['name']} is not hex")
+            row["hex"] = raw.upper()
+        fields.append(row)
+    if not any(f["key"] == "val" for f in fields):
+        raise ValueError("custom frame: a write needs its Value field")
+    # Same shape it came in (custom, FC as hex), so cleaning it twice -- the
+    # compile, then the output document's own check -- changes nothing.
+    return {"custom": True, "fc": f"{fc:02X}", "fields": fields}
+
+
 def _clean_modbus_write(o, clean):
     """The Modbus Write node's document. Mutates and returns `clean`.
 
@@ -4048,6 +4097,9 @@ def _clean_modbus_write(o, clean):
     payload_fn = str(o.get("payload_fn") or "").strip()[:40]
     if payload_fn:
         clean["payload_fn"] = payload_fn
+    frame = clean_modbus_write_frame(o.get("frame"))
+    if frame:
+        clean["frame"] = frame
     clean["delay_start"] = bool(o.get("delay_start"))
     if clean["delay_start"]:
         try:
@@ -5910,6 +5962,48 @@ def request_inject(systems_dir, slug, fn_id, action="press"):
         json.dump(presses, f)
     os.replace(tmp, path)
     return seq
+
+
+#: The Unit-Id scan of a Modbus Server. Same channel as an Inject press: the
+#: master writes a small request file, the running app (the process that owns
+#: the bus) runs the scan and keeps the result file current. File names match
+#: systems/*/app/functions.py.
+MODBUS_SCAN_REQUEST = "modbus-scan-request.json"
+MODBUS_SCAN_RESULT = "modbus-scan-result.json"
+
+
+def request_modbus_scan(systems_dir, slug, server, action="start", first=1, last=247):
+    """Start (or stop) a Unit-Id scan of one Modbus Server. Returns its seq."""
+    pkg_dir = _pkg_dir(systems_dir, slug)
+    path = os.path.join(_data_dir_cached(pkg_dir), MODBUS_SCAN_REQUEST)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            prev = json.load(f) or {}
+    except (OSError, ValueError):
+        prev = {}
+    seq = int((prev or {}).get("seq") or 0) + (0 if action == "stop" else 1)
+    doc = {"seq": seq, "ts": time.time(), "server": str(server or "")[:40],
+           "action": "stop" if action == "stop" else "start",
+           "first": int(first), "last": int(last)}
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(doc, f)
+    os.replace(tmp, path)
+    return seq
+
+
+def modbus_scan_result(systems_dir, slug):
+    """The app's latest scan result ({seq, server, state, at, found, ...}), or
+    {} when no scan has run."""
+    pkg_dir = _pkg_dir(systems_dir, slug)
+    path = os.path.join(_data_dir_cached(pkg_dir), MODBUS_SCAN_RESULT)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            doc = json.load(f) or {}
+        return doc if isinstance(doc, dict) else {}
+    except (OSError, ValueError):
+        return {}
 
 
 @locked

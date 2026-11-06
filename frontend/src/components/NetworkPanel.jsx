@@ -61,6 +61,18 @@ export function apNameProblem(name) {
   }
   return "";
 }
+/** What is wrong with a hotspot address, or "" (the box checks again). */
+export function apIpProblem(ip) {
+  const v = String(ip || "").trim();
+  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(v);
+  if (!m || m.slice(1).some((x) => Number(x) > 255)) return "The hotspot IP must look like 192.168.1.1.";
+  const [a, b] = [Number(m[1]), Number(m[2])];
+  const priv = a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
+  if (!priv) return "Use a private address (192.168.x.x, 10.x.x.x or 172.16-31.x.x).";
+  if (m[4] === "0" || m[4] === "255") return "Pick an address ending between .1 and .254.";
+  return "";
+}
+
 export function apPasswordProblem(password) {
   const p = String(password ?? "");
   if (p.length < 8) return "The password needs at least 8 characters.";
@@ -82,6 +94,8 @@ export default function NetworkPanel() {
   // A NEW password only: the field starts blank (placeholder) and never
   // shows the stored one (Tok Aba, 2026-10-14). Blank = keep the stored key.
   const [apPassword, setApPassword] = useState("");
+  // The hotspot IP being edited; null = the saved one.
+  const [apIp, setApIp] = useState(null);
   const [apName, setApName] = useState("");
   // Filled in from the box's saved values the first time status arrives (and
   // again after a Save or a Reset), not on every poll: a poll must not wipe
@@ -189,7 +203,7 @@ export default function NetworkPanel() {
   const onAp = !!data.via && wlan.some((x) => x.device === data.via);
   const boxUrl = data.box_url || "";
   const hubPort = boxUrl.split(":").pop() || "5100";
-  const apAddr = sw.ap_address || "10.42.0.1";
+  const apAddr = sw.ap_address || data.ap_ip_effective || "192.168.1.1";
 
   // ---- the access point's name and password -------------------------------
   // Save is offered only for a change the box will take. While the AP is
@@ -199,14 +213,20 @@ export default function NetworkPanel() {
   const apNameErr = apNameProblem(apName);
   // Blank is "keep the stored password", never a problem.
   const apKeyErr = apPassword ? apPasswordProblem(apPassword) : "";
-  const apDirty = apName.trim() !== savedName || apPassword !== "";
-  const apProblem = apDirty ? (apNameErr || apKeyErr) : "";
-  const canSaveAp = apDirty && !apNameErr && !apKeyErr;
+  // The hotspot's own address (default 192.168.1.1): where the box answers
+  // its hotspot clients, who get leases in the same /24.
+  const savedIp = data.ap_ip || data.ap_ip_default || "192.168.1.1";
+  const apIpNow = apIp === null ? savedIp : apIp;
+  const apIpErr = apIpProblem(apIpNow);
+  const apDirty = apName.trim() !== savedName || apPassword !== "" || apIpNow.trim() !== savedIp;
+  const apProblem = apDirty ? (apNameErr || apKeyErr || apIpErr) : "";
+  const canSaveAp = apDirty && !apNameErr && !apKeyErr && !apIpErr;
 
   function reseedAp(d) {
     if (!d) return;
     setApName(d.ap_name || "");
     setApPassword("");
+    setApIp(null);
   }
 
   async function saveAp() {
@@ -229,8 +249,10 @@ export default function NetworkPanel() {
     try {
       // A blank password is left out: the route keeps the stored one
       // ("either may be left out", core/routes/network.py).
-      const d = await api.post("/api/hub/network/ap/save",
-                               apPassword ? { ssid: name, password: apPassword } : { ssid: name });
+      const body = { ssid: name };
+      if (apPassword) body.password = apPassword;
+      if (apIpNow.trim() !== savedIp) body.address = apIpNow.trim();
+      const d = await api.post("/api/hub/network/ap/save", body);
       setData(d);
       reseedAp(d);
       const said = d.ap_save || {};
@@ -727,6 +749,29 @@ export default function NetworkPanel() {
               <div className="muted small" style={{ marginTop: 4 }}>
                 At least 8 characters.
               </div>
+            </label>
+            <label style={{ display: "block", marginTop: 12 }}>
+              <strong className="small">Hotspot IP address</strong>
+              <input className="input mono" value={apIpNow} data-ap-ip="1"
+                     inputMode="decimal" autoComplete="off" spellCheck={false}
+                     aria-invalid={!!apIpErr}
+                     placeholder={data.ap_ip_default || "192.168.1.1"}
+                     style={{ display: "block", width: "100%", minWidth: 0, marginTop: 6,
+                              borderRadius: 10, boxSizing: "border-box" }}
+                     onChange={(e) => setApIp(e.target.value)} />
+              <div className="muted small" style={{ marginTop: 4 }}>
+                Devices on the hotspot open this device at this address and get addresses
+                in the same range ({(apIpNow.split(".").slice(0, 3).join(".") || "192.168.1")}.x).
+                Default {data.ap_ip_default || "192.168.1.1"}.
+              </div>
+              {data.ap_ip_conflict && apIpNow.trim() === savedIp && (
+                <p className="small" data-ap-ip-conflict="1" role="status"
+                   style={{ margin: "6px 0 0", color: "var(--warn-text)" }}>
+                  {savedIp} is in the same network as the cable on {data.ap_ip_conflict}.
+                  The hotspot uses {data.ap_ip_effective} instead until one of them changes -
+                  pick a different hotspot address (for example 192.168.50.1) to use your own.
+                </p>
+              )}
             </label>
             {apProblem && (
               <p className="small" data-ap-problem="1" role="status"

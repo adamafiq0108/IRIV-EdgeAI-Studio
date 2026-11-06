@@ -60,3 +60,9 @@ docs/team/
 
 # Release files built by scripts/make_release.py
 /dist/
+
+# Install-time settings (core/envfile.py). .env.example is committed.
+.env
+
+# Internal project documents (planning, test reports, reviews) - kept locally, not published.
+docs-internal/

@@ -170,7 +170,16 @@ def validate(req):
             raise Refused("a Wi-Fi password is 8-63 printable characters "
                           "(or 64 hex digits)")
     client = kind in ("join", "trial")
-    return {"kind": kind, "ssid": ssid, "psk": psk,
+    # The hotspot's own address (ap only): "192.168.1.1/24". Absent =
+    # NetworkManager's shared default, 10.42.0.1.
+    address = ""
+    if kind == "ap" and req.get("address"):
+        address = str(req.get("address"))
+        m = re.fullmatch(r"(\d{1,3}(?:\.\d{1,3}){3})/(\d{1,2})", address)
+        if not m or not all(0 <= int(x) <= 255 for x in m.group(1).split(".")) \
+                or not 8 <= int(m.group(2)) <= 30:
+            raise Refused("the hotspot address must look like 192.168.1.1/24")
+    return {"kind": kind, "ssid": ssid, "psk": psk, "address": address,
             "hidden": _bool(req.get("hidden"), False) if client else False,
             # A trial that passes is kept as a network the box rejoins.
             "autoconnect": (True if kind == "trial" else
@@ -225,6 +234,8 @@ def profile(clean, strict=False):
             lines += ["proto=rsn", "pairwise=ccmp", "group=ccmp"]
         lines += [""]
     lines += ["[ipv4]", "method=" + ("shared" if clean["kind"] == "ap" else "auto")]
+    if clean["kind"] == "ap" and clean.get("address"):
+        lines += ["address1=" + clean["address"]]
     lines += ["may-fail=false", "dhcp-timeout=%d" % TRIAL_DHCP_S, ""] if strict else [""]
     lines += ["[ipv6]", "method=" + ("ignore" if clean["kind"] == "ap" else "auto"), ""]
     return name, stem, uid, "\n".join(lines)
