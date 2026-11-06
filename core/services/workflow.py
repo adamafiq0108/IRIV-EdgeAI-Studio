@@ -934,6 +934,16 @@ REGISTRY = {
         # for a note meant to cover something -- a "do not wire this" label.
         "data": {"text": "", "width": 220, "height": 120, "color": "",
                  "layer": "back"}},
+    # A GROUP: a named, coloured box to tag a part of the graph ("Gate A",
+    # "Line 2 alarms"). Nodes dropped inside move with it; it changes nothing
+    # that runs (category common, stripped before validation like a Comment).
+    "note.group": {
+        "category": "common", "rank": -1, "label": "Group",
+        "badge": "GRP",
+        "description": "A named, coloured box. Drop nodes inside to tag them "
+                       "and move them together. Changes nothing that runs.",
+        "data": {"name": "Group", "color": "#3B82F6", "width": 520,
+                 "height": 320}},
     # A wire that jumps instead of being drawn. On a graph with three cameras
     # and a dozen rules, the line from a zone on the left to an output on the
     # right crosses everything in between; a named jump says the same thing
@@ -967,10 +977,30 @@ REGISTRY = {
     # exactly as resolve_links() replaces a jump with the wire it stood for --
     # so the compiler, the validator and every artifact below know nothing
     # about functions at all.
+    # THE FRAME. A function is now drawn as one resizable box: the Start is
+    # pinned to its left edge, the End to its right, and any node dropped
+    # inside it is part of the body. The frame itself is canvas furniture
+    # (category common, stripped before validation like a Comment); what it
+    # adds is `members` -- the ids the canvas found inside it, written by the
+    # page on every change -- which function_bodies() folds into the body
+    # alongside what the Start reaches. The Start and End stay the nodes that
+    # hold the name, the parameters and the returns, so resolve_functions()
+    # and every graph saved before the frame existed work unchanged.
+    "function.frame": {
+        "palette": {"cat": "logic", "group": "Function"},
+        "category": "common", "rank": -1, "label": "Function",
+        "badge": "FN",
+        "description": "A resizable frame with Start and End pinned to its "
+                       "edges. Any node dropped inside becomes the body.",
+        "data": {"fn": "", "width": 760, "height": 340, "collapsed": False,
+                 "members": []}},
+    # The Start and End no longer have palette entries of their own: dropping
+    # a Function brings both, pinned to the frame. Hidden, not removed --
+    # every graph that already holds them still loads and still runs.
     "function.start": {
         "palette": {"cat": "logic", "group": "Function"},
         "category": "common", "rank": 0, "label": "Function Start",
-        "badge": "FN(",
+        "badge": "START", "hidden": True,
         "description": "Names a function and hands out its parameters. "
                        "Everything wired from here to the matching Function "
                        "End is its body.",
@@ -978,7 +1008,7 @@ REGISTRY = {
     "function.end": {
         "palette": {"cat": "logic", "group": "Function"},
         "category": "common", "rank": 9, "label": "Function End",
-        "badge": "FN)",
+        "badge": "END", "hidden": True,
         "description": "What the function gives back. Name one port per "
                        "value it returns, or leave the list empty for a "
                        "function that returns a single thing.",
@@ -1958,8 +1988,12 @@ REGISTRY = {
     # whether the chosen zone is armed. "Enable the intrusion zone only while
     # the forklift is idle" is this node after an Object Motion Tracking; the zone's own
     # checkbox on the Zones panel is the SAVED state this overrides at runtime.
+    # In ACTIONS, under its own Zones heading: it sits at the END of a chain
+    # (a result switches a zone) and nothing flows out of it, so it belongs
+    # to the stage that acts -- not Board (it drives no hardware) and not
+    # Filters (those sit at the start and pass data on).
     "output.zone_switch": {
-        "palette": {"cat": "board", "group": "Outputs"},
+        "palette": {"cat": "output", "group": "Zones"},
         "category": "output", "rank": 4, "label": "Zone Switch",
         "badge": "ZSW",
         "description": "Enables or disables a zone from the workflow: pick "
@@ -2318,7 +2352,7 @@ REGISTRY = {
     # one answer instead of two vocabularies.
     "dashboard.card": {
         "palette": {"cat": "dashboard", "group": "Cards"},
-        "category": "dashboard", "rank": 4, "label": "Card",
+        "category": "dashboard", "rank": 4, "label": "Card Widget",
         "badge": "CARD",
         "description": "One value: a stat tile, a gauge, or a verdict state.",
         "widget_kind": "tile", "widget_source": "stat",
@@ -2388,7 +2422,7 @@ REGISTRY = {
     # rather than "Graph" to match what the editors call it.
     "dashboard.graph": {
         "palette": {"cat": "dashboard", "group": "Charts"},
-        "category": "dashboard", "rank": 4, "label": "Chart",
+        "category": "dashboard", "rank": 4, "label": "Chart Widget",
         "badge": "CHRT",
         "description": "The value over time or by group: line, bar, area, "
                        "spline, donut, pie or radar.",
@@ -2760,7 +2794,7 @@ REGISTRY = {
     # rules about a fifth kind of thing for one node.
     "integration.command": {
         "palette": {"cat": "integration", "group": "Telegram"},
-        "category": "output", "rank": 4, "label": "Command",
+        "category": "output", "rank": 4, "label": "Send Command",
         "badge": "CMD",
         "description": "Answer a Telegram command. Names the word people type "
                        "(/summary), and offers buttons - wire a Query into "
@@ -2791,7 +2825,7 @@ REGISTRY = {
     # every photo in an album, so what arrives in a chat is not what to keep.
     "integration.photos": {
         "palette": {"cat": "integration", "group": "Telegram"},
-        "category": "output", "rank": 4, "label": "Snapshots",
+        "category": "output", "rank": 4, "label": "Send Images",
         "badge": "PHOT",
         "description": "Answer a command button with the snapshots from its "
                        "window - up to ten, over at most 24 hours.",
@@ -2809,8 +2843,11 @@ REGISTRY = {
     # operator already knows, so a watch adds a trigger rather than a second
     # way to write a message.
     "integration.watch": {
-        "palette": {"cat": "integration", "group": "Alerts"},
-        "category": "output", "rank": 4, "label": "Watch (threshold)",
+        # Sits beside the Trigger in the palette: the same idea (fire once
+        # when a line is crossed) over RECORDED totals instead of the live
+        # picture. Named so the pair reads as a pair.
+        "palette": {"cat": "logic", "group": "Branch"},
+        "category": "output", "rank": 4, "label": "Recorded Trigger",
         "badge": "WTCH",
         "description": "Run a Query on a timer and send when its number "
                        "crosses a line - more than 50 violations today. Wire a "
@@ -2822,7 +2859,7 @@ REGISTRY = {
                  "op": ">", "value": 10, "quiet_min": 60}},
     "output.telegram": {
         "palette": {"cat": "integration", "group": "Telegram"},
-        "category": "output", "rank": 4, "label": "Telegram",
+        "category": "output", "rank": 4, "label": "Send Message",
         "badge": "TG",
         "description": "Send a Telegram message when this analytics alerts.",
         "output_type": "telegram",
@@ -2842,7 +2879,7 @@ REGISTRY = {
         # they read as the pair they are rather than as two of five unrelated
         # outputs.
         "palette": {"cat": "output", "group": "Footage"},
-        "category": "output", "rank": 4, "label": "Snapshot",
+        "category": "output", "rank": 4, "label": "Image Snapshot",
         "badge": "SNAP",
         "description": "Save a photo of the annotated frame when a decision fires: a Condition or Compare in front of it, or a Formula straight in. Needs the Snapshots button ON in Camera Setup.",
         "output_type": "snapshot",
@@ -2873,7 +2910,7 @@ REGISTRY = {
         # they read as the pair they are rather than as two of five unrelated
         # outputs.
         "palette": {"cat": "output", "group": "Footage"},
-        "category": "output", "rank": 4, "label": "Record Clip",
+        "category": "output", "rank": 4, "label": "Recording Clip",
         "badge": "REC",
         "description": "Record a short video clip when a decision fires: a Condition or Compare in front of it, or a Formula straight in. Records up to 5s BEFORE the moment and 5s after. Needs the Clips button ON in Camera Setup.",
         "output_type": "record",
@@ -5681,14 +5718,31 @@ def function_bodies(graph):
                 stack.append(nxt)
         return seen
 
+    # A FRAME's members are body too: a node dropped inside the frame belongs
+    # to the function whether or not anything is wired to it yet, so it never
+    # runs on the main canvas as a stray copy of half a function. Ids that no
+    # longer exist, other brackets and other frames are ignored.
+    ids = {n.get("id") for n in nodes}
+    bracket = {n.get("id") for n in nodes
+               if n.get("type") in FUNCTION_NODES + ("function.frame",)
+               and n.get("type") != "function.call"}
+    framed = {}
+    for n in nodes:
+        if n.get("type") != "function.frame" or not function_name(n):
+            continue
+        members = (n.get("data") or {}).get("members") or []
+        framed.setdefault(function_name(n), set()).update(
+            m for m in members if m in ids and m not in bracket)
+
     out = {}
     for name, start in starts.items():
         end = ends.get(name)
         if end is None:
             continue
         out[name] = (start, end,
-                     walk(start["id"], fwd, end["id"])
-                     - walk(end["id"], fwd, start["id"]) - {end["id"]})
+                     (walk(start["id"], fwd, end["id"])
+                      - walk(end["id"], fwd, start["id"]) - {end["id"]})
+                     | framed.get(name, set()))
     return out
 
 
@@ -6123,11 +6177,11 @@ def edge_allowed(src_type, tgt_type, tgt_handle=""):
         return True, ""
     if tgt_type == "integration.watch":
         return False, (f"{s['label']} is not something to watch - wire a "
-                       "Query in, and the Watch runs it on a timer")
+                       "Query in, and the Recorded Trigger runs it on a timer")
     if src_type == "integration.watch":
         if tgt_type in ("output.email", "output.telegram"):
             return True, ""
-        return False, ("a Watch sends a message when its number crosses - "
+        return False, ("a Recorded Trigger sends a message when its number crosses - "
                        "wire it into a Telegram or an Email node")
     if src_type == "storage.csv":
         if tgt_type in ("output.email", "output.telegram"):

@@ -5936,3 +5936,50 @@ body.wf-fs-on .topbar { visibility: hidden; }
   background: var(--card, var(--background, #fff)); border-top: 1px solid var(--border, rgba(128,128,128,.25)); }
 .wf-guide-big-body .ng-bare .ng-slider-nav { margin: 0 -22px; padding: 10px 22px; }
 .wf-col-bar::before { border-left: 1px dashed rgba(128,128,128,.4) !important; }
+
+/* The guide's minimize / expand control is an ICON (the two diagonal arrows),
+   not a word: a square hit target in every place the word button sat. */
+.ng-minbtn.ng-minbtn-icon,
+.ui-dialog-head .ng-minbtn.ng-minbtn-icon,
+.ui-dialog.ng-popup .ui-dialog-head .ng-minbtn.ng-minbtn-icon,
+.ng-docked .ui-dialog.ng-popup .ui-dialog-head .ng-minbtn.ng-minbtn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0;
+}
+
+/* ---- Workflow guide: modules, and properties beside the picture ---------- */
+[data-ng-flow] { container-type: inline-size; }
+.ng-modules { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.ng-module {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
+  border-radius: 999px; border: 1px solid var(--border, rgba(128,128,128,.3));
+  background: var(--surface, transparent); color: inherit; font-size: 12px;
+  font-weight: 600; cursor: pointer;
+}
+.ng-module .ng-module-n {
+  width: 18px; height: 18px; border-radius: 50%; display: inline-flex;
+  align-items: center; justify-content: center; font-size: 11px;
+  background: rgba(128,128,128,.18);
+}
+.ng-module.on { border-color: var(--primary, #04bade); box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary, #04bade) 25%, transparent); }
+.ng-module.on .ng-module-n { background: var(--primary, #04bade); color: #fff; }
+.ng-module.done .ng-module-n { background: color-mix(in srgb, var(--primary, #04bade) 30%, transparent); }
+.ng-step-grid { display: block; }
+.ng-step-props {
+  border: 1px solid var(--border, rgba(128,128,128,.3)); border-radius: 10px;
+  padding: 10px 12px; margin: 0 0 10px; background: var(--surface, transparent);
+}
+.ng-step-props-head { font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted-text, #888); margin-bottom: 6px; }
+.ng-step-props-set { margin: 0 0 8px; font-size: 12.5px; line-height: 1.45; }
+.ng-step-props img { display: block; width: 100%; height: auto; border-radius: 8px;
+  border: 1px solid var(--border, rgba(128,128,128,.25)); }
+.ng-step-props-list { margin: 0; padding-left: 16px; font-size: 12px; line-height: 1.45; }
+.ng-step-props-list li { margin-bottom: 4px; }
+/* Wide enough (the large view): picture left, properties right. Narrow (the
+   docked column): the properties stack under the picture. */
+@container (min-width: 720px) {
+  .ng-step-grid.with-props { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr);
+    gap: 14px; align-items: start; }
+  .ng-step-grid.with-props .ng-step-props { max-height: 460px; overflow-y: auto; }
+}

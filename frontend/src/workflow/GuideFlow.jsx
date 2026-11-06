@@ -14,6 +14,15 @@ import { Diagram } from "./GuideDiagram.jsx";
 import { api } from "../api/client.js";
 import { flowFor } from "./GuideFlows.js";
 import GuideMove from "./GuideMoves.jsx";
+import { NODE_PROPS } from "./guidelineProps.js";
+
+// The real properties panel of each node type, one picture per type (the same
+// pictures the Nodes Guideline shows).
+const PROP_SHOTS = import.meta.glob("../assets/guide-props/*.png", { eager: true, query: "?url", import: "default" });
+const shotOf = (type) => PROP_SHOTS[`../assets/guide-props/${String(type).replace(/\./g, "_")}.png`];
+// A step may name its own pictures (`shots`: file names without .png), for a
+// node with more than one way to be set up -- a Card as a number AND as a status.
+const shotNamed = (name) => PROP_SHOTS[`../assets/guide-props/${name}.png`];
 
 //: What the pictures show when a caller (a page guide) names no cards of its own.
 const SAMPLE_CARDS = [
@@ -255,6 +264,27 @@ function FlowSlider({ flow, registry, nodeTypes, bare, big, at: atIn, onAt }) {
   const box = useRef(null);
   const step = STEPS[at];
   const last = at === STEPS.length - 1;
+  // MODULES: the slides are grouped (GuideFlows.js), and the reader sees one
+  // module at a time -- its own step count, its own dots, and a Next module
+  // button at its end. A flow without modules is one module.
+  const MODS = flow.modules || [{ id: "all", title: flow.label }];
+  const modOf = (i) => STEPS[i]?.module ?? 0;
+  const mod = modOf(at);
+  const modSteps = STEPS.map((st, i) => i).filter((i) => modOf(i) === mod);
+  const modFirst = modSteps[0];
+  const modLast = modSteps[modSteps.length - 1];
+  const firstOf = (m) => STEPS.findIndex((st) => (st.module ?? 0) === m);
+  // The node a step is about, for the properties beside the picture: only a
+  // step that rings ONE kind of node (an overview rings several).
+  const marked = step.show ? [].concat(step.show.mark).filter(Boolean) : [];
+  const propType = (() => {
+    const types = [...new Set(marked.map((id) => NODES[id]?.type).filter(Boolean))];
+    return types.length === 1 ? types[0] : null;
+  })();
+  const propShots = step.shots ? step.shots.map(shotNamed).filter(Boolean)
+    : propType && shotOf(propType) ? [shotOf(propType)] : [];
+  const propShot = propShots[0] || null;
+  const propList = propType && !propShot ? (NODE_PROPS[propType] || []).flatMap((pg) => pg.items) : [];
 
   // The arrow keys move the slider while it has focus.
   useEffect(() => {
@@ -305,19 +335,62 @@ function FlowSlider({ flow, registry, nodeTypes, bare, big, at: atIn, onAt }) {
       <div className="ng-flow-scroll">
       <div className="ng-title">{flow.label}</div>
       <p className="muted small" style={{ margin: "0 0 10px" }}>
-        Every workflow is built the same way: take in what the camera sees, narrow it
-        down, measure it, then show or act on the result. Step through this one. The
-        numbered red ring marks the nodes each step is about.
+        Three short modules, each ending with something you can see. Pick a module at the
+        top, or step through them in order. The numbered red ring marks the nodes each
+        step is about, and each node's properties are shown beside it.
       </p>
 
+      {MODS.length > 1 && (
+        <div className="ng-modules" role="tablist" aria-label="Modules" data-ng-modules>
+          {MODS.map((m, i) => (
+            <button key={m.id} type="button" role="tab" aria-selected={i === mod}
+                    className={"ng-module" + (i === mod ? " on" : "") + (i < mod ? " done" : "")}
+                    title={m.lead || m.title} onClick={() => setAt(firstOf(i))}>
+              <span className="ng-module-n">{i + 1}</span> {m.title}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="ng-slider-head">
-        <span className="ng-tag">Step {at + 1} of {STEPS.length}</span>
+        <span className="ng-tag">
+          {MODS.length > 1 ? `Module ${mod + 1} · ` : ""}Step {at - modFirst + 1} of {modSteps.length}
+        </span>
         <strong>{step.title}</strong>
       </div>
+      <div className={"ng-step-grid" + (propType ? " with-props" : "")}>
+      <div className="ng-step-pic">
       {picture}
       {step.show && step.show.nodes.length > 2 && (
         <p className="ng-slide-hint" data-ng-slide-hint>Drag the canvas, or slide the bars, to see all of it.</p>
       )}
+      </div>
+      {propType && (
+        // The node's PROPERTIES beside its picture: what to set, then the
+        // real panel it is set in. Beside, not on a page of its own -- a second
+        // slide per node would double the guide.
+        <aside className="ng-step-props" data-ng-props>
+          <div className="ng-step-props-head">Properties</div>
+          {step.setup && <p className="ng-step-props-set"><strong>Set it like this:</strong> {step.setup}</p>}
+          {propShot
+            ? propShots.map((src, i) => (
+              <figure key={src} style={{ margin: i ? "10px 0 0" : 0 }}>
+                {step.shotCaptions?.[i] && (
+                  <figcaption className="small muted" style={{ marginBottom: 4 }}>
+                    {step.shotCaptions[i]}
+                  </figcaption>
+                )}
+                <img src={src} alt={`The ${registry?.[propType]?.label || propType} properties panel`}
+                     loading="lazy" />
+              </figure>
+            ))
+            : propList.length > 0 && (
+              <ul className="ng-step-props-list">
+                {propList.map((it) => <li key={it.name}><strong>{it.name}</strong> {it.text}</li>)}
+              </ul>
+            )}
+        </aside>
+      )}
+      </div>
       <p className="ng-slide-body" data-ng-slide-body>{withNodeNames(step.body, registry)}</p>
       {step.use && (
         <div className="ng-use" data-ng-use>
@@ -327,7 +400,7 @@ function FlowSlider({ flow, registry, nodeTypes, bare, big, at: atIn, onAt }) {
               return <span key={u} className="ng-use-chip"><b>{n}</b> {rest.join(" ")}</span>;
             })}
           </div>
-          <div><strong>Setup</strong> {step.setup}</div>
+          {!propType && <div><strong>Setup</strong> {step.setup}</div>}
           {step.tip && <div className="ng-use-tip"><strong>Your choice</strong> {step.tip}</div>}
           <div className="ng-use-tip">
             Want to know more about these nodes?{" "}
@@ -349,11 +422,13 @@ function FlowSlider({ flow, registry, nodeTypes, bare, big, at: atIn, onAt }) {
       </div>
       <div className="ng-slider-nav">
         <button type="button" className="btn btn-sm" disabled={at === 0}
-                onClick={() => setAt(at - 1)} data-ng-prev>Back</button>
+                onClick={() => setAt(at - 1)} data-ng-prev>
+          {at === modFirst && at > 0 ? "Previous module" : "Back"}
+        </button>
         <div className="ng-dots" role="tablist" aria-label="Steps">
-          {STEPS.map((s, i) => (
-            <button key={s.title} type="button" role="tab" aria-selected={i === at}
-                    aria-label={`Step ${i + 1}: ${s.title}`} title={s.title}
+          {modSteps.map((i) => (
+            <button key={`${i}-${STEPS[i].title}`} type="button" role="tab" aria-selected={i === at}
+                    aria-label={`Step ${i - modFirst + 1}: ${STEPS[i].title}`} title={STEPS[i].title}
                     className={"ng-dot" + (i === at ? " on" : "")}
                     onClick={() => setAt(i)} />
           ))}
@@ -361,6 +436,11 @@ function FlowSlider({ flow, registry, nodeTypes, bare, big, at: atIn, onAt }) {
         {last ? (
           <button type="button" className="btn btn-sm" onClick={() => setAt(0)}>
             Start again
+          </button>
+        ) : at === modLast ? (
+          <button type="button" className="btn btn-sm btn-accent"
+                  onClick={() => setAt(at + 1)} data-ng-next>
+            Next module: {MODS[mod + 1]?.title}
           </button>
         ) : (
           <button type="button" className="btn btn-sm btn-accent"

@@ -13,6 +13,26 @@
 // says so in its text. Only settings that really are shown are listed. Same
 // word rules as guidelineText.js (no code-style names, no jargon).
 export const NODE_PROPS = {
+  "function.frame": [
+    { title: "Name and inputs", items: [
+      { name: "Function Name", text: "What the function is called. Renaming it also renames its Start, its End and every Call Function that runs it." },
+      { name: "Parameters (Start outputs)", text: "The values the function takes in. Each name becomes a dot on the Start and a matching dot on every Call Function. With none, a single run dot is the way in." },
+    ] },
+    { title: "Results and use", items: [
+      { name: "Returns (End inputs)", text: "The values the function gives back. Each name becomes a dot on the End and on every Call Function. The type beside each name is a label to help you read it." },
+      { name: "On the canvas", text: "Drag the title bar to move the function with everything inside. Drag the orange corner to make it bigger. The arrow on the left folds it to one bar." },
+      { name: "Used by", text: "How many Call Function nodes run this function. Each one runs its own copy." },
+    ] },
+  ],
+
+  "note.group": [
+    { title: "Name and colour", items: [
+      { name: "Group Name", text: "The tag shown on the group. Use it to say what this part of the workflow is for." },
+      { name: "Colour", text: "Pick one of the swatches or any colour you like. Groups of the same colour read as one family." },
+      { name: "On the canvas", text: "Drag the name tag to move the group and everything inside it. Drag the corner to make it bigger. A node belongs to the group when its middle is inside the box." },
+    ] },
+  ],
+
   "source.detection": [
     { title: "Capture", items: [
       { name: "Capture", text: "How the camera is read: every frame (Video), or only when something tells it to take a picture (Snapshot). Video is the usual choice." },
@@ -27,7 +47,7 @@ export const NODE_PROPS = {
   "filter.class": [
     { title: "Class Filter", items: [
       { name: "On / Off switch", text: "The switch at the top right of the panel. Off pauses the rules after this filter, here and on the dashboard. It is On by default." },
-      { name: "Name", text: "How the dashboard lists this filter, so it can be paused there. Needed when the workflow has more than one Class Filter." },
+      { name: "Class Filter Name", text: "How the dashboard lists this filter, so it can be paused there. Needed when the workflow has more than one Class Filter." },
       { name: "Object classes", text: "Tick the kinds of object to keep, such as person or car. Leave all unticked to keep every class." },
     ] },
   ],
@@ -52,7 +72,7 @@ export const NODE_PROPS = {
 
   "analytics.object": [
     { title: "Basics", items: [
-      { name: "Name", text: "The name shown wherever this node's numbers appear: cards, pickers and tables." },
+      { name: "Object Detection Name", text: "The name shown wherever this node's numbers appear: cards, pickers and tables." },
       { name: "OID", text: "A tick box at the top right of the panel. Ticked, the node also gives out the ID of each object it finds, so a Data Table can record who each row was about." },
     ] },
     { title: "Violation timer", items: [
@@ -63,7 +83,7 @@ export const NODE_PROPS = {
 
   "analytics.anomaly": [
     { title: "Anomaly", items: [
-      { name: "Name", text: "The name shown wherever this node's results appear: cards, pickers and tables." },
+      { name: "Anomaly Name", text: "The name shown wherever this node's results appear: cards, pickers and tables." },
       { name: "Violation timer", text: "Immediately marks NG the moment something is found. After a time marks it only if it stays. Immediately is the default." },
       { name: "Counts as NG once it has stayed for", text: "Shown after choosing After a time. How many seconds something must stay before it counts as NG. Needs a Video stream." },
     ] },
@@ -71,7 +91,7 @@ export const NODE_PROPS = {
 
   "analytics.counter": [
     { title: "Basics", items: [
-      { name: "Name", text: "The name shown wherever this counter's numbers appear: cards, pickers and tables." },
+      { name: "Counter Name", text: "The name shown wherever this counter's numbers appear: cards, pickers and tables." },
       { name: "Count", text: "Either the number there right now, or a total where each object is counted once. The wording follows what you wired in (a zone, a line, or the whole view)." },
       { name: "OID", text: "A tick box at the top right of the panel. Ticked, the counter also gives out the ID of each object it counts." },
     ] },
@@ -84,7 +104,7 @@ export const NODE_PROPS = {
 
   "analytics.dwell": [
     { title: "Basics", items: [
-      { name: "Name", text: "The name shown wherever this node's times appear: cards, pickers and tables." },
+      { name: "Cycle Time Name", text: "The name shown wherever this node's times appear: cards, pickers and tables." },
       { name: "What to measure", text: "Time present measures how long objects stay. Countdown gives each arrival a time budget. Occupied clock runs while the place is in use at all." },
       { name: "OID", text: "A tick box at the top right of the panel, shown for Time present. Ticked, the node also records each stay with the object's ID." },
     ] },
@@ -101,7 +121,7 @@ export const NODE_PROPS = {
 
   "analytics.travel": [
     { title: "Basics", items: [
-      { name: "Name", text: "The name shown wherever this node's trip times appear: cards, pickers and tables." },
+      { name: "Travel Time (A → B) Name", text: "The name shown wherever this node's trip times appear: cards, pickers and tables." },
       { name: "Also show speed", text: "Off measures trip times only. On also works out speed, which needs the real distance between the two lines." },
     ] },
     { title: "Speed", items: [
@@ -112,7 +132,7 @@ export const NODE_PROPS = {
 
   "analytics.proximity": [
     { title: "Name and classes", items: [
-      { name: "Name", text: "The name shown wherever this node's numbers appear: cards, pickers and tables." },
+      { name: "Object Distance Name", text: "The name shown wherever this node's numbers appear: cards, pickers and tables." },
       { name: "Class A", text: "The first kind of object in the pair, such as person. Any class means every kind." },
       { name: "Class B", text: "The second kind of object in the pair, such as forklift. Choosing the same class twice measures nearest neighbours of that class." },
     ] },
@@ -128,7 +148,7 @@ export const NODE_PROPS = {
 
   "analytics.guard": [
     { title: "The bubble", items: [
-      { name: "Name", text: "The name shown wherever this node's numbers appear: cards, pickers and tables." },
+      { name: "Safety Bubble Name", text: "The name shown wherever this node's numbers appear: cards, pickers and tables." },
       { name: "Bubble around", text: "Tick the kinds of object that get a bubble around them, such as a forklift. With none ticked nothing is protected." },
       { name: "Bubble size", text: "How far the bubble reaches beyond the object's own box, as a share of that box. The default is 50 percent." },
     ] },
@@ -144,13 +164,13 @@ export const NODE_PROPS = {
 
   "analytics.heatmap": [
     { title: "Heatmap", items: [
-      { name: "Name", text: "The name shown wherever this heatmap's numbers appear: cards, pickers and tables." },
+      { name: "Heatmap Name", text: "The name shown wherever this heatmap's numbers appear: cards, pickers and tables." },
     ] },
   ],
 
   "analytics.trails": [
     { title: "Trails", items: [
-      { name: "Name", text: "The name shown wherever this node's numbers appear: cards, pickers and tables." },
+      { name: "Object Motion Tracking Name", text: "The name shown wherever this node's numbers appear: cards, pickers and tables." },
       { name: "Trail behind", text: "Tick the kinds of object that leave a trail. With none ticked, every class does." },
       { name: "Trail length", text: "How many seconds of movement each trail keeps before it fades. The default is 10." },
     ] },
@@ -162,7 +182,7 @@ export const NODE_PROPS = {
 
   "analytics.total": [
     { title: "Counting", items: [
-      { name: "Name", text: "The name shown wherever this total appears: cards, pickers and tables." },
+      { name: "Total Value Name", text: "The name shown wherever this total appears: cards, pickers and tables." },
       { name: "Accumulate", text: "Count events adds 1 each time the wired value turns on. Increment adds every rise in the value. A drop never takes anything away." },
       { name: "Ignore blips shorter than (s)", text: "A change only counts once it has lasted this many seconds, so a one-frame flicker does not add up. 2 to 3 seconds is a good start. 0 reacts at once." },
     ] },
@@ -174,14 +194,14 @@ export const NODE_PROPS = {
 
   "analytics.expr": [
     { title: "Formula", items: [
-      { name: "Name", text: "The name shown wherever this formula's answer appears: cards, pickers and tables." },
+      { name: "Custom Formula Name", text: "The name shown wherever this formula's answer appears: cards, pickers and tables." },
       { name: "Expression", text: "The calculation itself, written with the names of the values wired in. Use the templates and the buttons for operators if you are not sure how to start." },
     ] },
   ],
 
   "variable.schedule": [
     { title: "When it runs", items: [
-      { name: "Name", text: "The name shown wherever this schedule appears." },
+      { name: "Schedule Name", text: "The name shown wherever this schedule appears." },
       { name: "Runs", text: "How often it comes round: every few minutes, hourly, daily, weekly or monthly. The other settings follow from this choice." },
       { name: "Time", text: "Shown for daily, weekly and monthly. The time of day it runs, on the box's own clock. The default is 12:00." },
     ] },
@@ -206,7 +226,7 @@ export const NODE_PROPS = {
 
   "variable.mqtt": [
     { title: "Connection and topic", items: [
-      { name: "Name", text: "The name shown wherever this value appears: cards, pickers and tables." },
+      { name: "MQTT Subscribe Name", text: "The name shown wherever this value appears: cards, pickers and tables." },
       { name: "Connection", text: "The MQTT broker this listens to. Set it up once and share it between nodes. With none picked it uses this box's own broker." },
       { name: "Topic", text: "The topic to listen to. Wildcards work: a plus sign matches one level and a hash sign matches everything under it." },
     ] },
@@ -217,7 +237,7 @@ export const NODE_PROPS = {
 
   "variable.board_input": [
     { title: "Board Input", items: [
-      { name: "Name", text: "The name shown wherever this input's value appears: cards, pickers and tables." },
+      { name: "Board Input (DI) Name", text: "The name shown wherever this input's value appears: cards, pickers and tables." },
       { name: "Port", text: "Which input terminal on the board to read. Each option shows what it reads right now, so pick the one that is wired." },
       { name: "Contact is normally closed (invert)", text: "A tick box. Tick it if the wired contact is closed when idle, so that closing counts as off and opening as on." },
     ] },
@@ -300,7 +320,7 @@ export const NODE_PROPS = {
 
   "variable.api": [
     { title: "Where to ask", items: [
-      { name: "Name", text: "The name shown wherever this value appears: cards, pickers and tables." },
+      { name: "API Value (fetch) Name", text: "The name shown wherever this value appears: cards, pickers and tables." },
       { name: "URL", text: "The web address to fetch the value from." },
       { name: "How often to read", text: "Seconds between fetches. 2 is the lowest. The default is 5." },
     ] },
@@ -345,7 +365,7 @@ export const NODE_PROPS = {
 
   "dashboard.card": [
     { title: "Title and shape", items: [
-      { name: "Title", text: "The name shown on the card. Also lists the card in the dashboard editors so it can be placed on another page." },
+      { name: "Card Widget Name", text: "The name shown on the card. Also lists the card in the dashboard editors so it can be placed on another page." },
       { name: "Caption", text: "Only shown for a single-number tile. The small line under the value. Blank shows nothing." },
       { name: "Show as", text: "The shape of the card: a tile, a gauge, a status or a table. Only the shapes that suit what feeds the card are offered." },
     ] },
@@ -362,7 +382,7 @@ export const NODE_PROPS = {
 
   "dashboard.graph": [
     { title: "Title and shape", items: [
-      { name: "Title", text: "The name shown on the chart. Also lists the chart in the dashboard editors." },
+      { name: "Chart Widget Name", text: "The name shown on the chart. Also lists the chart in the dashboard editors." },
       { name: "Show as", text: "Another chart of the same family, such as an area or a line. Every setting carries over. Use Change chart type for a different family." },
       { name: "Source", text: "Only shown when nothing wired in decides it. Draw the live value, the events a rule raised, or a data table." },
     ] },
@@ -373,7 +393,7 @@ export const NODE_PROPS = {
 
   "common.inject": [
     { title: "Name and payload", items: [
-      { name: "Name", text: "The name shown wherever this node appears." },
+      { name: "Inject Name", text: "The name shown wherever this node appears." },
       { name: "Payload", text: "What each press puts on the wire: a number, true or false, text, JSON, or the time it fired. A number or true or false can be tested and calculated with." },
       { name: "Topic", text: "Optional. A label that travels beside the payload." },
     ] },
@@ -390,7 +410,7 @@ export const NODE_PROPS = {
 
   "output.trigger": [
     { title: "Name and firing", items: [
-      { name: "Output name", text: "A name for this moment, shown in the workflow and in alerts. Required." },
+      { name: "Trigger Name", text: "A name for this moment, shown in the workflow and in alerts. Required." },
       { name: "Firing", text: "How often it may fire: every time, at most once every N seconds, once for each object ID, or when a new object ID appears." },
       { name: "Seconds between two fires", text: "Only shown for at most once every N seconds. The shortest gap, from 1 to 86400 seconds. It applies to the alert and the payload alike." },
     ] },
@@ -478,7 +498,7 @@ export const NODE_PROPS = {
 
   "storage.query": [
     { title: "Query", items: [
-      { name: "Name", text: "A required name, so the Dashboard and Analytics editors can list what this query publishes." },
+      { name: "Query Name", text: "A required name, so the Dashboard and Analytics editors can list what this query publishes." },
       { name: "Statement", text: "The question you ask the tables, written as a SELECT. Read the tables you wired in by the names the Database page shows." },
       { name: "Period", text: "Which rows the statement sees: all time, or follow the Analytics range, today, this week or this month. The statement must use the period placeholders for it to take effect." },
     ] },
@@ -515,7 +535,7 @@ export const NODE_PROPS = {
   ],
 
   "integration.photos": [
-    { title: "Snapshots", items: [
+    { title: "Send Images", items: [
       { name: "Camera", text: "Which camera's pictures to send. Blank sends whatever any camera saved in the period." },
       { name: "How many to send", text: "All of them (up to 60), or a number from 1 to 60. When there are more, the newest are sent. The default is 10." },
     ] },
@@ -523,7 +543,7 @@ export const NODE_PROPS = {
 
   "integration.watch": [
     { title: "What to watch", items: [
-      { name: "Watch name", text: "What this watch is called in the message and the log." },
+      { name: "Recorded Trigger Name", text: "What this Recorded Trigger is called in the message and the log." },
       { name: "Check every", text: "How often the Query runs, in minutes. The default is 15. It checks on a timer and does not react live." },
       { name: "Over which period", text: "Which stretch of time the Query looks at, from the last hour to all time. Today is the default." },
     ] },
@@ -553,7 +573,7 @@ export const NODE_PROPS = {
     { title: "Picture options", items: [
       { name: "Tag with object ID (when available)", text: "A tick box. Stamps the object's ID in the corner of the picture and into its file name, when the rule can say which object it was." },
       { name: "Crop the violation", text: "A tick box. Saves a close-up of the objects that broke the rule beside the full photo. It costs a little disk space." },
-      { name: "Page name", text: "The Footage page this node's photos appear on, apart from other Snapshots. Give it a name." },
+      { name: "Image Snapshot Name", text: "The Footage page this node's photos appear on, apart from other Image Snapshots. Give it a name." },
     ] },
     { title: "PDF notice", items: [
       { name: "Notice title", text: "The red heading of the PDF notice. Blank prints VIOLATION NOTICE." },
@@ -566,7 +586,7 @@ export const NODE_PROPS = {
     { title: "Clip length", items: [
       { name: "Include after the moment (s, max 5)", text: "How many seconds of video to keep after the moment, up to 5." },
       { name: "Include before the moment (s, max 5)", text: "How many seconds of run-up to keep, up to 5. Above 0 the camera keeps a short buffer in memory all the time. 0 turns that off." },
-      { name: "Page name", text: "The Footage page this node's clips appear on, apart from other Record Clips. Give it a name." },
+      { name: "Recording Clip Name", text: "The Footage page this node's clips appear on, apart from other Recording Clips. Give it a name." },
     ] },
     { title: "Camera and moment", items: [
       { name: "Camera", text: "Only shown with more than one camera. Which camera it records. Follow the rule uses the camera of the rule that fires it." },

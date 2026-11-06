@@ -4,11 +4,11 @@
 // from opening again) and from the Guide button in the page's header. The
 // pictures are drawn with the app's own styles and the wording of its own
 // buttons, in the same way as the Workflow guideline (GuideFlow.jsx).
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { GuideSwitchRow } from "../components/GuideSwitch.jsx";
 import { useLocation } from "react-router-dom";
-import { BookOpen, Camera, Circle, Menu, Pentagon, Play, SlidersHorizontal, Spline, SquareDashed } from "lucide-react";
+import { BookOpen, Camera, Circle, Menu, Pentagon, Play, SlidersHorizontal, Spline, SquareDashed, Maximize2, Minimize2 } from "lucide-react";
 import { GUIDE_REQUEST_EVENT, guidesEnabled, setupTourActive } from "./guideState.js";
 import { Welcome } from "./GuideWelcome.jsx";
 import { BarSnapshot, BuilderSnapshot, DroppedSnapshot, MenuSnapshot, PageSnapshot }
@@ -488,11 +488,13 @@ function stepsOf(g) {
           ...g.steps];
 }
 
-export function PageGuide({ guide, open, onClose }) {
+export function PageGuide({ guide, open, onClose, initialAt = 0, initialMini = false, onState }) {
   const g0 = GUIDES[guide];
   const g = g0 && { ...g0, steps: stepsOf(g0) };
-  const [at, setAt] = useState(0);
-  const [mini, setMini] = useState(false);
+  const [at, setAt] = useState(initialAt);
+  const [mini, setMini] = useState(initialMini);
+  // Where the reader is, for the host to hand the guide on to the next page.
+  useEffect(() => { onState?.({ at, mini }); }, [at, mini, onState]);
   // Closing ends the guide: the next time it opens it starts from the first page.
   const close = () => { setAt(0); setMini(false); onClose?.(); };
   useEffect(() => {
@@ -516,7 +518,7 @@ export function PageGuide({ guide, open, onClose }) {
            style={mini ? undefined : { width: "min(760px, 96vw)" }} onMouseDown={(e) => e.stopPropagation()}>
         <div className="ui-dialog-head">
           <h3>{g.title}</h3>
-          <button type="button" className="btn btn-sm ng-minbtn" onClick={() => setMini(!mini)} aria-label={mini ? "Expand" : "Minimize"} title={mini ? "Expand the guide" : "Minimize - keep the guide in the corner"} data-guide-minimize>{mini ? "Expand" : "Minimize"}</button>
+          <button type="button" className="btn btn-sm ng-minbtn ng-minbtn-icon" onClick={() => setMini(!mini)} aria-label={mini ? "Expand the guide" : "Minimize the guide"} title={mini ? "Expand the guide" : "Minimize - keep the guide in the corner"} data-guide-minimize>{mini ? <Maximize2 size={15} aria-hidden="true" /> : <Minimize2 size={15} aria-hidden="true" />}</button>
           <button className="toast-close" onClick={close} aria-label="Close">×</button>
         </div>
         <div className="ui-dialog-body">
@@ -552,26 +554,94 @@ export function PageGuide({ guide, open, onClose }) {
 /** The page's guide: it opens with the page the first time guides are on, and whenever the Guide
  *  button in the top bar asks for it. */
 export default function PageGuideHost({ guide }) {
+  // A guide HANDED OVER from the page before: the Dashboard guide stays open
+  // when Edit dashboard opens the Dashboard Builder (and back again), the
+  // Analytics guide when Edit layout opens the Analytics Builder -- the guide
+  // is explaining exactly that step, so closing it there lost the reader.
+  // Read once, in an EFFECT and not while rendering: when the page we came
+  // from is already loaded, this page renders before that one has unmounted
+  // and handed the guide over, so a read during render found nothing and the
+  // guide went missing on the way back. Effects of the new page run after the
+  // old page's cleanups, so the hand-over is there by then.
+  const [carried, setCarried] = useState(null);
+  const [shown, setShown] = useState(guide);
   const [open, setOpen] = useState(false);
-  // Opens with the page the first time, unless the first-time setup guide is
-  // still going: that one has a "Show me how" button for this same guide.
+  const where = useRef({ at: 0, mini: false });
+  const live = useRef({ open: false, shown: guide });
+  live.current = { open, shown };
+  // Leaving the page with the guide open: leave it for the next page to pick
+  // up (it does only if that page belongs to the same family).
+  useEffect(() => () => {
+    if (live.current.open) {
+      try {
+        sessionStorage.setItem(CARRY_KEY, JSON.stringify({
+          guide: live.current.shown, ...where.current, ts: Date.now() }));
+      } catch { /* private mode: the guide simply closes, as before */ }
+    }
+  }, []);
+  // On arrival: a guide handed over from the page before opens where it was
+  // left. Otherwise the page's own guide opens the first time, unless the
+  // first-time setup guide is still going (it has a "Show me how" button for
+  // this same guide).
   useEffect(() => {
+    const c = takeCarry(guide);
+    if (c) {
+      where.current = { at: c.at, mini: c.mini };
+      setCarried(c);
+      setShown(c.guide);
+      setOpen(true);
+      return undefined;
+    }
     if (!guidesEnabled()) return undefined;
-    let live = true;
-    setupTourActive().then((active) => { if (live && !active) setOpen(true); });
-    return () => { live = false; };
+    let alive = true;
+    setupTourActive().then((active) => { if (alive && !active) setOpen(true); });
+    return () => { alive = false; };
   }, [guide]);
   // The first-time setup guide's "Show me how" opens it with ?guide=open, also
   // when the page is already showing.
   const { search } = useLocation();
   useEffect(() => {
-    if (new URLSearchParams(search).get("guide") === "open") setOpen(true);
-  }, [search]);
+    if (new URLSearchParams(search).get("guide") === "open") { setShown(guide); setOpen(true); }
+  }, [search, guide]);
   // The Guide button in the top bar asks for this page's guide.
   useEffect(() => {
-    const ask = (e) => { if (e.detail?.key === guide) setOpen(true); };
+    const ask = (e) => { if (e.detail?.key === guide) { setShown(guide); setOpen(true); } };
     window.addEventListener(GUIDE_REQUEST_EVENT, ask);
     return () => window.removeEventListener(GUIDE_REQUEST_EVENT, ask);
   }, [guide]);
-  return <PageGuide guide={guide} open={open} onClose={() => setOpen(false)} />;
+  const onState = useCallback((st) => { where.current = st; }, []);
+  // Keyed on the hand-over too: coming BACK to the Dashboard with its own
+  // guide, the guide's name does not change, and without a new key the guide
+  // would keep the first page it was born with instead of the carried one.
+  return <PageGuide key={shown + (carried ? ":carried" : "")} guide={shown} open={open}
+                    onState={onState}
+                    initialAt={shown === carried?.guide ? carried.at : 0}
+                    initialMini={shown === carried?.guide ? carried.mini : false}
+                    onClose={() => { setOpen(false); setShown(guide); }} />;
+}
+
+//: Pages whose guides travel together: an open guide from one of them stays
+//: open on the others. Keyed by the guide each page hosts.
+const GUIDE_FAMILY = {
+  dashboard: "dashboard", dashboardBuilder: "dashboard",
+  analytics: "analytics", analyticsBuilder: "analytics",
+};
+const CARRY_KEY = "pageGuide.carry";
+
+/** The guide the page before left open, if it belongs to this page's family
+ *  and was left within the last few seconds (a navigation, not a reload an
+ *  hour later). Consumed: read once. */
+function takeCarry(guide) {
+  try {
+    const raw = sessionStorage.getItem(CARRY_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(CARRY_KEY);
+    const c = JSON.parse(raw);
+    const fam = GUIDE_FAMILY[guide];
+    if (!fam || GUIDE_FAMILY[c.guide] !== fam || !GUIDES[c.guide]) return null;
+    if (Date.now() - Number(c.ts || 0) > 10000) return null;
+    return { guide: c.guide, at: Math.max(0, Number(c.at) || 0), mini: !!c.mini };
+  } catch {
+    return null;
+  }
 }

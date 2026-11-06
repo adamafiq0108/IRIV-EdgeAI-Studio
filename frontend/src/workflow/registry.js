@@ -113,7 +113,7 @@ export const CATEGORY_STYLE = {
                icon: Database,        title: "Database" },
   // -- visualisation -------------------------------------------------------
   dashboard: { color: "#EAB308", stage: "visualization",
-               icon: LayoutDashboard, title: "Dashboard" },
+               icon: LayoutDashboard, title: "Dashboard & Analytics" },
   // -- actions -------------------------------------------------------------
   output:    { color: "#EF4444", stage: "actions",
                icon: Zap,             title: "Outputs" },
@@ -415,11 +415,11 @@ export function edgeAllowed(registry, srcType, tgtType, tgtHandle) {
   }
   if (tgtType === "integration.watch") {
     return [false, `${s.label} is not something to watch - wire a Query in, `
-      + "and the Watch runs it on a timer"];
+      + "and the Recorded Trigger runs it on a timer"];
   }
   if (srcType === "integration.watch") {
     if (["output.email", "output.telegram"].includes(tgtType)) return [true, ""];
-    return [false, "a Watch sends a message when its number crosses - wire it "
+    return [false, "a Recorded Trigger sends a message when its number crosses - wire it "
       + "into a Telegram or an Email node"];
   }
   if (srcType === "storage.csv") {

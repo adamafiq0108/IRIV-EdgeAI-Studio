@@ -15,7 +15,12 @@ import { LINKS, NODE_GUIDE } from "./guidelineText.js";
 //: Never offered as a "from" or "to": canvas furniture that takes anything, and
 //: the function brackets, which are not a stage in a pipeline.
 export const FURNITURE = ["note.comment", "common.debug", "common.link_in", "common.link_out",
-                          "function.start", "function.end", "function.call"];
+                          "function.start", "function.end", "function.call",
+                          "function.frame", "note.group"];
+
+//: Furniture the guideline still LISTS, because a beginner needs to know what
+//: it is for: it holds or tags other nodes and takes no wire itself.
+export const LISTED_FURNITURE = ["function.frame", "note.group"];
 
 /** Nodes that go only into another node's Zone point: they name an area. */
 const ZONE_ONLY = new Set(["zone.ref"]);

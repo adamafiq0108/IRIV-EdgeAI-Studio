@@ -25,7 +25,7 @@ import MqttConnectionEditor, { MqttConnectionRow }
 import { Link, useLocation } from "react-router-dom";
 import {
   ReactFlow, ReactFlowProvider, Background, MiniMap, Controls, Panel, SelectionMode,
-  applyNodeChanges, applyEdgeChanges, addEdge, useReactFlow,
+  applyNodeChanges, applyEdgeChanges, addEdge, useReactFlow, useStoreApi,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { api, saveBlob } from "../api/client.js";
@@ -36,6 +36,9 @@ import { useToast } from "../components/ui/Toast.jsx";
 import { useAsk, useConfirm } from "../components/ui/ask.jsx";
 import { exprNames } from "../workflow/ExprEditor.jsx";
 import { TypedInput } from "../workflow/TypedInput.jsx";
+import { CALL as FN_CALL, END as FN_END, FRAME as FN_FRAME, GROUP, START as FN_START, assignDropped, expandFrameDrag, fitGroups, groupMinSize, seedGroups, expandGroupDrag, fnKey, frameMembership, frameMinSize, frameOf, framePins, hiddenByFrames, legacyFrames, pinPositions, syncFrames, wireStaysInside } from "../workflow/functionFrame.js";
+import { edgeTypes } from "../workflow/ProblemEdge.jsx";
+import FunctionPicker from "../workflow/FunctionPicker.jsx";
 import { CATEGORY_STYLE, COUNTER, COUNTER_LINE_PORT, COUNTER_MODE_LABEL, FUNCTION_NODES, LINE_COUNTER, PORT_LABELS, STAGES, branchCtype, camLabel, classFilterNaming, classesFor, counterMode, counterSwaps, counterToLine, edgeAllowed, isBranch, isCounter, isStatePoint, lineToCounter, metricsForSpec, metricsOf, mintId, mintFnId, migrateStateEdges, recordedMode, statePointFn, statePointKeys } from "../workflow/registry.js";
 
 /** A palette drawer, preceded by its stage heading when it starts one. */
@@ -152,6 +155,35 @@ const SUBGROUP_ORDER = [
 // Mirrors _TRANSPARENT_OUTPUTS in core/services/workflow.py.
 const TRANSPARENT_OUT = ["output.alert", "output.event"];
 
+//: The nodes that must be NAMED when they are added (see nameNode): their
+//: name is their identity somewhere else -- an alert, a Dashboard title, a
+//: Footage page, the dashboard's Class filter card.
+const NAME_FIRST = {
+  "output.trigger": { field: "name", label: "Trigger Name", placeholder: "e.g. Overcrowded, Door left open",
+    title: "Name this Trigger",
+    description: "The name identifies this trigger in the workflow and is what its alerts say." },
+  "integration.watch": { field: "name", label: "Recorded Trigger Name", placeholder: "e.g. Violations today",
+    title: "Name this Recorded Trigger",
+    description: "The name is used in the message it sends and in the log." },
+  "filter.class": { field: "name", label: "Class Filter Name", placeholder: "e.g. people, forklifts",
+    title: "Name this Class Filter",
+    description: "The dashboard's Class filter card lists it by this name, so it can be paused there." },
+  "dashboard.card": { field: "name", label: "Card Widget Name", placeholder: "e.g. People in Zone 1",
+    title: "Name this Card Widget",
+    description: "The title shown on the card on your Dashboard and Analytics pages." },
+  "dashboard.graph": { field: "name", label: "Chart Widget Name", placeholder: "e.g. Violations per day",
+    title: "Name this Chart Widget",
+    description: "The title shown on the chart on your Dashboard and Analytics pages." },
+  "output.snapshot": { field: "page_name", label: "Image Snapshot Name", placeholder: "e.g. Handrail violations",
+    title: "Name this Image Snapshot",
+    description: "The photos this node takes get their own page in Footage under this name, "
+      + "so you can tell them from another Image Snapshot's." },
+  "output.record": { field: "page_name", label: "Recording Clip Name", placeholder: "e.g. Crane approach",
+    title: "Name this Recording Clip",
+    description: "The clips this node records get their own page in Footage under this name, "
+      + "so you can tell them from another Recording Clip's." },
+};
+
 // Nodes that WIRE as outputs but are not fired by a rule. A Command is fired
 // by a person typing it and a Watch by its own timer, so the whole output
 // panel -- "wire an Analytics node in first", "fires on a decision" -- is
@@ -180,7 +212,7 @@ const DEFAULT_BOX_COLOR = "#FF0000";
 // the START: it is the one that DECLARES the function, and a rename typed on
 // a Call means "call a different function", which is a normal thing to want.
 function renameFunction(nodes, before, fields) {
-  if (!before || before.type !== "function.start") return nodes;
+  if (!before || !["function.start", "function.frame"].includes(before.type)) return nodes;
   if (fields.fn === undefined) return nodes;
   const from = String(before.data?.fn || "").trim().toLowerCase();
   const to = String(fields.fn || "").trim();
@@ -189,13 +221,14 @@ function renameFunction(nodes, before, fields) {
   // it would merge two functions into one without saying so. The Start keeps
   // the new name (the operator typed it, and a duplicate name reads as the
   // clash it is), but nothing else moves.
-  const taken = nodes.some((n) => n.type === "function.start"
+  const taken = nodes.some((n) => n.type === before.type
     && n.id !== before.id
     && String(n.data?.fn || "").trim().toLowerCase() === to.toLowerCase());
   if (taken) return nodes;
   return nodes.map((n) => {
     if (n.id === before.id) return n;
-    if (!["function.end", "function.call"].includes(n.type)) return n;
+    if (!["function.start", "function.end", "function.call", "function.frame"]
+      .includes(n.type)) return n;
     if (String(n.data?.fn || "").trim().toLowerCase() !== from) return n;
     return { ...n, data: { ...n.data, fn: to } };
   });
@@ -206,7 +239,7 @@ function renameFunction(nodes, before, fields) {
 // renaming it afterwards is one field, not two that have to agree.
 function nextFunctionName(nodes) {
   const taken = new Set((nodes || [])
-    .filter((n) => n.type === "function.start" || n.type === "function.end")
+    .filter((n) => ["function.start", "function.end", "function.frame"].includes(n.type))
     .map((n) => String(n.data?.fn || "").trim().toLowerCase()));
   for (let i = 1; i < 500; i += 1) {
     if (!taken.has(`fn${i}`)) return `fn${i}`;
@@ -1340,6 +1373,19 @@ function Editor() {
   // until something else happened to re-render.
   const [hasClip, setHasClip] = useState(false);
   const dragSnap = useRef(null);
+  // True while a selection BOX is being dragged (see onNodesChange).
+  const boxSel = useRef(false);
+  const rfStore = useStoreApi();
+  // The last selection box in FLOW coordinates. React Flow clears its own
+  // copy before it calls onSelectionEnd, so it is caught here as it changes.
+  const lastBox = useRef(null);
+  useEffect(() => rfStore.subscribe((st) => {
+    const r = st.userSelectionRect;
+    if (!r || !r.width) return;
+    const [tx, ty, zoom] = st.transform || [0, 0, 1];
+    lastBox.current = { x: (r.x - tx) / zoom, y: (r.y - ty) / zoom,
+                        w: r.width / zoom, h: r.height / zoom };
+  }), [rfStore]);
   const invalidReason = useRef("");
   const saveTimer = useRef(null);
   const wrapperRef = useRef(null);
@@ -1602,12 +1648,73 @@ function Editor() {
   // -- change handlers -------------------------------------------------------
   const onNodesChange = useCallback((changes) => {
     const { nodes: ns, edges: es } = stateRef.current;
+    // What the operator just LET GO of -- the nodes they dragged themselves,
+    // not the ones a frame or group carried. Only these join or leave a
+    // function frame or group (assignDropped): passing a frame over a node
+    // never swallows it.
+    const dropped = changes.filter((c) => c.type === "position" && c.dragging === false)
+      .map((c) => c.id);
+    // A selection BOX picks nodes it merely touches (SelectionMode.Partial),
+    // which is right for a node and wrong for a function frame or a group:
+    // they are big, so sweeping over two nodes inside one selected the whole
+    // frame too. A frame or group joins a box selection only when the box
+    // covers it completely.
+    if (boxSel.current && changes.some((c) => c.type === "select" && c.selected)) {
+      const st = rfStore.getState();
+      const r = st.userSelectionRect;
+      const [tx, ty, zoom] = st.transform || [0, 0, 1];
+      if (r) {
+        const box = { x: (r.x - tx) / zoom, y: (r.y - ty) / zoom,
+                      w: r.width / zoom, h: r.height / zoom };
+        const byId = new Map(ns.map((n) => [n.id, n]));
+        changes = changes.filter((c) => {
+          if (c.type !== "select" || !c.selected) return true;
+          const n = byId.get(c.id);
+          if (!n || (n.type !== FN_FRAME && n.type !== GROUP)) return true;
+          const w = Number(n.data?.width) || 0;
+          const h = n.type === FN_FRAME && n.data?.collapsed ? 44 : Number(n.data?.height) || 0;
+          return n.position.x >= box.x && n.position.y >= box.y
+            && n.position.x + w <= box.x + box.w && n.position.y + h <= box.y + box.h;
+        });
+      }
+    }
+    // GROUPS carry whatever sits inside them. First, so a function frame
+    // carried by a group is already moving when frames are expanded below.
+    if (ns.some((n) => n.type === GROUP)) changes = expandGroupDrag(changes, ns);
+    // FUNCTION FRAMES. Dragging a frame carries its Start, End and body;
+    // deleting one takes its Start and End with it (the body stays, as plain
+    // nodes on the canvas); a Start or End is never deleted on its own while
+    // its frame is there -- it is the frame's edge, not a node of its own.
+    if (ns.some((n) => n.type === FN_FRAME)) {
+      const pins = framePins(ns);
+      const gone = new Set(changes.filter((c) => c.type === "remove").map((c) => c.id));
+      const pinned = new Map();
+      for (const [fid, p] of Object.entries(pins)) {
+        if (p.start) pinned.set(p.start.id, fid);
+        if (p.end) pinned.set(p.end.id, fid);
+      }
+      changes = changes.filter((c) => !(c.type === "remove" && pinned.has(c.id)
+                                        && !gone.has(pinned.get(c.id))));
+      for (const fid of gone) {
+        const p = pins[fid];
+        if (!p) continue;
+        for (const pin of [p.start, p.end]) {
+          if (pin && !changes.some((c) => c.type === "remove" && c.id === pin.id)) {
+            changes = [...changes, { type: "remove", id: pin.id }];
+          }
+        }
+      }
+      changes = expandFrameDrag(changes, ns);
+    }
     if (changes.some((c) => c.type === "remove")) history.push(ns, es);
     if (changes.some((c) => c.type === "position" && c.dragging) && !dragSnap.current) {
       dragSnap.current = { nodes: ns, edges: es };
     }
     const dragEnd = changes.some((c) => c.type === "position" && c.dragging === false);
-    setNodes((cur) => applyNodeChanges(changes, cur));
+    setNodes((cur) => {
+      const next = applyNodeChanges(changes, cur);
+      return dropped.length ? assignDropped(next, dropped) : next;
+    });
     if (dragEnd && dragSnap.current) {
       history.push(dragSnap.current.nodes, dragSnap.current.edges);
       dragSnap.current = null;
@@ -1666,6 +1773,10 @@ function Editor() {
     const [ok, reason] = edgeAllowed(registry, src.type, tgt.type,
                                      conn.targetHandle);
     if (!ok) { invalidReason.current = reason; return false; }
+    {
+      const [inOk, inWhy] = wireStaysInside(src.id, tgt.id, ns);
+      if (!inOk) { invalidReason.current = inWhy; return false; }
+    }
     // THE COUNTER takes a Zone OR a Line, and the port says which. Asked
     // before the generic kind check below so the refusal is in the Counter's
     // own words -- "drop it on the Zone port" -- rather than a line counter's
@@ -2070,24 +2181,60 @@ function Editor() {
   // A Snapshot node owns a page in Footage under its name, so a new one asks
   // for the name at once (it can be changed in the node's settings).
   const askPage = useAsk();
-  const nameSnapshot = useCallback(async (id, type) => {
-    const clip = type === "output.record";
+  // NAME IT FIRST. A node whose NAME is its identity -- what an alert says,
+  // what a card is titled on the Dashboard, the page its photos land on, the
+  // filter the dashboard pauses by name -- asks for that name the moment it is
+  // dropped, and is not added without one: an unnamed one is a card called
+  // "Card", an alert nobody can tell from the next, a Footage page with no
+  // title. A copy dragged from "On this canvas" already carries its name.
+  const nameNode = useCallback(async (id, type) => {
+    const ask = NAME_FIRST[type];
+    if (!ask) return;
     const name = await askPage({
-      title: clip ? "Name this Record Clip" : "Name this Snapshot",
-      description: clip
-        ? "The clips this node records get their own page in Footage under this "
-          + "name, so you can tell them from another Record Clip's."
-        : "The photos this node takes get their own page in Footage "
-          + "under this name, so you can tell them from another Snapshot's.",
-      label: "Page name", placeholder: clip ? "Crane approach" : "Handrail violations",
-      submitLabel: "Save name" });
+      title: ask.title, description: ask.description,
+      label: ask.label, placeholder: ask.placeholder, submitLabel: "Add node" });
     const clean = String(name || "").split(/\s+/).join(" ").trim().slice(0, 60);
-    if (!clean) return;
+    if (!clean) {
+      // No name, no node: take it back off the canvas (one undo step was
+      // already pushed when it was added, so this leaves no trace).
+      setNodes((cur) => cur.filter((n) => n.id !== id));
+      setEdges((cur) => cur.filter((e) => e.source !== id && e.target !== id));
+      setSelectedId((cur) => (cur === id ? null : cur));
+      setInspectId((cur) => (cur === id ? null : cur));
+      toast.info("Not added", `${registry[type]?.label || "This node"} needs a name - drop it again and give it one.`);
+      scheduleSave();
+      return;
+    }
     setNodes((cur) => cur.map((n) => (n.id === id
-      ? { ...n, data: { ...n.data, page_name: clean } } : n)));
-  }, [askPage]);
+      ? { ...n, data: { ...n.data, [ask.field]: clean } } : n)));
+    scheduleSave();
+  }, [askPage, registry, toast, scheduleSave]);
+
+  // A FUNCTION arrives as one frame with its Start and End already pinned to
+  // its edges and already sharing a name, so it works before it is renamed.
+  // The pins are placed by syncFrames once React Flow has measured them.
+  const addFunctionFrame = useCallback((position) => {
+    if (!registry[FN_FRAME]) return;
+    const { nodes: ns, edges: es } = stateRef.current;
+    history.push(ns, es);
+    const fn = nextFunctionName(ns);
+    const frame = { id: mintId(), type: FN_FRAME, position, selected: true,
+                    data: { ...(registry[FN_FRAME].data || {}), fn, members: [] } };
+    const start = { id: mintId(), type: FN_START, position, data: { fn, params: [] } };
+    const end = { id: mintId(), type: FN_END, position, data: { fn, returns: [] } };
+    const at = pinPositions(frame, start, end);
+    start.position = at.start;
+    end.position = at.end;
+    setNodes((cur) => assignDropped([...cur.map((n) => ({ ...n, selected: false })),
+                                     frame, start, end], [frame.id]));
+    setSelectedId(frame.id);
+    setInspectId(frame.id);
+    scheduleSave();
+  }, [registry, history, scheduleSave]);
 
   const addNode = useCallback((type, position, extraData) => {
+    // A function is a frame with its Start and End, never one of the three.
+    if (type === FN_FRAME || type === FN_START) { addFunctionFrame(position); return; }
     const spec = registry[type];
     if (!spec) return;
     const { nodes: ns, edges: es } = stateRef.current;
@@ -2113,17 +2260,17 @@ function Editor() {
     }
     // A Chart opens on "Choose a chart type" (chartTypes.markFreshChart):
     // remembered for this session only, never saved with the node.
-    if (type === "dashboard.graph") markFreshChart(id);
-    setNodes((cur) => [...cur.map((n) => ({ ...n, selected: false })),
-                       { id, type, position, data, selected: true }]);
+    if (type === "dashboard.graph" && !(extraData || {}).kind) markFreshChart(id);
+    // Dropped inside a function or a group: it joins it, as if dragged in.
+    setNodes((cur) => assignDropped([...cur.map((n) => ({ ...n, selected: false })),
+                                     { id, type, position, data, selected: true }], [id]));
     setSelectedId(id);
     // A node you just created opens its settings: you made it in order to
     // configure it, so the double-click rule would only be a step in the way.
     setInspectId(id);
     scheduleSave();
-    if (["output.snapshot", "output.record"].includes(type)
-        && !(extraData || {}).page_name) nameSnapshot(id, type);
-  }, [registry, history, scheduleSave, nameSnapshot]);
+    if (NAME_FIRST[type] && !String(data[NAME_FIRST[type].field] || "").trim()) nameNode(id, type);
+  }, [registry, history, scheduleSave, nameNode, addFunctionFrame]);
 
   // A SAVED query dropped from the palette: the Query node plus the wires
   // that make it read.
@@ -2541,6 +2688,82 @@ function Editor() {
     return out;
   }, [nodes]);
 
+  // How big each function is and how often it is used: "3 nodes · called by
+  // 1 Call" on the frame, "3 nodes" on every Call of it.
+  const fnStats = useMemo(() => {
+    const out = {};
+    const frames = nodes.filter((n) => n.type === FN_FRAME);
+    const membership = frames.length ? frameMembership(nodes) : {};
+    for (const f of frames) {
+      const k = fnKey(f);
+      if (!k) continue;
+      out[k] = { nodes: Object.values(membership).filter((fid) => fid === f.id).length,
+                 calls: 0, frameId: f.id };
+    }
+    for (const n of nodes) {
+      if (n.type !== FN_CALL) continue;
+      const k = fnKey(n);
+      if (out[k]) out[k].calls += 1;
+    }
+    return out;
+  }, [nodes]);
+
+  // KEEP EVERY FRAME HONEST. After any change: an old Start / End pair with
+  // no frame gets one drawn around it; every frame's Start and End snap back
+  // to its edges; `members` is rewritten to what is inside it now, which is
+  // what the server folds into the body. Converges: a second pass over its
+  // own output changes nothing, so it never loops.
+  useEffect(() => {
+    if (!registry || !registry[FN_FRAME]) return;
+    if (!nodes.some((n) => n.type === FN_START || n.type === FN_FRAME
+                           || n.type === GROUP)) return;
+    const added = editable ? legacyFrames(nodes, edges, mintId) : [];
+    const base = added.length ? [...added, ...nodes] : nodes;
+    const next = fitGroups(syncFrames(seedGroups(base)));
+    if (next === nodes) return;
+    // Only membership and pin positions changed -- nothing worth an undo
+    // step, but the members ARE what the server reads, so save.
+    // Membership, pins and group sizes changed -- nothing worth an undo step,
+    // but members ARE what the server reads and a grown group is a new size,
+    // so save when a frame or group itself changed.
+    const before = new Map(nodes.map((n) => [n.id, n]));
+    const membersMoved = next.some((n) => (n.type === FN_FRAME || n.type === GROUP)
+      && before.get(n.id) !== n);
+    setNodes(next);
+    if (editable && (added.length || membersMoved) && !dragSnap.current) scheduleSave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, registry, editable]);
+
+  // OPEN a function from one of its Calls: unfold the frame, select it, and
+  // bring it into view. Edit it once and every Call of it changes.
+  const openFunction = useCallback((name) => {
+    const k = String(name || "").trim().toLowerCase();
+    const frame = stateRef.current.nodes.find((n) => n.type === FN_FRAME && fnKey(n) === k);
+    if (!frame) return;
+    setNodes((cur) => cur.map((n) => (n.id === frame.id
+      ? { ...n, selected: true, data: { ...n.data, collapsed: false } }
+      : { ...n, selected: false })));
+    setSelectedId(frame.id);
+    setInspectId(frame.id);
+    const d = frame.data || {};
+    rf.fitBounds({ x: frame.position.x, y: frame.position.y,
+                   width: Number(d.width) || 760, height: Number(d.height) || 340 },
+                 { padding: 0.15, duration: 300 });
+    if (d.collapsed) scheduleSave();
+  }, [rf, scheduleSave]);
+
+  // The frame inspector edits its Start (parameters) and End (returns):
+  // those two nodes are still where a function's shape lives.
+  const setFnData = useCallback((frameId, type, fields) => {
+    const { nodes: ns, edges: es } = stateRef.current;
+    const frame = ns.find((n) => n.id === frameId);
+    if (!frame) return;
+    history.push(ns, es);
+    setNodes((cur) => cur.map((n) => (n.type === type && fnKey(n) === fnKey(frame)
+      ? { ...n, data: { ...n.data, ...fields } } : n)));
+    scheduleSave();
+  }, [history, scheduleSave]);
+
   // A Custom Formula's wire follows the NAME its expression uses.
   //
   // Clicking a name under "Wired in - use these names" (or typing one) grows
@@ -2597,14 +2820,12 @@ function Editor() {
     // with nothing to close it -- and an unclosed function has no body, so it
     // compiles to nothing while looking finished. Both arrive named the same,
     // far enough apart to wire between.
-    if (type === "function.start") {
-      const fn = nextFunctionName(stateRef.current.nodes);
-      addNode("function.start", position, { fn, params: [] });
-      addNode("function.end", { x: position.x + 360, y: position.y }, { fn });
+    if (type === "function.start" || type === FN_FRAME) {
+      addFunctionFrame(position);
       return;
     }
     addNode(type, position, extra);
-  }, [rf, addNode, addSavedQuery]);
+  }, [rf, addNode, addSavedQuery, addFunctionFrame]);
 
   // -- context menu ----------------------------------------------------------
   // The right button both pans (drag) and opens this menu (click), so a menu is
@@ -2737,7 +2958,14 @@ function Editor() {
   // node that is no longer the selected one must not keep an open panel
   // editing it, or a click elsewhere leaves you changing something you can no
   // longer see.
-  const selected = nodes.find((n) => n.id === selectedId && n.id === inspectId);
+  const selected = (() => {
+    const n = nodes.find((m) => m.id === selectedId && m.id === inspectId);
+    // A Start or End is the edge of its frame: its settings ARE the frame's.
+    if (n && (n.type === FN_START || n.type === FN_END) && fnStats[fnKey(n)]) {
+      return nodes.find((m) => m.id === fnStats[fnKey(n)].frameId) || n;
+    }
+    return n;
+  })();
   // See `helpPref`: unanswered means open. Selecting a node still takes the
   // panel over, so the guide is never in the way of actual work -- it is what
   // the column shows when nothing else needs it.
@@ -3047,7 +3275,26 @@ function Editor() {
     return out;
   })();
   const offNodes = offNodeIds(warnings, edges, nodes);
+  // A folded function hides its Start, End and body; React Flow then hides
+  // every wire touching them too.
+  const folded = hiddenByFrames(nodes);
   const shown = nodes.map((n) => {
+    // THE FRAME sits behind everything, below even a Comment, and only its
+    // title bar drags it (the rest of it lets the pointer through -- see
+    // FunctionFrameNode). Its Start and End are pinned: not draggable, not
+    // deletable on their own.
+    if (n.type === GROUP) {
+      return { ...n, zIndex: -3, dragHandle: ".group-drag",
+               style: { ...(n.style || {}), pointerEvents: "none" } };
+    }
+    if (n.type === FN_FRAME) {
+      return { ...n, zIndex: -2, dragHandle: ".fn-frame-drag",
+               style: { ...(n.style || {}), pointerEvents: "none" } };
+    }
+    if (folded.has(n.id)) return { ...n, hidden: true };
+    if ((n.type === FN_START || n.type === FN_END) && fnStats[fnKey(n)]) {
+      return { ...n, draggable: false, deletable: false };
+    }
     const marked = searchLower && nodeMatches(n)
       ? { ...n, style: { ...n.style, outline: "2px solid var(--accent, #04bade)", borderRadius: 12 } }
       : { ...n, style: n.style && n.style.outline ? {} : n.style };
@@ -3068,7 +3315,40 @@ function Editor() {
   // "connected but broken" instead of "switched off". The edge itself is
   // untouched - flipping the switch back on restores it, so a capture switch
   // can never cost an operator their wiring.
+  // A wire with a PROBLEM gets a red X at its midpoint (ProblemEdge), the
+  // reason on hover: a wire the rules no longer allow (drawn before a rule
+  // changed, or crossing into a function), or a wire touching a node the
+  // compiler rejected. A warning on the node it feeds marks it amber.
+  const fnMembership = frameMembership(nodes);
+  const fnPinsMap = framePins(nodes);
+  const wireProblem = (e) => {
+    const src = nodeById.get(e.source), tgt = nodeById.get(e.target);
+    if (!src || !tgt || !registry) return null;
+    if (e.targetHandle === "link_in" || e.sourceHandle === "link_out") return null;
+    if (!isStatePoint(src.type, e.sourceHandle)) {
+      const [ok, why] = edgeAllowed(registry, src.type, tgt.type, e.targetHandle);
+      if (!ok) return { level: "error", reason: why || "this wire is not allowed" };
+    }
+    const fa = frameOf(src.id, nodes, fnMembership, fnPinsMap);
+    const fb = frameOf(tgt.id, nodes, fnMembership, fnPinsMap);
+    if (fa !== fb) {
+      return { level: "error",
+               reason: "this wire crosses a function frame - a node inside a function only connects to its Start, End or other nodes in the same frame" };
+    }
+    if (errors[tgt.id]) return { level: "error", reason: errors[tgt.id] };
+    if (errors[src.id]) return { level: "error", reason: errors[src.id] };
+    if (warnings[tgt.id] && !offNodes.has(tgt.id)) {
+      return { level: "warn", reason: warnings[tgt.id] };
+    }
+    return null;
+  };
   const shownEdges = edges.map((e) => {
+    const bad = wireProblem(e);
+    if (bad) {
+      const hot = e.id === hoveredEdgeId || e.selected;
+      return { ...e, type: "problem", animated: false, data: { ...(e.data || {}), ...bad },
+               style: hot ? { stroke: "#2f8fff", strokeWidth: 3 } : undefined };
+    }
     // A LINK wire is an association, not a flow: dotted, accent-coloured,
     // never animated -- deliberately unlike the 5-5 grey dash a switched-off
     // branch gets, because "tied together" and "not running" must never
@@ -3083,9 +3363,15 @@ function Editor() {
       ? { ...e, animated: false,
           style: { ...e.style, stroke: "rgba(148,163,184,.45)",
                    strokeDasharray: "5 5" } }
-      : (e.style && e.style.strokeDasharray
-          ? { ...e, style: { ...e.style, stroke: undefined, strokeDasharray: undefined } }
-          : e);
+      // A live wire FLOWS, the way the guideline draws it: the dash moving
+      // from source to target says which way the value goes.
+      // The ink is stated per edge, not left to defaultEdgeOptions: a hover
+      // fade replaces the edge's style object, which threw the default away
+      // and left a faint grey dash on the light canvas. Black on light,
+      // white on dark.
+      : { ...e, animated: true,
+          style: { ...(e.style || {}), strokeDasharray: undefined,
+                   stroke: isDarkCanvas ? "#FFFFFF" : "#111111" } };
     // Hovered or selected: which wire is this, answered at the cursor. A wire
     // into a switched-off node still highlights -- inspecting a dashed wire
     // matters at least as much as a live one.
@@ -3226,10 +3512,47 @@ function Editor() {
                                    // corner; the node itself owns the grip
                                    // and this is its way to write the size.
                                    resizeNode: (id, dims, done) => {
-                                     setNodes((cur) => cur.map((n) => (n.id === id
-                                       ? { ...n, data: { ...n.data, ...dims } } : n)));
+                                     setNodes((cur) => {
+                                       const node = cur.find((n) => n.id === id);
+                                       // A frame never shrinks smaller than
+                                       // the nodes inside it.
+                                       // ...and a group never smaller than
+                                       // the nodes it holds.
+                                       if (node?.type === GROUP) {
+                                         const min = groupMinSize(node, cur);
+                                         dims = { width: Math.round(Math.max(min.width, dims.width)),
+                                                  height: Math.round(Math.max(min.height, dims.height)) };
+                                       }
+                                       if (node?.type === FN_FRAME) {
+                                         const min = frameMinSize(node, cur, frameMembership(cur));
+                                         dims = { width: Math.round(Math.max(min.width, dims.width)),
+                                                  height: Math.round(Math.max(min.height, dims.height)) };
+                                       }
+                                       return cur.map((n) => (n.id === id
+                                         ? { ...n, data: { ...n.data, ...dims } } : n));
+                                     });
                                      if (done) scheduleSave();
                                    },
+                                   fnStats,
+                                   toggleFrame: (id) => {
+                                     setNodes((cur) => cur.map((n) => (n.id === id
+                                       ? { ...n, data: { ...n.data, collapsed: !n.data?.collapsed } }
+                                       : n)));
+                                     scheduleSave();
+                                   },
+                                   openFunction,
+                                   addFnPort: editable ? (id, key) => {
+                                     const { nodes: ns, edges: es } = stateRef.current;
+                                     history.push(ns, es);
+                                     setNodes((cur) => cur.map((n) => {
+                                       if (n.id !== id) return n;
+                                       const list = (n.data?.[key] || []).filter(Boolean);
+                                       let i = list.length + 1;
+                                       while (list.includes(`param${i}`)) i += 1;
+                                       return { ...n, data: { ...n.data, [key]: [...list, `param${i}`] } };
+                                     }));
+                                     scheduleSave();
+                                   } : null,
                                    // The star. Saved with the graph like any
                                    // other node setting -- what somebody
                                    // pinned while tuning a line is a property
@@ -3428,7 +3751,17 @@ function Editor() {
                        if (!id) return;
                        setSelectedId(id);
                        setInspectId(id);
-                       setNodes((cur) => cur.map((n) => ({ ...n, selected: n.id === id })));
+                       // Inside a folded function: unfold it, or the jump
+                       // lands on a node nobody can see.
+                       const folded = hiddenByFrames(nodes);
+                       const fold = folded.has(id) && nodes.find((f) => f.type === FN_FRAME
+                         && f.data?.collapsed
+                         && hiddenByFrames(nodes.map((m) => (m.type === FN_FRAME && m.id !== f.id
+                           ? { ...m, data: { ...m.data, collapsed: false } } : m))).has(id));
+                       setNodes((cur) => cur.map((n) => ({
+                         ...n, selected: n.id === id,
+                         ...(fold && n.id === fold.id
+                           ? { data: { ...n.data, collapsed: false } } : {}) })));
                        rf.fitView({ nodes: [{ id }], duration: 300, maxZoom: 1.2 });
                      }} />
           </div>
@@ -3456,10 +3789,33 @@ function Editor() {
                 so a Backspace that missed an input deleted the very node
                 being edited - "I clicked save and my node was gone". */}
             <ReactFlow
-              nodes={shown} edges={shownEdges} nodeTypes={nodeTypes}
+              nodes={shown} edges={shownEdges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
               onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
               onConnect={onConnect} onConnectEnd={onConnectEnd}
               onSelectionChange={onSelectionChange}
+              onSelectionStart={() => { boxSel.current = true; }}
+              onSelectionEnd={() => {
+                boxSel.current = false;
+                // Final say for frames and groups: selected only when the box
+                // that just ended covers them completely (see onNodesChange).
+                const box = lastBox.current;
+                lastBox.current = null;
+                if (!box) return;
+                setNodes((cur) => {
+                  let changed = false;
+                  const next = cur.map((n) => {
+                    if (n.type !== FN_FRAME && n.type !== GROUP) return n;
+                    const w = Number(n.data?.width) || 0;
+                    const h = n.type === FN_FRAME && n.data?.collapsed ? 44 : Number(n.data?.height) || 0;
+                    const inside = n.position.x >= box.x && n.position.y >= box.y
+                      && n.position.x + w <= box.x + box.w && n.position.y + h <= box.y + box.h;
+                    if (!!n.selected === inside) return n;
+                    changed = true;
+                    return { ...n, selected: inside };
+                  });
+                  return changed ? next : cur;
+                });
+              }}
               isValidConnection={isValidConnection}
               nodesDraggable={editable} nodesConnectable={editable}
               elementsSelectable
@@ -3482,6 +3838,7 @@ function Editor() {
               // blueprint instead -- that IS its settings, one level down.
               onNodeDoubleClick={(e, n) => {
                 if (n.type === "analytics.block") { setBpId(n.id); return; }
+                if (n.type === FN_CALL && fnStats[fnKey(n)]) { openFunction(n.data.fn); return; }
                 setSelectedId(n.id);
                 setInspectId(n.id);
               }}
@@ -3743,6 +4100,7 @@ function Editor() {
                            setNodes((cur) => cur.map((n) => ({ ...n, selected: false })));
                          }}
                          onOpenBlueprint={() => setBpId(selected.id)}
+                         onFnData={(type, fields) => setFnData(selected.id, type, fields)}
                          // Turning a Variable that HOLDS one into a variable
                          // that IS one: same node, same place on the canvas,
                          // so making a new value never means finding a
@@ -4557,19 +4915,114 @@ function Palette({ registry, zoneList, models, editable, search, searchText,
     .filter((f) => !search || f.name.toLowerCase().includes(search)
                    || (f.params || []).some((p) => p.toLowerCase().includes(search)))
     .sort((a, b) => a.name.localeCompare(b.name));
+  // Every Custom Formula already written on this canvas, so one built once
+  // can be dragged out again as many times as needed instead of retyped.
+  // One entry per distinct expression (copies of the same formula are one
+  // formula), named after the first node that holds it. Dragging one out is a
+  // new Custom Formula with the same expression and settings, and its own id.
+  const formulasHere = (() => {
+    const seen = new Map();
+    for (const n of nodes || []) {
+      if (n.type !== "analytics.expr") continue;
+      const expr = String(n.data?.expr || "").trim();
+      if (!expr) continue;
+      const k = expr.replace(/\s+/g, " ");
+      const cur = seen.get(k);
+      if (cur) { cur.count += 1; cur.ids.push(n.id); continue; }
+      const { fnId, pinned, ...rest } = n.data || {};
+      seen.set(k, { key: k, name: String(n.data?.name || "").trim() || "Formula",
+                    expr, data: rest, count: 1, ids: [n.id] });
+    }
+    return [...seen.values()]
+      .filter((f) => !search || f.name.toLowerCase().includes(search)
+                     || f.expr.toLowerCase().includes(search))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  })();
+  // Every Card Widget and Chart Widget on this canvas, one entry per node
+  // (each one is its own widget on the dashboard). Double-click jumps to it;
+  // dragging one out is a NEW widget with the same shape and settings and
+  // nothing wired in yet.
+  const widgetsHere = (nodes || [])
+    .filter((n) => n.type === "dashboard.card" || n.type === "dashboard.graph")
+    .map((n) => {
+      const { fnId, pinned, builder_edit, ...rest } = n.data || {};
+      const kind = n.type === "dashboard.graph" ? "chart" : "card";
+      return { id: n.id, type: n.type, data: rest,
+               name: String(n.data?.name || "").trim()
+                 || (n.type === "dashboard.graph" ? "Chart Widget" : "Card Widget"),
+               sub: `${n.data?.kind || (kind === "chart" ? "area" : "tile")} ${kind}` };
+    })
+    .filter((w) => !search || w.name.toLowerCase().includes(search))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  // ON THIS CANVAS, for the nodes worth finding again on a busy canvas. Each
+  // is listed in its own drawer, by name; double-click jumps to it.
+  //   copy: true  -> it can also be DRAGGED out as a new node with the same
+  //                  settings (lots of set-up, and a second one makes sense);
+  //   copy: false -> find only (a copy would fire a second alert, write into
+  //                  the same Footage page, or is rarely what anyone wants).
+  // The measuring nodes (Counter, Cycle Time, ...) are every analytics node
+  // in the Processing drawer, find only. Functions, formulas, cards, charts
+  // and links have lists of their own.
+  const paletteCatOf = (sp) => sp.palette?.cat || sp.category;
+  const HERE_TYPES = {
+    "filter.class": true, "filter.preprocess": true,
+    "variable.mqtt": true, "output.mqtt_publish": true,
+    "variable.rs485": true, "output.modbus_write": true,
+    "variable.api": true, "output.webhook": true, "output.webhook_publish": true,
+    "output.telegram": true, "output.email": true, "variable.schedule": true,
+    "output.trigger": false, "integration.watch": false,
+    "output.snapshot": false, "output.record": false,
+    "common.inject": false, "note.group": false,
+  };
+  const hereCopy = (type) => {
+    if (type in HERE_TYPES) return HERE_TYPES[type];
+    const sp = registry[type];
+    if (sp && sp.category === "analytics" && paletteCatOf(sp) === "zone") return false;
+    return undefined;                                    // not listed
+  };
+  const hereByCat = {};
+  for (const n of nodes || []) {
+    const copy = hereCopy(n.type);
+    if (copy === undefined) continue;
+    const sp = registry[n.type] || {};
+    const d = n.data || {};
+    const name = String(d.name || d.page_name || "").trim() || sp.label || n.type;
+    if (search && !name.toLowerCase().includes(search)
+        && !String(sp.label || "").toLowerCase().includes(search)) continue;
+    const detail = n.type === "filter.class" ? (d.classes || []).join(", ") || "all classes"
+      : d.topic ? String(d.topic) : "";
+    const { fnId, pinned, builder_edit, ...rest } = d;
+    (hereByCat[paletteCatOf(sp)] ||= []).push({
+      id: n.id, type: n.type, name, copy, data: rest,
+      sub: [sp.label, detail].filter(Boolean).join(" · "),
+    });
+  }
+  for (const list of Object.values(hereByCat)) list.sort((a, b) => a.name.localeCompare(b.name));
   // Every link name already on this canvas, with how many Link ins and Link
   // outs carry it, so a name made once is picked rather than retyped (a
   // typo'd jump name carries nothing and says nothing). Dragging one out is
   // a Link in or a Link out already named; the side that has none yet is the
   // one the name is still waiting for.
+  // DOUBLE-CLICK an "On this canvas" entry to jump to it. Several nodes behind
+  // one entry (copies of a formula, the ins and outs of a link): each double
+  // click goes to the next one.
+  const hop = useRef({});
+  const jumpTo = (key, ids) => {
+    if (!ids || !ids.length || !onShowNode) return;
+    const i = (hop.current[key] ?? -1) + 1;
+    hop.current[key] = i % ids.length;
+    onShowNode(ids[i % ids.length]);
+  };
+  const jumpHint = " - double-click to find it on the canvas";
   const linkNames = (() => {
     const seen = new Map();
     for (const n of nodes || []) {
       if (n.type !== "common.link_in" && n.type !== "common.link_out") continue;
       const name = String(n.data?.link || "").trim();
       if (!name) continue;
-      const row = seen.get(name) || { name, ins: 0, outs: 0 };
+      const row = seen.get(name) || { name, ins: 0, outs: 0, ids: [] };
       if (n.type === "common.link_in") row.ins += 1; else row.outs += 1;
+      row.ids.push(n.id);
       seen.set(name, row);
     }
     return [...seen.values()]
@@ -5008,6 +5461,9 @@ function Palette({ registry, zoneList, models, editable, search, searchText,
                   icon={style.icon}
                   count={items.length + perModel.length
                          + (cat === "logic" ? fnHere.length : 0)
+                         + (cat === "math" ? formulasHere.length : 0)
+                         + (cat === "dashboard" ? widgetsHere.length : 0)
+                         + (hereByCat[cat] || []).length
                          + (cat === "common" ? linkNames.length : 0)
                          + (cat === "integration" ? thresholds.length : 0)}
                   open={!!search || !!openCats[cat]} onToggle={() => toggleCat(cat)}>
@@ -5049,21 +5505,55 @@ function Palette({ registry, zoneList, models, editable, search, searchText,
                 ))}
               </div>
             )}
-            {cat === "logic" && fnHere.length > 0 && (
-              <div style={{ marginBottom: 2 }}>
-                <SubHead>On this canvas ({fnHere.length})</SubHead>
-                {fnHere.map((f) => (
-                  <PaletteItem key={f.name} color={style.color} label={f.name}
-                               sub={!f.closed ? "no Function End yet"
-                                 : f.params.length
-                                   ? `${f.params.length} parameter`
-                                     + `${f.params.length === 1 ? "" : "s"}: `
-                                     + f.params.join(", ")
-                                   : "no parameters"}
-                               {...dragProps("function.call", { fn: f.name })} />
-                ))}
-              </div>
-            )}
+            {(() => {
+              // One "On this canvas" section per drawer: the drawer's own
+              // special list (functions, formulas, widgets) and then every
+              // other listed node that lives in this drawer.
+              const generic = hereByCat[cat] || [];
+              const special = cat === "logic" ? fnHere.length
+                : cat === "math" ? formulasHere.length
+                : cat === "dashboard" ? widgetsHere.length : 0;
+              if (!generic.length && !special) return null;
+              return (
+                <div style={{ marginBottom: 2 }}>
+                  <SubHead>On this canvas ({generic.length + special})</SubHead>
+                  {cat === "dashboard" && widgetsHere.map((w) => (
+                    <PaletteItem key={w.id} color={style.color} label={w.name}
+                                 sub={w.sub + jumpHint}
+                                 onDoubleClick={() => jumpTo(`wd:${w.id}`, [w.id])}
+                                 {...dragProps(w.type, w.data)} />
+                  ))}
+                  {cat === "math" && formulasHere.map((f) => (
+                    <PaletteItem key={f.key} color={style.color} label={f.name}
+                                 sub={f.expr + (f.count > 1 ? `  ·  used ${f.count}×` : "") + jumpHint}
+                                 onDoubleClick={() => jumpTo(`fx:${f.key}`, f.ids)}
+                                 {...dragProps("analytics.expr", f.data)} />
+                  ))}
+                  {cat === "logic" && fnHere.map((f) => (
+                    <PaletteItem key={f.name} color={style.color} label={f.name}
+                                 sub={(!f.closed ? "no Function End yet"
+                                   : f.params.length
+                                     ? `${f.params.length} parameter`
+                                       + `${f.params.length === 1 ? "" : "s"}: `
+                                       + f.params.join(", ")
+                                     : "no parameters") + jumpHint}
+                                 onDoubleClick={() => jumpTo(`fn:${f.name}`, nodes
+                                   .filter((n) => n.type === "function.frame"
+                                     && String(n.data?.fn || "").trim().toLowerCase() === f.name.toLowerCase())
+                                   .map((n) => n.id))}
+                                 {...dragProps("function.call", { fn: f.name })} />
+                  ))}
+                  {generic.map((g) => (
+                    <PaletteItem key={g.id} color={style.color} label={g.name}
+                                 sub={g.sub + (g.copy ? jumpHint
+                                   : " - double-click to find it on the canvas (find only)")}
+                                 cursor={g.copy && editable ? undefined : "pointer"}
+                                 onDoubleClick={() => jumpTo(`nd:${g.id}`, [g.id])}
+                                 {...(g.copy ? dragProps(g.type, g.data) : {})} />
+                  ))}
+                </div>
+              );
+            })()}
             {cat === "common" && linkNames.length > 0 && (
               <div style={{ marginBottom: 2 }}>
                 <SubHead>Links on this canvas ({linkNames.length})</SubHead>
@@ -5076,8 +5566,9 @@ function Palette({ registry, zoneList, models, editable, search, searchText,
                     <div className="mono" style={{ fontSize: 12, fontWeight: 600,
                                                    overflow: "hidden",
                                                    textOverflow: "ellipsis",
-                                                   whiteSpace: "nowrap" }}
-                         title={l.name}>
+                                                   whiteSpace: "nowrap", cursor: "pointer" }}
+                         onDoubleClick={() => jumpTo(`ln:${l.name}`, l.ids)}
+                         title={l.name + jumpHint}>
                       {l.name}
                     </div>
                     <div style={{ display: "flex", gap: 6, marginTop: 5 }}>
@@ -5170,6 +5661,92 @@ function ParamList({ value, disabled, onChange }) {
               onClick={() => onChange([...rows, ""])}>+ Parameter</button>
     </div>
   );
+}
+
+//: The kinds a parameter or return value may be declared as. A label for the
+//: reader, not a type the compiler checks: every wire on this canvas carries
+//: a value, and an "event" is a value that only matters when it arrives.
+const FN_PORT_TYPES = ["any", "event", "number", "boolean", "string"];
+
+/** One list of named, typed ports: a function's parameters or its returns. */
+function FnPortList({ names, types, disabled, onChange, addLabel, word }) {
+  const rows = names || [];
+  const kinds = types || {};
+  const emit = (nextRows, nextKinds) => {
+    const keep = {};
+    for (const r of nextRows) if (r && nextKinds[r]) keep[r] = nextKinds[r];
+    onChange(nextRows, keep);
+  };
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {rows.map((r, i) => (
+        <div key={i} style={{ display: "flex", gap: 6, alignItems: "center",
+                              padding: "4px 6px 4px 10px", borderRadius: 8,
+                              background: "rgba(128,128,128,.08)" }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+                         background: "#F97316" }} />
+          <input className="input mono" value={r} disabled={disabled}
+                 placeholder="name" style={{ flex: 1, minWidth: 0 }}
+                 onChange={(e) => {
+                   const v = e.target.value.toLowerCase()
+                     .replace(/[^a-z0-9_]+/g, "_").slice(0, 24);
+                   const nk = { ...kinds };
+                   if (kinds[r]) { nk[v] = kinds[r]; delete nk[r]; }
+                   emit(rows.map((x, j) => (j === i ? v : x)), nk);
+                 }} />
+          <select className="input" value={kinds[r] || "any"} disabled={disabled}
+                  style={{ width: 92 }}
+                  onChange={(e) => emit(rows, { ...kinds,
+                    [r]: e.target.value === "any" ? undefined : e.target.value })}>
+            {FN_PORT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <button className="btn btn-sm" disabled={disabled}
+                  title={"Remove this " + word}
+                  onClick={() => emit(rows.filter((_, j) => j !== i), kinds)}>×</button>
+        </div>
+      ))}
+      <button className="btn btn-sm" disabled={disabled}
+              style={{ borderStyle: "dashed" }}
+              onClick={() => emit([...rows, ""], kinds)}>{addLabel}</button>
+    </div>
+  );
+}
+
+/** The settings of a function frame: its name, what it takes (the Start's
+ *  outputs) and what it gives back (the End's inputs). */
+function FunctionFrameInspector({ node, nodes, editable, onChange, onFnData }) {
+  const k = String(node.data?.fn || "").trim().toLowerCase();
+  const same = (n) => String(n.data?.fn || "").trim().toLowerCase() === k;
+  const start = nodes.find((n) => n.type === "function.start" && same(n));
+  const end = nodes.find((n) => n.type === "function.end" && same(n));
+  const calls = nodes.filter((n) => n.type === "function.call" && same(n)).length;
+  return (<>
+    <Field label="Function Name"
+           hint="Renaming updates the Start, the End and every Call of this function.">
+      <input className="input mono" value={node.data?.fn || ""} disabled={!editable}
+             placeholder="e.g. detect_bump"
+             onChange={(e) => onChange({
+               fn: e.target.value.toLowerCase().replace(/[^a-z0-9_]+/g, "_").slice(0, 30),
+             })} />
+    </Field>
+    <Field label="Parameters (Start outputs)"
+           hint="One port per name on the Start and on every Call. With none, the plain run port is the way in.">
+      <FnPortList names={start?.data?.params || []} types={start?.data?.types}
+                  disabled={!editable || !start} word="parameter" addLabel="+ Add parameter"
+                  onChange={(params, types) => onFnData("function.start", { params, types })} />
+    </Field>
+    <Field label="Returns (End inputs)"
+           hint="One port per value the function gives back, on the End and on every Call. With none, the End takes a single result.">
+      <FnPortList names={end?.data?.returns || []} types={end?.data?.types}
+                  disabled={!editable || !end} word="return value" addLabel="+ Add return value"
+                  onChange={(returns, types) => onFnData("function.end", { returns, types })} />
+    </Field>
+    <p className="muted small" style={{ margin: "10px 0 0", paddingTop: 10,
+                                        borderTop: "1px solid rgba(128,128,128,.2)" }}>
+      Used by {calls} Call node{calls === 1 ? "" : "s"}. Renaming updates every caller.
+      Every Call runs its own copy of the body.
+    </p>
+  </>);
 }
 
 /** One live value as a row shows it.
@@ -5342,7 +5919,16 @@ const metricLabel = (m) => METRIC_INFO[m] ? `${m} - ${METRIC_INFO[m]}` : m;
 // the simple pair (0 = normal label, 1 = alert label), or a custom list for
 // MORE than two outcomes (0 idle, 1 warning, 2 violation) driven by whatever
 // number the function, variable or formula sends.
-function VerdictStates({ d, editable, set, onChange, wiredNames = [] }) {
+//: The states a status card starts with when it is NOT fed by an alert: a
+//: plain 0 / 1 reading, named for what it means rather than for compliance.
+//: A card wired from a Trigger or a Condition keeps the simple normal / alert
+//: pair instead -- there the 1 IS an alert.
+export const DEFAULT_STATES = [
+  { value: 0, label: "NOT DETECTED", tone: "empty" },
+  { value: 1, label: "DETECTED", tone: "ok" },
+];
+
+function VerdictStates({ d, editable, set, onChange, wiredNames = [], fromAlert = false }) {
   const states = Array.isArray(d.states) ? d.states : [];
   function patchRow(i, fields) {
     onChange({ states: states.map((s, j) => (j === i ? { ...s, ...fields } : s)) });
@@ -5413,12 +5999,12 @@ function VerdictStates({ d, editable, set, onChange, wiredNames = [] }) {
           colour.
         </p>
         <button className="btn btn-sm" disabled={!editable}
-                onClick={() => onChange({ states: [
+                onClick={() => onChange({ states: fromAlert ? [
                   { value: 0, label: d.ok_label || "COMPLIANT", tone: "ok" },
                   { value: 1, label: "WARNING", tone: "warn" },
                   { value: 2, label: d.alert_label || "VIOLATION", tone: "alert" },
-                ] })}>
-          Use custom states (3 or more)
+                ] : DEFAULT_STATES })}>
+          {fromAlert ? "Use custom states (3 or more)" : "Use named states"}
         </button>
       </>
     );
@@ -5486,10 +6072,15 @@ function VerdictStates({ d, editable, set, onChange, wiredNames = [] }) {
             Rebuild from the {wiredNames.length} wired inputs
           </button>
         )}
-        <button className="btn btn-sm" disabled={!editable}
-                onClick={() => onChange({ states: [] })}>
-          Back to simple normal / alert
-        </button>
+        {/* The normal / alert pair is offered only where the value IS an
+            alert: a card fed by a Trigger or a Condition. Anywhere else a
+            status names states (0 nobody, 1 somebody), not compliance. */}
+        {fromAlert && (
+          <button className="btn btn-sm" disabled={!editable}
+                  onClick={() => onChange({ states: [] })}>
+            Back to simple normal / alert
+          </button>
+        )}
       </div>
     </Field>
   );
@@ -6946,7 +7537,7 @@ function ClassFilterSwitch({ on, disabled, onChange }) {
   );
 }
 
-function Inspector({ node, registry, meta, nodes, edges, editable, errors, warnings, onChange, onOpenBlueprint, onRetype, functions, onDone, customVars = [], onCreateVar, aiStatus = null, waitsForDetection = null }) {
+function Inspector({ node, registry, meta, nodes, edges, editable, errors, warnings, onChange, onOpenBlueprint, onFnData, onRetype, functions, onDone, customVars = [], onCreateVar, aiStatus = null, waitsForDetection = null }) {
   const ask = useAsk();
   const spec = registry[node.type] || {};
   const d = node.data || {};
@@ -7217,6 +7808,11 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
     : [];
   // The value-producing nodes wired into THIS node, in wire order -- what a
   // multi-input verdict weighs, and the names its states default to.
+  // Is this card fed by an ALERT (a Trigger, a Condition)? Then its status is
+  // a normal / alert pair; otherwise it names states (DEFAULT_STATES).
+  const cardFromAlert = (edges || []).some((e) => e.target === node.id
+    && ["output.alert", "output.event", "output.trigger", "logic.when"]
+      .includes((nodes || []).find((n) => n.id === e.source)?.type));
   const verdictWires = (edges || [])
     .filter((e) => e.target === node.id)
     .map((e) => (nodes || []).find((n) => n.id === e.source))
@@ -7606,6 +8202,36 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
       {err && <p className="small c-danger">{err}</p>}
       {!err && warn && <p className="small c-warn">{warn}</p>}
 
+      {node.type === "note.group" && (
+        <>
+          <Field label="Group Name" hint="The tag on the group. Changes nothing that runs.">
+            <input className="input" value={d.name || ""} disabled={!editable}
+                   placeholder="e.g. Gate A"
+                   onChange={(e) => onChange({ name: e.target.value.slice(0, 60) })} />
+          </Field>
+          <Field label="Colour">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+              {["#3B82F6", "#06B6D4", "#10B981", "#84CC16", "#EAB308", "#F97316",
+                "#EF4444", "#EC4899", "#8B5CF6", "#64748B"].map((c) => (
+                <button key={c} type="button" disabled={!editable} title={c}
+                        onClick={() => onChange({ color: c })}
+                        style={{ width: 24, height: 24, borderRadius: 6, background: c,
+                                 cursor: editable ? "pointer" : "default", padding: 0,
+                                 border: (d.color || "#3B82F6").toLowerCase() === c.toLowerCase()
+                                   ? "2px solid var(--text, #111)" : "2px solid transparent" }} />
+              ))}
+              <input type="color" value={d.color || "#3B82F6"} disabled={!editable}
+                     title="Any colour" style={{ width: 32, height: 26, padding: 0,
+                                                 border: 0, background: "none" }}
+                     onChange={(e) => onChange({ color: e.target.value })} />
+            </div>
+          </Field>
+          <p className="muted small">
+            Drop nodes inside the group to tag them; dragging the name tag moves the
+            group and everything in it. Drag the corner to resize.
+          </p>
+        </>
+      )}
       {node.type === "note.comment" && (
         <>
           <Field label="Note">
@@ -7714,7 +8340,7 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
       {node.type === "filter.class" && (() => {
         const why = classFilterNaming(nodes)[node.id];
         return (
-          <Field label="Name"
+          <Field label="Class Filter Name"
                  hint={"How the dashboard's Class filter card lists this filter, "
                        + "so it can be paused there. Needed when the workflow has "
                        + "more than one Class Filter."}>
@@ -8011,7 +8637,7 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
               "Add" is an operation applied to what is wired in, not a
               measurement anybody looks up by name later. */}
           {node.type !== "analytics.formula" && !spec.math && (
-            <Field label="Name"
+            <Field label={`${spec.label || "Node"} Name`}
                    hint="Shown everywhere this node's numbers appear - cards, pickers, tables.">
               <input className="input" value={d.name || ""} disabled={!editable}
                      onChange={set("name")} />
@@ -9049,7 +9675,28 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
           and the Call name the one they mean. The body is whatever is wired
           between the two brackets on the canvas -- reachability, not
           position, so moving a node never changes what a function does. */}
-      {FUNCTION_NODES.includes(node.type) && (<>
+      {node.type === "function.frame" && (
+        <FunctionFrameInspector node={node} nodes={nodes} editable={editable}
+                                onChange={onChange} onFnData={onFnData} />
+      )}
+      {node.type === "function.call" && (
+        <Field label="Function"
+               hint="Which function this Call runs. Every function on this canvas is listed; type to search. Every Call runs its own copy of the function.">
+          <FunctionPicker value={d.fn || ""} disabled={!editable}
+                          fnDefs={Object.fromEntries(nodes
+                            .filter((n) => n.type === "function.start" && String(n.data?.fn || "").trim())
+                            .map((n) => {
+                              const k = String(n.data.fn).trim().toLowerCase();
+                              const end = nodes.find((m) => m.type === "function.end"
+                                && String(m.data?.fn || "").trim().toLowerCase() === k);
+                              return [k, { name: String(n.data.fn).trim(),
+                                           params: n.data?.params || [],
+                                           returns: end?.data?.returns || [] }];
+                            }))}
+                          onPick={(fn) => onChange({ fn })} />
+        </Field>
+      )}
+      {FUNCTION_NODES.includes(node.type) && node.type !== "function.call" && (<>
         <Field label="Function name"
                hint={node.type === "function.start"
                  ? "The Function End with this name closes the bracket. Everything wired between the two is the body."
@@ -9074,12 +9721,6 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
             <ParamList value={d.params || []} disabled={!editable}
                        onChange={(params) => onChange({ params })} />
           </Field>
-        )}
-        {node.type === "function.call" && (
-          <p className="muted small" style={{ margin: "2px 0 0" }}>
-            Every Call runs its OWN copy of the body. A function holding a Data
-            Table, a Card or an Email, called twice, does that thing twice.
-          </p>
         )}
       </>)}
 
@@ -9210,8 +9851,8 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
               function feeding three cards produced three cards with the same
               name. Titling one also lists it in the Dashboard and Analytics
               editors, where it can be dropped onto another page as composed. */}
-          <Field label="Title"
-                 hint="Also lists this card in the editors' “From workflow” palette.">
+          <Field label={`${spec.label || "Card Widget"} Name`}
+                 hint="The title shown on the Dashboard and Analytics. Also lists this card in the editors' “From workflow” palette.">
             <input className="input" value={d.name || ""} disabled={!editable}
                    onChange={set("name")}
                    placeholder={upstreamFn?.data?.name || "Line 2 rejects"} />
@@ -9236,7 +9877,12 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
               and the event store answers a count, a chart or rows. */}
           {node.type === "dashboard.card" && (
             <ShapeField field={Field} value={d.kind || "tile"} disabled={!editable}
-                        onChange={(v) => onChange({ kind: v })}
+                        // Picking "status" on a card NOT fed by an alert
+                        // starts it with named states, not COMPLIANT /
+                        // VIOLATION -- a count of people is not a breach.
+                        onChange={(v) => onChange(v === "verdict" && !cardFromAlert
+                          && !(Array.isArray(d.states) && d.states.length)
+                          ? { kind: v, states: DEFAULT_STATES } : { kind: v })}
                         extra={savedShapeOff ? [[d.kind, `${d.kind} - as saved`]] : []}
                         shapes={CARD_SHAPES.filter(([k]) => (
                           k === "tile"
@@ -9409,7 +10055,8 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
           )}
           {cardKind === "verdict" && !sourceMode && (
             <VerdictStates d={d} editable={editable} set={set}
-                           onChange={onChange} wiredNames={verdictWires} />
+                           onChange={onChange} wiredNames={verdictWires}
+                           fromAlert={cardFromAlert} />
           )}
           {/* THE CARD'S LOOK IS NOT SET HERE. Colour, card colour, animation
               and the text sizes all used to be on this node as well as in the
@@ -9487,8 +10134,8 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
       </>)}
 
       {node.type === "integration.watch" && (<>
-        <Field label="Watch name"
-               hint="What this watch is called in the message and in the log.">
+        <Field label="Recorded Trigger Name"
+               hint="What this Recorded Trigger is called in the message and in the log.">
           <input className="input" value={d.name || ""} disabled={!editable}
                  placeholder="Violations today" onChange={set("name")} />
         </Field>
@@ -9718,7 +10365,7 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
                      why="Wire a Query into this node to give it rows." />
       </>)}
       {node.type === "storage.query" && (<>
-        <Field label="Name"
+        <Field label="Query Name"
                hint="Required. The Dashboard and Analytics editors list what this graph publishes by name - an unnamed query is a card you can only identify by dragging it out.">
           <input className="input" value={d.name || ""} disabled={!editable}
                  onChange={(e) => onChange({ name: e.target.value })}
@@ -10492,8 +11139,8 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
           {node.type === "output.record" && (
             <>
               {/* The page this node's clips go to in Footage. */}
-              <Field label="Page name"
-                     hint="Footage shows this node's clips on a page of this name, apart from every other Record Clip's.">
+              <Field label="Recording Clip Name"
+                     hint="The page name in Footage. Footage shows this node's clips on a page of this name, apart from every other Record Clip's.">
                 <input className="input" value={d.page_name || ""} maxLength={60}
                        placeholder="Crane approach" disabled={!editable}
                        data-page-name onChange={set("page_name")} />
@@ -10563,8 +11210,8 @@ function Inspector({ node, registry, meta, nodes, edges, editable, errors, warni
                     </span>
                   </label>
                   {/* The page this Snapshot's photos go to in Footage. */}
-                  <Field label="Page name"
-                         hint="Footage shows this node's photos on a page of this name, apart from every other Snapshot's.">
+                  <Field label="Image Snapshot Name"
+                         hint="The page name in Footage. Footage shows this node's photos on a page of this name, apart from every other Snapshot's.">
                     <input className="input" value={d.page_name || ""} maxLength={60}
                            placeholder="Handrail violations" disabled={!editable}
                            data-page-name onChange={set("page_name")} />

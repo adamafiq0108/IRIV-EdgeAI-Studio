@@ -20,6 +20,22 @@
 //            finishes "<node> now ..." ("counts them")
 
 export const NODE_GUIDE = {
+  "function.frame": {
+    inputs: false,
+    does: "A box that holds a piece of workflow you want to use again. Start sits on its left edge and End on its right; any node you drop inside the box becomes part of it. Use a Call Function node to run it anywhere, as often as you like.",
+    example: "Build the steps that find a chair once, inside a Function called find_chair, then run it from three different places with a Call Function each.",
+    takes: "nothing, its Start hands its inputs to the nodes inside",
+    gives: "nothing, its End hands the result to each Call Function",
+    then: "holds the steps until a Call Function runs them.",
+  },
+  "note.group": {
+    inputs: false,
+    does: "A coloured box with a name, to tag a part of your workflow. Drop nodes inside it and they move together when you drag the group by its name. It changes nothing in how the workflow runs.",
+    example: "Put everything about the main gate in a blue group called Gate A, so it is easy to find on a busy canvas.",
+    takes: "nothing, nodes are placed inside it",
+    gives: "nothing, it only labels the nodes inside",
+    then: "keeps the nodes inside it together.",
+  },
   "common.inject": {
     inputs: false,
     does: "A button you press to send one value into the workflow by hand. It can also fire by itself when the system starts, or again and again on a timer.",
@@ -315,15 +331,15 @@ export const NODE_GUIDE = {
     then: "answers the command.",
   },
   "integration.photos": {
-    does: "Sends back recent photos when someone taps a Telegram button.",
+    does: "Sends back recent photos in Telegram when someone taps a button.",
     example: "Tap Photos to see the last 10 violation photos.",
     takes: "a Telegram button",
     gives: "recent photos",
     then: "sends the photos.",
   },
   "integration.watch": {
-    does: "Checks a query on a timer and sends a message when its number crosses a limit.",
-    example: "Message me when more than 50 violations happen in one day.",
+    does: "Like a Trigger, but for totals that have been recorded instead of what the camera sees right now. It checks a query on a timer and sends a message once when its number crosses a limit. For live moments, use Trigger.",
+    example: "Message me when more than 50 violations have been recorded today.",
     takes: "a Query",
     gives: "a message when the limit is crossed",
     then: "keeps watching the number.",

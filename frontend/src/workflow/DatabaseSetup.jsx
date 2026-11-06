@@ -2,6 +2,7 @@
 // Database Setup: how to make the table a Data Table node writes to, as a
 // slideshow popup. It opens on the Database page (from the Examples guideline's
 // "Database Setup" button, or the button on the page itself).
+import { Maximize2, Minimize2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { GuideSwitchRow } from "../components/GuideSwitch.jsx";
@@ -63,7 +64,7 @@ export default function DatabaseSetup({ open, onClose }) {
            style={mini ? undefined : { width: "min(720px, 96vw)" }} onMouseDown={(e) => e.stopPropagation()}>
         <div className="ui-dialog-head">
           <h3>Database Setup</h3>
-          <button type="button" className="btn btn-sm ng-minbtn" onClick={() => setMini(!mini)} aria-label={mini ? "Expand" : "Minimize"} title={mini ? "Expand the guide" : "Minimize - keep the guide in the corner"} data-guide-minimize>{mini ? "Expand" : "Minimize"}</button>
+          <button type="button" className="btn btn-sm ng-minbtn ng-minbtn-icon" onClick={() => setMini(!mini)} aria-label={mini ? "Expand the guide" : "Minimize the guide"} title={mini ? "Expand the guide" : "Minimize - keep the guide in the corner"} data-guide-minimize>{mini ? <Maximize2 size={15} aria-hidden="true" /> : <Minimize2 size={15} aria-hidden="true" />}</button>
           <button className="toast-close" onClick={close} aria-label="Close">×</button>
         </div>
         <div className="ui-dialog-body">

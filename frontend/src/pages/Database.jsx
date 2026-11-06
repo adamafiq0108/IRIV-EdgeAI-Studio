@@ -1811,7 +1811,7 @@ function SqlConsole({ tables, available, saved = [], onSavedChange, preset }) {
               {res.bound && (
                 <div className="muted" style={{ marginTop: 6 }}>
                   This statement takes a period, so it ran {res.bound} - the
-                  Period picker above. A Telegram button or a Watch supplies its
+                  Period picker above. A Telegram button or a Recorded Trigger supplies its
                   own window.
                 </div>
               )}

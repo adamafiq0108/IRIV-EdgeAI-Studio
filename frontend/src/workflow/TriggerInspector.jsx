@@ -2,7 +2,7 @@
 // TriggerInspector - the Trigger node's settings (output.trigger), laid out
 // the way Tok Aba's mockup has it (2026-10-14):
 //
-//   1. Trigger identity      the Output name
+//   1. Trigger Name          the name
 //   2. When should it fire?  ONE firing choice
 //   3. What should happen?   opt-in rows - Raise an alert, Highlight objects,
 //                            Highlight the zone, Payload options (with "Keep
@@ -330,8 +330,8 @@ export default function TriggerFields({ d, editable, onChange, node, edges,
 
       {/* 1 ---------------------------------------------------------------- */}
       <section className="trg-sec" aria-labelledby={`trg1-${node.id}`}>
-        <h4 id={`trg1-${node.id}`} className="trg-h">1. Trigger identity</h4>
-        <Field label="Output name">
+        <h4 id={`trg1-${node.id}`} className="trg-h">1. Trigger Name</h4>
+        <Field label="Trigger Name">
           <input className="input" value={d.name || ""} disabled={!editable}
                  placeholder="e.g. Overcrowded, Door left open"
                  onChange={(e) => onChange({ name: e.target.value })} />

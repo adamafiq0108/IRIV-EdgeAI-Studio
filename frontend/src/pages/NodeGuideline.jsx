@@ -21,7 +21,7 @@ import { ErrorNote, SkelGuideline } from "../components/Loading.jsx";
 import { buildNodeTypes } from "../workflow/nodes.jsx";
 import { Diagram } from "../workflow/GuideDiagram.jsx";
 import { CATEGORY_STYLE, STAGES } from "../workflow/registry.js";
-import { FURNITURE, connectionsOf } from "../workflow/guideRules.js";
+import { FURNITURE, LISTED_FURNITURE, connectionsOf } from "../workflow/guideRules.js";
 import { Drawer, PALETTE_ORDER, PaletteItem, SubHead, nodeMatches } from "../workflow/PaletteParts.jsx";
 import { LINKS, NODE_GUIDE, firstSentence, valueWords } from "../workflow/guidelineText.js";
 import { NODE_PROPS } from "../workflow/guidelineProps.js";
@@ -166,7 +166,7 @@ export default function NodeGuideline() {
       style: CATEGORY_STYLE[c],
       items: Object.entries(registry)
         .filter(([type, sp]) => cat(sp) === c && !sp.deprecated && !sp.hidden
-                                && !FURNITURE.includes(type))
+                                && (!FURNITURE.includes(type) || LISTED_FURNITURE.includes(type)))
         .filter(([type, sp]) => !q || nodeMatches(sp, type, q))
         .sort((a, b) => String(a[1].palette?.group || "").localeCompare(
                           String(b[1].palette?.group || ""))
