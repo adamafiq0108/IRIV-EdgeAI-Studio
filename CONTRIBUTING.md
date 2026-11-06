@@ -19,6 +19,7 @@ python -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 cd frontend && npm ci && npm run build && cd ..
 
+export IRIV_HW_CHECK=off          # dev machine: not an IRIV Edge AI board with an AI HAT
 python tools/mock_slave.py --port 5101 --token mock-token &
 python master_server.py --system demo --port 5110 &
 python hub_server.py --port 5100
