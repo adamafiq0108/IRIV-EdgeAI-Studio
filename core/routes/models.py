@@ -1791,6 +1791,14 @@ async def detector_power(request: Request):
     action = str(body.get("action") or "")
     if action not in ("start", "stop"):
         raise HTTPException(status_code=400, detail="action must be start or stop")
+    # RUN ONLY IN IRIV EDGE AI DEVICES, with an AI HAT: detection does not
+    # start anywhere else. Stopping is always allowed.
+    if action == "start":
+        from core.services import device_gate                   # noqa: PLC0415
+        gate = await asyncio.to_thread(device_gate.result)
+        if not gate["ok"]:
+            raise HTTPException(status_code=403,
+                                detail=f"{gate['title']} - {gate['message']}")
     fn = detector_control_service.start if action == "start" else detector_control_service.stop
     from core.services import app_supervisor                   # noqa: PLC0415
     try:

@@ -25,10 +25,20 @@ export default function Login() {
   // wizard instead of the sign-in; a failed ask falls through to the sign-in.
   const [first, setFirst] = useState(null);
   const [justSetUp, setJustSetUp] = useState("");
+  // RUN ONLY IN IRIV DEVICES: set when the box is not an IRIV device (the
+  // server's /api/public says so, or a sign-in is refused for it). The whole
+  // screen becomes that message -- no form to fill in that cannot work.
+  // {title, message} from the server (services/device_gate.py): not an
+  // IRIV Edge AI device, or no AI HAT.
+  const [notIriv, setNotIriv] = useState(null);
 
   useEffect(() => {
     api.get("/api/public").then((d) => {
       setBrand(d.brand || {}); applyBrand(d.brand); setHubUrl(d.hub_url || "");
+      if (d.iriv_device === false) {
+        setNotIriv({ title: d.iriv_device_title || "RUN ONLY IN IRIV EDGE AI DEVICES",
+                     message: d.iriv_device_msg || "" });
+      }
     }).catch(() => {});
     api.get("/api/auth/first-run").then(setFirst)
       .catch(() => setFirst({ pending: false }));
@@ -64,6 +74,12 @@ export default function Login() {
       if (hub) { goWithSession(withSession(hub)); return; }
       navigate(next, { replace: true });
     } catch (err) {
+      if (err?.status === 403 && err?.data?.not_iriv_device) {
+        setNotIriv({ title: err.data.title || "RUN ONLY IN IRIV EDGE AI DEVICES",
+                     message: err.data.error || "" });
+        setBusy(false);
+        return;
+      }
       // Only a 401 is a wrong username or password (UAT-118). A box that did
       // not answer, a rate limit or a server fault each read as a typo before,
       // and the only fix offered for all of them was "type it again".
@@ -81,6 +97,25 @@ export default function Login() {
     }
   }
 
+  if (notIriv) {
+    return (
+      <div className="login-wrap">
+        <ThemeToggle />
+        <div className="login-card" role="alert" data-not-iriv>
+          <img className="login-logo" src={apiUrl("/static/img/cytron.png")} alt="" />
+          <div className="login-title">{brand.product_name || "IRIV EdgeAI Studio"}</div>
+          <div className="login-error" style={{ fontWeight: 700, fontSize: 15,
+                                                letterSpacing: ".02em", textAlign: "center" }}>
+            {notIriv.title}
+          </div>
+          <p className="muted small" style={{ textAlign: "center", margin: "8px 0 0" }}>
+            {notIriv.message} Signing in and starting the system are turned off
+            on this device. Contact Cytron support if you need help.
+          </p>
+        </div>
+      </div>
+    );
+  }
   if (!first) return <div className="login-wrap"><ThemeToggle /></div>;
   if (first.pending) {
     return (

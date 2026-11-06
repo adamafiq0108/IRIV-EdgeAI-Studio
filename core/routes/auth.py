@@ -24,6 +24,7 @@ from core.services import audit as audit_service
 from core.services import auth as auth_service
 from core.services import caps as caps_service
 from core.services import email as email_service
+from core.services import device_gate
 from core.services import monitor_account
 from core.services import hubport
 from core.services import sysconfig as sysconfig_service
@@ -537,7 +538,19 @@ def public_context(request: Request):
             # the rest of this payload -- the two ways back in are already
             # described to an unauthenticated caller on that screen, so which
             # of them this box offers is not a new fact about it.
-            "email": sysconfig_service.email_enabled(cfg)}
+            "email": sysconfig_service.email_enabled(cfg),
+            # May the studio run on this box (services/device_gate.py): an
+            # IRIV Edge AI device with an AI HAT? The login screen says so
+            # BEFORE anyone types a password that is going to be refused
+            # anyway. Open: whether a box will let you in at all is what a
+            # sign-in screen exists to say.
+            **_device_fields()}
+
+
+def _device_fields():
+    r = device_gate.result()
+    return {"iriv_device": r["ok"], "iriv_device_code": r["code"],
+            "iriv_device_title": r["title"], "iriv_device_msg": r["message"]}
 
 
 @router.get("/api/auth/me", name="auth.me")
@@ -562,6 +575,14 @@ def whoami(request: Request):
 
 @router.post("/api/auth/login", name="auth.login_json")
 async def login_json(request: Request):
+    # RUN ONLY IN IRIV EDGE AI DEVICES, with an AI HAT: no sign-in anywhere
+    # else (services/device_gate.py) -- asked first, before a password is
+    # looked at or a throttle bucket is spent.
+    gate = await asyncio.to_thread(device_gate.result)
+    if not gate["ok"]:
+        return JSONResponse({"ok": False, "error": gate["message"], "title": gate["title"],
+                             "not_iriv_device": True, "code": gate["code"],
+                             "reason": gate["why"]}, status_code=403)
     body = await _json(request)
     # Cap the name at what an account may actually be called (32 chars --
     # auth_service.set_admin_username). Uncapped, a caller with no session at

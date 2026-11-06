@@ -121,8 +121,9 @@ Options:
                      latest LTS and Node-RED (if the board has it) to its
                      latest release; Node-RED stays on or off as it was.
   --skip-hardware-check
-                     install even when the Hailo accelerator check below
-                     cannot find one. A bench or dev box only.
+                     install even when the hardware check fails: not an IRIV
+                     Edge AI device (no Compute Module 5, no ATECC), or no AI
+                     HAT. A bench or dev box only.
   --no-service       build and copy, but write no systemd unit and start
                      nothing. Use to rehearse an install, or to check on a
                      running box what WOULD ship, without touching it.
@@ -195,15 +196,48 @@ command -v rsync >/dev/null || die "rsync not found -- apt-get install rsync"
 # 1a. Hardware gate -- Hailo accelerator
 # ---------------------------------------------------------------------------
 #
-# This product needs a Hailo accelerator (8, 8L or 10H) fitted. Checked HERE,
-# before anything is downloaded or written, so a board without one gets a
-# plain answer instead of a half-finished install that then fails somewhere
-# inside the detection loop. Nothing is sent anywhere -- it reads the board in
-# front of it. Any host that has the accelerator qualifies (no particular
-# compute module, no secure element).
+# Two things are checked HERE, before anything is downloaded or written, so a
+# board that does not qualify gets a plain answer instead of a half-finished
+# install. Nothing is sent anywhere -- it reads the board in front of it.
 #
-# --skip-hardware-check installs anyway, for a bench or dev box.
+#   1. RUN ONLY IN IRIV EDGE AI DEVICES: the box must be an IRIV Edge AI device -- a Raspberry
+#      Pi Compute Module 5, OR an ATECC secure element answering on I2C
+#      (core/services/device_gate.py, the same check sign-in and Start use).
+#   2. An AI HAT (a Hailo accelerator: 8, 8L or 10H) must be fitted. To run
+#      this software, you need an AI HAT.
+#
+# --skip-hardware-check installs anyway, for a bench or dev box. The running
+# software still refuses sign-in on a non-IRIV device unless that box also
+# opts out (IRIV_HW_CHECK=off, or [hardware] enforce = false).
 say "Hardware check"
+# The ATECC is asked over /dev/i2c-*, which needs the i2c-dev module; a fresh
+# image may not have loaded it yet. Harmless where it is already loaded.
+modprobe i2c-dev 2>/dev/null || true
+DEV_RC=0
+python3 - "${SRC_DIR}" <<'PY' || DEV_RC=$?
+import os
+import sys
+
+sys.path.insert(0, sys.argv[1])
+# The installer decides on its own flag (--skip-hardware-check), so the
+# runtime opt-out must not short-circuit the answer printed here.
+os.environ.pop("IRIV_HW_CHECK", None)
+from core.services import device_gate                           # noqa: E402
+
+cm5 = device_gate.is_cm5()
+atecc = False if cm5 else device_gate.has_atecc()
+print("   Compute Module 5  : %s" % ("found" if cm5 else "not found"))
+if not cm5:
+    print("   ATECC secure elem.: %s" % ("found" if atecc else "not found"))
+sys.exit(0 if (cm5 or atecc) else 1)
+PY
+if [[ $DEV_RC -ne 0 ]]; then
+    if [[ $SKIP_HARDWARE_CHECK -eq 1 ]]; then
+        warn "RUN ONLY IN IRIV EDGE AI DEVICES: this is not an IRIV Edge AI device -- continuing because --skip-hardware-check was given."
+    else
+        die "RUN ONLY IN IRIV EDGE AI DEVICES: this box has no Compute Module 5 and no ATECC secure element, so it is not an IRIV Edge AI device and the studio will not install here."
+    fi
+fi
 HW_RC=0
 python3 - "${SRC_DIR}" <<'PY' || HW_RC=$?
 import sys
@@ -212,14 +246,14 @@ sys.path.insert(0, sys.argv[1])
 from core.services import builtin_models                        # noqa: E402
 
 hailo = bool(builtin_models.detect_arch_uncached())
-print("   Hailo accelerator : %s" % ("found" if hailo else "NOT FOUND"))
+print("   AI HAT (Hailo)    : %s" % ("found" if hailo else "NOT FOUND"))
 sys.exit(0 if hailo else 1)
 PY
 if [[ $HW_RC -ne 0 ]]; then
     if [[ $SKIP_HARDWARE_CHECK -eq 1 ]]; then
-        warn "hardware check failed -- continuing because --skip-hardware-check was given."
+        warn "AI HAT REQUIRED: no AI HAT found -- continuing because --skip-hardware-check was given."
     else
-        die "no Hailo accelerator was found (see above). Pass --skip-hardware-check to install anyway on a bench/dev box."
+        die "AI HAT REQUIRED: to run this software, you need an AI HAT. No AI HAT (Hailo accelerator) was found on this box. Fit one and run the installer again (or pass --skip-hardware-check on a bench/dev box)."
     fi
 fi
 
@@ -541,6 +575,10 @@ if [[ "$(cd "$SRC_DIR" && pwd -P)" == "$(cd "$REAL_TARGET" 2>/dev/null && pwd -P
     die "the source checkout and the install target are the same directory (${SRC_DIR}) -- install from a checkout that is not the target"
 fi
 
+# docs/ is the project's own documentation (design, planning, test reports):
+# for the repository, never for a customer's box, and nothing at runtime reads
+# it. The release package (make_release.py) has never shipped it either.
+#
 # The owner's tooling, removed OUTRIGHT before the copy -- not left to
 # --exclude and --delete together, which do NOT do this: rsync's delete
 # pass only removes files it considered for transfer, and an --exclude'd
@@ -551,7 +589,7 @@ fi
 # ever installed with this script) is exactly the case where core/dev/ and
 # scripts/dev/ were already sitting in the target, and would have stayed.
 rm -rf "${TARGET}/core/dev" "${TARGET}/scripts/dev" "${TARGET}/frontend/node_modules" \
-       "${TARGET}/config.json"
+       "${TARGET}/config.json" "${TARGET}/docs"
 # Same reasoning for the bench scripts: a box installed by an earlier
 # version of this installer already has them, and an --exclude alone would
 # never take them away.
@@ -585,6 +623,7 @@ rsync -a --delete \
     --exclude '*.pyc' \
     --exclude 'config/*.local.toml' \
     --exclude 'config.json' \
+    --exclude '/docs' \
     "${BENCH_EXCLUDE[@]}" \
     "${SRC_DIR}/" "${TARGET}/"
 
@@ -602,12 +641,12 @@ done
 
 # Belt and braces: assert the exclusions actually held. A typo in an --exclude
 # is silent, and the whole point of this script is what is NOT here.
-for forbidden in core/dev scripts/dev frontend/node_modules config.json \
+for forbidden in core/dev scripts/dev frontend/node_modules config.json docs \
                  "${BENCH_ONLY[@]}"; do
     [[ -e "${TARGET}/${forbidden}" ]] \
         && die "${forbidden} reached the install -- refusing to continue"
 done
-note "core/dev, scripts/dev, frontend source, config.json: absent"
+note "core/dev, scripts/dev, frontend source, config.json, docs: absent"
 note "installer and bench scripts: absent (${#BENCH_ONLY[@]} of them)"
 
 # ---------------------------------------------------------------------------
