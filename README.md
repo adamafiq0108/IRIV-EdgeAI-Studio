@@ -17,7 +17,6 @@ Your camera. Your AI. No code. IRIV EdgeAI Studio lets you build powerful vision
 [How it works](#-how-it-works) •
 [Install](#-install-on-an-iriv-edge-ai-board) •
 [Update](#-update-an-installed-board) •
-[Develop](#-develop-locally) •
 [FAQ](#-faq)
 
 <img src="core/static/img/iriv-edge-ai-cm5.png" alt="The IRIV Edge AI board" width="560">
@@ -279,70 +278,13 @@ cleanly first, so the board powers off quickly.
 
 ---
 
-## 🛠️ Develop locally
-
-<details>
-<summary><b>Run it on your own computer</b></summary>
-
-```bash
-python -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
-cd frontend && npm ci && npm run build && cd ..
-
-export IRIV_HW_CHECK=off          # a dev machine is not an IRIV Edge AI board
-python tools/mock_slave.py --port 5101 --token mock-token &
-python master_server.py --system demo --port 5110 &
-python hub_server.py --port 5100
-```
-
-For frontend work, run `npm run dev` in `frontend/` (port `5173`, proxies the API). The Python
-servers serve the **built** bundle, so a JSX change shows there only after `npm run build`.
-
-> [!NOTE]
-> `IRIV_HW_CHECK=off` is for development machines only. Without it, sign-in and Start detection
-> are refused on hardware that is not an IRIV Edge AI device with an AI HAT.
-</details>
-
-<details>
-<summary><b>Add your own system type</b></summary>
-
-1. **Device side**: write an adapter for your detection app by subclassing
-   `agent.adapters.base.Adapter`, then check it against the contract:
-   ```bash
-   python tools/contract_check.py http://<device-ip>:5101 --token <token>
-   ```
-2. **Dashboard side**: create `systems/<your-system>/system.py` and declare its widgets.
-3. **Config**: add the name to `[systems].enabled` and give it a `[masters.<name>]` URL.
-4. Start its master. Its card, pages and analytics appear automatically.
-
-Full walkthrough: [`docs/setup.md`](docs/setup.md).
-</details>
-
-<details>
-<summary><b>Project layout</b></summary>
-
-```text
-hub_server.py        the hub: sign-in, Systems page, settings (port 5100)
-master_server.py     one per system: workflow, rules, database, dashboards
-core/                shared backend (routes/, services/) and the built web app
-frontend/            the React web app (Vite)
-systems/demo/app/    the detection app every system runs
-agent/               device-side agent and adapter base class
-scripts/install.sh   the installer
-tools/               contract checker, mock device, probes
-docs/                design and developer documentation
-```
-</details>
-
----
-
 ## ❓ FAQ
 
 <details>
 <summary><b>Login says "RUN ONLY IN IRIV EDGE AI DEVICES" or "AI HAT REQUIRED"</b></summary>
 
 The software found no Compute Module 5 and no IRIV secure element, or no AI HAT. Check the AI
-HAT is seated, then restart the board. On a development machine, set `IRIV_HW_CHECK=off`.
+HAT is seated, then restart the board.
 </details>
 
 <details>
