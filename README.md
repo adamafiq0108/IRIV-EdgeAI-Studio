@@ -17,6 +17,7 @@ and show it all on live dashboards, from a drag-and-drop workflow in your browse
 [Features](#-features) •
 [How it works](#-how-it-works) •
 [Install](#-install-on-an-iriv-edge-ai-board) •
+[Update](#-update-an-installed-board) •
 [Develop](#-develop-locally) •
 [FAQ](#-faq)
 
@@ -205,6 +206,34 @@ sudo systemctl restart ssh
 > [!WARNING]
 > Add an SSH key you can log in with **before** turning off password login, or you will be
 > locked out of the board.
+</details>
+
+---
+
+## ⬆️ Update an installed board
+
+The latest update is always on the
+[**`updates`** branch](https://github.com/adamafiq0108/IRIV-EdgeAI-Studio/tree/updates) as one
+`irivai-<version>.tar.gz` file.
+
+1. Download the `.tar.gz` from the
+   [`updates` branch](https://github.com/adamafiq0108/IRIV-EdgeAI-Studio/tree/updates).
+2. On the dashboard (admin account), open the account menu and choose **About**.
+3. In **Software update**, press **Choose update file**, then **Install**.
+
+Settings, recordings, models and systems are kept, and the previous version stays available
+(**Go back to …**) if you need it.
+
+<details>
+<summary><b>For maintainers: publishing an update</b></summary>
+
+Bump [`VERSION`](VERSION) (a board refuses the version it already runs), commit, then:
+
+```bash
+bash scripts/publish_update.sh
+```
+
+It builds the dashboard and the update file and replaces the `updates` branch with it.
 </details>
 
 ---

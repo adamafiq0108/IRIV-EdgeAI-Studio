@@ -565,6 +565,7 @@ BENCH_ONLY=(
     scripts/install_service.sh
     scripts/setup_nvme.sh
     scripts/mediamtx/install.sh
+    scripts/publish_update.sh
 )
 
 # Installing a checkout ONTO ITSELF would now delete this very file while bash
