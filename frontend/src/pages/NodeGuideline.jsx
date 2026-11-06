@@ -14,7 +14,8 @@
 // asks before it draws a wire (registry.edgeAllowed). The words that explain a
 // link are written by hand for the ones worth it (workflow/guidelineText.js);
 // any other gets a sentence made from the two nodes' own descriptions.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Component, useEffect, useMemo, useRef, useState } from "react";
+import { Inspector } from "./Workflow.jsx";
 import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
 import { ErrorNote, SkelGuideline } from "../components/Loading.jsx";
@@ -78,9 +79,122 @@ function Mini({ types, registry, nodeTypes, height = 150 }) {
   );
 }
 
-/** The node's own settings, a page at a time: what each field in its properties panel is for.
- *  A node with more settings than fit on one page has Previous and Next. */
-function PropsGuide({ type, label, pages, page, onPage }) {
+/** What kind of control a setting is, guessed from its own words -- only for the plain list the
+ *  guide falls back to when the real panel cannot be drawn. */
+function controlOf(it) {
+  const t = `${it.name} ${it.text}`.toLowerCase();
+  if (/tick box|a tick\b|switch/.test(t)) return "check";
+  if (/\bchoose|pick|one of|either|list\b|select|\bor\b.*\bor\b/.test(t)) return "select";
+  return "input";
+}
+
+const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+
+/** If the real panel throws for some node, the guide shows the plain list instead of a blank. */
+class PanelBoundary extends Component {
+  constructor(props) { super(props); this.state = { failed: false }; }
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidUpdate(prev) {
+    if (prev.resetKey !== this.props.resetKey && this.state.failed) this.setState({ failed: false });
+  }
+  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+}
+
+/** The REAL properties panel of a node (the Workflow inspector), drawn for a sample node in a
+ *  sandbox: every dropdown opens with its real choices, every tick box ticks, and nothing is
+ *  saved. Clicking a field picks it in the guide; the guide highlights the field it is on. */
+function SandboxPanel({ type, meta, current, items, onPick }) {
+  const registry = meta.registry || {};
+  const [node, setNode] = useState(() => ({
+    id: "guide-sample", type, position: { x: 0, y: 0 },
+    data: { ...(registry[type]?.data || {}), ...sampleData(registry[type]) },
+  }));
+  const box = useRef(null);
+  const labelOf = (field) => {
+    const el = field.querySelector(".wf-field-label");
+    if (!el) return "";
+    // The label's own text, without the (i) hint button inside it.
+    return norm([...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(" "));
+  };
+  const indexOf = (label) => {
+    const l = norm(label);
+    let i = items.findIndex((it) => norm(it.name) === l);
+    if (i < 0) i = items.findIndex((it) => l && (norm(it.name).startsWith(l) || l.startsWith(norm(it.name))));
+    return i;
+  };
+  // Highlight the field the guide is on, and bring it into view inside the panel.
+  useEffect(() => {
+    const root = box.current;
+    if (!root) return;
+    root.querySelectorAll(".ng-hl").forEach((el) => el.classList.remove("ng-hl"));
+    const want = norm(current?.name);
+    const field = [...root.querySelectorAll(".wf-field")].find((f) => {
+      const l = labelOf(f);
+      return l && (l === want || want.startsWith(l) || l.startsWith(want));
+    });
+    if (field) {
+      field.classList.add("ng-hl");
+      const top = field.offsetTop - root.offsetTop - 40;
+      root.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+    // Only when the guide moves to another setting: re-running on every
+    // render scrolled the panel back while somebody typed in it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.name]);
+  return (
+    <div ref={box} className="ng-sandbox" data-ng-sandbox
+         onClickCapture={(e) => {
+           const field = e.target.closest?.(".wf-field");
+           if (!field || !box.current?.contains(field)) return;
+           const i = indexOf(labelOf(field));
+           if (i >= 0) onPick(i);
+         }}>
+      {/* The same wrapper classes as the Workflow page's right column: the
+          field layout (.rail-form) and the inspector's own rules (.wf-inspector)
+          only apply inside them -- without, every field ran onto one line. */}
+      <div className="wf-inspector rail-form ng-sandbox-form">
+      <Inspector node={node} registry={registry} meta={meta} nodes={[node]} edges={[]}
+                 editable errors={{}} warnings={{}} functions={meta.functions || []}
+                 customVars={[]} onCreateVar={() => {}} onRetype={() => {}} onFnData={() => {}}
+                 onOpenBlueprint={() => {}}
+                 onChange={(fields) => setNode((n) => ({ ...n, data: { ...n.data, ...fields } }))} />
+      </div>
+    </div>
+  );
+}
+
+/** The plain list of a node's settings: the fallback when the real panel cannot be drawn. */
+function MockPanel({ label, flat, pages, at, onPage }) {
+  return (
+    <div className="ng-iprops-panel" role="listbox" aria-label={`${label} settings`}>
+      <div className="ng-iprops-title">{label}</div>
+      {flat.map((it, i) => {
+        const first = i === 0 || flat[i - 1].group !== it.group;
+        const kind = controlOf(it);
+        return (
+          <div key={`${it.group}-${it.name}`}>
+            {first && pages.length > 1 && <div className="ng-iprops-group">{it.group}</div>}
+            <button type="button" role="option" aria-selected={i === at}
+                    className={"ng-iprops-row" + (i === at ? " on" : "")} onClick={() => onPage(i)}>
+              <span className="ng-iprops-label">
+                {kind === "check" && <span className="ng-iprops-check" aria-hidden="true" />}
+                {it.name}
+              </span>
+              {kind !== "check" && (
+                <span className={"ng-iprops-field" + (kind === "select" ? " select" : "")} aria-hidden="true" />
+              )}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** The node's own settings, to click through: its real properties panel (try every control --
+ *  nothing is saved) beside what the chosen setting does. */
+function PropsGuide({ type, label, pages, page, onPage, meta }) {
+  const [showShot, setShowShot] = useState(false);
   if (!pages || !pages.length) {
     return (
       <div className="ng-step" data-ng-props>
@@ -89,47 +203,58 @@ function PropsGuide({ type, label, pages, page, onPage }) {
       </div>
     );
   }
-  const at = Math.min(page, pages.length - 1);
-  const pg = pages[at];
+  const flat = pages.flatMap((pg) => pg.items.map((it) => ({ ...it, group: pg.title })));
+  const at = Math.min(Math.max(0, page), flat.length - 1);
+  const cur = flat[at];
+  const sometimes = /only shown|^shown (for|when|after)/i.test(cur.text);
+  const mock = <MockPanel label={label} flat={flat} pages={pages} at={at} onPage={onPage} />;
   return (
-    <div className="ng-step" data-ng-props>
+    <div className="ng-step ng-props-step" data-ng-props>
       <div className="ng-step-head">
         <span className="ng-tag">Properties</span>
-        <strong>{pg.title}</strong>
-        {pages.length > 1 && (
-          <span className="muted small" style={{ marginLeft: "auto" }}>Page {at + 1} of {pages.length}</span>
-        )}
+        <strong>{label}</strong>
+        <span className="muted small" style={{ marginLeft: "auto" }}>Setting {at + 1} of {flat.length}</span>
       </div>
-      <p className="muted small" style={{ margin: "0 0 8px" }}>
-        This is the panel you see when you select {label} on the Workflow canvas. Below it, what each
-        setting does.
+      <p className="muted small" style={{ margin: "0 0 10px" }}>
+        This is the real panel you see when you double-click {label} on the Workflow canvas. Open
+        its lists and try its settings (nothing here is saved), and click a setting to see what it does.
       </p>
-      {shotOf(type) && (
-        <div className="ng-shot" data-ng-shot>
-          <img src={shotOf(type)} alt={`The ${label} properties panel`} loading="lazy" />
+      <div className="ng-iprops" data-ng-iprops>
+        <PanelBoundary key={type} resetKey={type} fallback={mock}>
+          {meta ? <SandboxPanel key={type} type={type} meta={meta} current={cur} items={flat}
+                                onPick={onPage} /> : mock}
+        </PanelBoundary>
+        <div className="ng-iprops-info" aria-live="polite">
+          <div className="ng-iprops-step">{cur.group}</div>
+          <h4 className="ng-iprops-name">{cur.name}</h4>
+          {sometimes && <span className="ng-iprops-badge">Shown only in some cases</span>}
+          <p className="ng-iprops-text">{cur.text}</p>
+          <div className="ng-slider-nav" data-ng-props-nav>
+            <button type="button" className="btn btn-sm" disabled={at === 0}
+                    onClick={() => onPage(at - 1)} data-ng-props-prev>Back</button>
+            <div className="ng-dots" role="tablist" aria-label="Settings">
+              {flat.map((it, i) => (
+                <button key={`${it.group}-${it.name}`} type="button" role="tab" aria-selected={i === at}
+                        aria-label={`Setting ${i + 1}: ${it.name}`} title={it.name}
+                        className={"ng-dot" + (i === at ? " on" : "")} onClick={() => onPage(i)} />
+              ))}
+            </div>
+            <button type="button" className="btn btn-sm btn-accent" disabled={at === flat.length - 1}
+                    onClick={() => onPage(at + 1)} data-ng-props-next>Next</button>
+          </div>
         </div>
-      )}
-      <dl className="ng-props">
-        {pg.items.map((it) => (
-          <div key={it.name} className="ng-prop">
-            <dt>{it.name}</dt>
-            <dd>{it.text}</dd>
-          </div>
-        ))}
-      </dl>
-      {pages.length > 1 && (
-        <div className="ng-slider-nav" data-ng-props-nav>
-          <button type="button" className="btn btn-sm" disabled={at === 0}
-                  onClick={() => onPage(at - 1)} data-ng-props-prev>Previous</button>
-          <div className="ng-dots" role="tablist" aria-label="Property pages">
-            {pages.map((p, i) => (
-              <button key={p.title} type="button" role="tab" aria-selected={i === at}
-                      aria-label={`Page ${i + 1}: ${p.title}`} title={p.title}
-                      className={"ng-dot" + (i === at ? " on" : "")} onClick={() => onPage(i)} />
-            ))}
-          </div>
-          <button type="button" className="btn btn-sm btn-accent" disabled={at === pages.length - 1}
-                  onClick={() => onPage(at + 1)} data-ng-props-next>Next</button>
+      </div>
+      {shotOf(type) && (
+        <div style={{ marginTop: 10 }}>
+          <button type="button" className="btn btn-sm" onClick={() => setShowShot((v) => !v)}
+                  aria-expanded={showShot}>
+            {showShot ? "Hide the screenshot" : "Show a screenshot"}
+          </button>
+          {showShot && (
+            <div className="ng-shot" data-ng-shot style={{ marginTop: 8 }}>
+              <img src={shotOf(type)} alt={`The ${label} properties panel`} loading="lazy" />
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -404,7 +529,7 @@ export default function NodeGuideline() {
           <div className="ng-title">{focus ? "What it connects to, and what that means" : "Properties"}</div>
           {!focus && spec && (
             <>
-              <PropsGuide type={sel} label={spec.label} pages={NODE_PROPS[sel]} page={propPage} onPage={setPropPage} />
+              <PropsGuide type={sel} label={spec.label} pages={NODE_PROPS[sel]} page={propPage} onPage={setPropPage} meta={meta} />
               <p className="muted small" style={{ margin: "10px 0 0" }}>
                 To see how this node connects, pick an input or an output in the middle column.
               </p>

@@ -5983,3 +5983,75 @@ body.wf-fs-on .topbar { visibility: hidden; }
     gap: 14px; align-items: start; }
   .ng-step-grid.with-props .ng-step-props { max-height: 460px; overflow-y: auto; }
 }
+
+/* ---- Nodes Guideline: properties you can click through --------------------- */
+/* Stacked by default; side by side only when the PANEL is wide enough (not
+   the screen -- the guideline's properties column is narrow on any screen). */
+.ng-props-step { container-type: inline-size; }
+.ng-iprops { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@container (min-width: 640px) {
+  .ng-iprops { grid-template-columns: minmax(260px, 1fr) minmax(0, 1fr); align-items: start; }
+}
+/* The real inspector, sandboxed: framed like the Workflow page's right column. */
+.ng-sandbox {
+  border: 1px solid var(--border, rgba(128,128,128,.3)); border-radius: 12px; padding: 12px;
+  background: var(--surface, #fff); max-height: 520px; overflow-y: auto; position: relative;
+}
+.ng-sandbox .wf-field { cursor: pointer; border-radius: 8px; transition: box-shadow .15s, background .15s; }
+.ng-sandbox .wf-field:hover { background: rgba(128,128,128,.06); }
+.ng-sandbox .wf-field.ng-hl {
+  background: color-mix(in srgb, var(--primary, #04bade) 10%, transparent);
+  box-shadow: 0 0 0 2px var(--primary, #04bade), 0 0 0 5px color-mix(in srgb, var(--primary, #04bade) 18%, transparent);
+}
+.ng-iprops-panel {
+  border: 1px solid var(--border, rgba(128,128,128,.3)); border-radius: 12px;
+  padding: 12px; background: var(--surface, #fff); max-height: 480px; overflow-y: auto;
+}
+.ng-iprops-title { font-weight: 700; font-size: 15px; margin: 0 0 8px; }
+.ng-iprops-group {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted-text, #888); margin: 10px 2px 4px;
+}
+.ng-iprops-row {
+  display: block; width: 100%; text-align: left; border: 1px solid transparent;
+  background: transparent; color: inherit; border-radius: 8px; padding: 6px 8px;
+  margin: 2px 0; cursor: pointer; transition: background .15s, border-color .15s, box-shadow .15s;
+}
+.ng-iprops-row:hover { background: rgba(128,128,128,.08); }
+.ng-iprops-row.on {
+  border-color: var(--primary, #04bade);
+  background: color-mix(in srgb, var(--primary, #04bade) 10%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary, #04bade) 18%, transparent);
+}
+.ng-iprops-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+.ng-iprops-check {
+  width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0;
+  border: 1.5px solid var(--muted-text, #999);
+}
+.ng-iprops-field {
+  display: block; height: 26px; margin-top: 4px; border-radius: 6px;
+  border: 1px solid var(--border, rgba(128,128,128,.3)); background: var(--bg, rgba(128,128,128,.04));
+  position: relative;
+}
+.ng-iprops-field.select::after {
+  content: ""; position: absolute; right: 10px; top: 9px; width: 6px; height: 6px;
+  border-right: 2px solid var(--muted-text, #999); border-bottom: 2px solid var(--muted-text, #999);
+  transform: rotate(45deg);
+}
+.ng-iprops-info {
+  border: 1px solid var(--border, rgba(128,128,128,.3)); border-radius: 12px; padding: 14px 16px;
+  background: var(--surface, #fff); display: flex; flex-direction: column; min-height: 200px;
+}
+.ng-iprops-step { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--primary, #04bade); }
+.ng-iprops-name { margin: 4px 0 6px; font-size: 17px; }
+.ng-iprops-badge {
+  align-self: flex-start; font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-bottom: 6px;
+  background: rgba(245,158,11,.14); border: 1px solid rgba(245,158,11,.4); color: var(--warn-text, #b45309);
+}
+.ng-iprops-text { margin: 0 0 12px; line-height: 1.55; flex: 1; }
+
+/* The sandboxed panel: no padding of its own (the frame has it), and no Save --
+   nothing in the guide is saved. */
+.ng-sandbox .ng-sandbox-form { padding: 0; overflow: visible; }
+.ng-sandbox .wf-done { display: none; }

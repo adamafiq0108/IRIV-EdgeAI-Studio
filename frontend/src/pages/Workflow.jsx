@@ -7537,7 +7537,7 @@ function ClassFilterSwitch({ on, disabled, onChange }) {
   );
 }
 
-function Inspector({ node, registry, meta, nodes, edges, editable, errors, warnings, onChange, onOpenBlueprint, onFnData, onRetype, functions, onDone, customVars = [], onCreateVar, aiStatus = null, waitsForDetection = null }) {
+export function Inspector({ node, registry, meta, nodes, edges, editable, errors, warnings, onChange, onOpenBlueprint, onFnData, onRetype, functions, onDone, customVars = [], onCreateVar, aiStatus = null, waitsForDetection = null }) {
   const ask = useAsk();
   const spec = registry[node.type] || {};
   const d = node.data || {};
