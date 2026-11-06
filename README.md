@@ -125,8 +125,7 @@ flowchart LR
 | **Network** | Internet during installation |
 
 > [!IMPORTANT]
-> The software runs **only on IRIV Edge AI devices with an AI HAT**. The installer checks the
-> hardware first and stops on anything else, and so do sign-in and Start detection
+> The software runs **only on IRIV Edge AI devices with an AI HAT**. If not, it shows an error
 > (*RUN ONLY IN IRIV EDGE AI DEVICES* / *AI HAT REQUIRED*).
 
 ---
