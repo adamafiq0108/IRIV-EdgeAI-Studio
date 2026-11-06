@@ -5,8 +5,7 @@
 # IRIV EdgeAI Studio
 
 **Build your own AI camera systems on the IRIV Edge AI board, with no code.**
-Wire a camera to an AI model, count and track what it sees, raise alerts, log to a database
-and show it all on live dashboards, from a drag-and-drop workflow in your browser.
+Your camera. Your AI. No code. IRIV EdgeAI Studio lets you build powerful vision systems with drag-and-drop workflows: detect, count, track, alert and visualise, all live in your browser.
 
 [![Version](https://img.shields.io/badge/version-1.0.0-04bade)](VERSION)
 [![Platform](https://img.shields.io/badge/platform-IRIV%20Edge%20AI%20(CM5)-0396b5)](#-what-you-need)
