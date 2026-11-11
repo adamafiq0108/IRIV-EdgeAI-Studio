@@ -179,18 +179,66 @@ _HIDDEN_KEY = "hidden"
 _FORMAT_KEY_RE = re.compile(r"^[a-z][a-z0-9_]{0,31}$")
 
 
+#: SHARED TEMPLATES: the repo's templates/ folder, one <key>.json per
+#: template, in the same shape as a [formats.<key>] section of formats.toml
+#: (scripts/dev/export_template.py writes one from a board). Dropped in,
+#: committed, and shipped with the next software update, each file is a
+#: built-in template on every board -- no edit of formats.toml needed.
+SHARED_TEMPLATES_DIR = pathlib.Path(__file__).resolve().parents[2] / "templates"
+#: A template is documents; anything bigger is not one.
+MAX_SHARED_TEMPLATE_BYTES = 2 * 1024 * 1024
+
+#: (dir, mtimes) -> parsed entries; re-read only when a file changes.
+_SHARED_CACHE = {"sig": None, "out": {}}
+
+
+def _shared_templates(folder=None):
+    """{key: entry} from the shared templates folder, each through the same
+    validation the template editor uses (format_entry). A file that does not
+    parse or validate is skipped and said once in the log -- one bad file must
+    not take the other templates, or the create-a-system flow, down with it."""
+    folder = pathlib.Path(folder or SHARED_TEMPLATES_DIR)
+    try:
+        files = sorted(p for p in folder.iterdir()
+                       if p.is_file() and p.suffix.lower() == ".json")
+    except OSError:
+        return {}
+    sig = (str(folder), tuple((p.name, p.stat().st_mtime_ns) for p in files))
+    if _SHARED_CACHE["sig"] == sig:
+        return dict(_SHARED_CACHE["out"])
+    out = {}
+    for path in files:
+        try:
+            if path.stat().st_size > MAX_SHARED_TEMPLATE_BYTES:
+                raise ValueError("file is larger than 2 MB")
+            data = json.loads(path.read_text(encoding="utf-8"))
+            key, entry = format_entry(path.stem, data)
+            if data.get("draft"):
+                entry["draft"] = True
+            out[key] = entry
+        except Exception as exc:                             # noqa: BLE001
+            print(f"[TEMPLATES] skipped {path.name}: {exc}", file=sys.stderr)
+    _SHARED_CACHE.update(sig=sig, out=out)
+    return dict(out)
+
+
 def _formats_overlay(config_dir=None):
     """The developer's authored/overridden formats, or {} when unreadable.
+
+    Two sources, merged per key: the shared templates folder (templates/,
+    shipped with the software) first, then formats.toml on top -- a template
+    authored or edited on THIS board keeps winning over the shared copy of
+    the same key.
 
     Unreadable is not fatal on purpose: a bad file must not take the
     create-a-system flow down with it. The shipped formats stand and the
     operator can still build something.
     """
+    out = _shared_templates()
     try:
         raw = config.load(FORMATS_FILE, config_dir) or {}
     except Exception:                                        # noqa: BLE001
-        return {}
-    out = {}
+        return out
     for key, entry in (raw.get("formats") or {}).items():
         if isinstance(entry, dict) and str(key).strip():
             out[str(key).strip()] = entry

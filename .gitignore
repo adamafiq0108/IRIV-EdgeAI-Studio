@@ -66,3 +66,6 @@ docs/team/
 
 # Internal project documents (planning, test reports, reviews) - kept locally, not published.
 docs-internal/
+
+# Bench tool for making OS images - kept local, not published.
+scripts/dev/make_image.sh
