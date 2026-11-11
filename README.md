@@ -241,10 +241,14 @@ It builds the dashboard and the update file and replaces the `updates` branch wi
 
 ## 🖱️ First steps after installing
 
-1. **AI Models**: put a model in use and switch on the classes you need (for example *person*).
-2. **Camera Setup**: choose your camera and draw a zone.
-3. **Workflow**: open the guide (top right) and build the first module, *Basic AI System*.
-4. **Dashboard**: press **Edit dashboard**, drop your cards on, then press **Start**.
+A new board starts with no systems: the home page is empty until you create one.
+
+1. **New system**: on the home page, click a **New system** tile, give it a name, press
+   **Create system**, then open it. The steps below all happen inside that system.
+2. **AI Models**: put a model in use and switch on the classes you need (for example *person*).
+3. **Camera Setup**: choose your camera and draw a zone.
+4. **Workflow**: open the guide (top right) and build the first module, *Basic AI System*.
+5. **Dashboard**: press **Edit dashboard**, drop your cards on, then press **Start**.
 
 Each page opens with its own guide the first time, and the **Guide** button brings it back.
 
@@ -271,6 +275,12 @@ sudo systemctl enable --now irivai-hub irivai-mediamtx
 
 Systems come back up when they are opened from the Systems page (or by themselves, if they are
 set to start automatically).
+
+**Node-RED takes over while the software is off.** The two never run together, because both
+control the board's GPIO, display, buzzer and USER button. Switching IRIV EdgeAI Studio off
+starts Node-RED automatically (at once, and at every boot while the software stays off); open it
+at `http://<board-ip>:1880`. Whenever the software starts again, Node-RED is stopped and its
+start-at-boot is switched off.
 
 **Shut down or reboot the board** from the dashboard's account menu. The software is switched off
 cleanly first, so the board powers off quickly.

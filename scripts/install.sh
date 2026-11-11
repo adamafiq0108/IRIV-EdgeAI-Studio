@@ -1286,6 +1286,41 @@ say "systemd units"
 
 write_unit() { printf '%s\n' "$2" > "$1"; note "wrote $1"; }
 
+# NODE-RED WHEN THE SOFTWARE IS OFF -- ONE OR THE OTHER, NEVER BOTH. Both
+# drive the board's GPIO (relays, PWM, inputs), and the front panel's display,
+# buzzer and USER button; two programs driving the same pins fight. So:
+#   * switching IRIV EdgeAI Studio off (`systemctl disable --now irivai-hub`,
+#     the README's "Off") starts Node-RED at once, and at every boot while the
+#     software stays disabled (irivai-nodered-fallback.service);
+#   * whenever the software STARTS (switched on, at boot, restarted) Node-RED
+#     is stopped and its own start-at-boot is turned off -- whoever turned it on.
+# The test is the hub unit's enablement: a restart, a crash or an update of
+# an enabled hub is still "the software is on".
+install -d -m 755 /usr/local/lib/irivai
+cat > /usr/local/lib/irivai/nodered-fallback.sh <<'SH'
+#!/bin/sh
+# Called by irivai-hub.service (hub-starting / hub-stopped) and at boot by
+# irivai-nodered-fallback.service (boot). See scripts/install.sh.
+systemctl cat nodered.service >/dev/null 2>&1 || exit 0     # no Node-RED here
+case "$1" in
+    boot|hub-stopped)
+        systemctl is-enabled --quiet irivai-hub && exit 0     # the software is on
+        systemctl is-active --quiet nodered && exit 0         # already running
+        systemctl start nodered \
+            && echo "IRIV EdgeAI Studio is off - Node-RED started"
+        ;;
+    hub-starting)
+        if systemctl is-active --quiet nodered || systemctl is-enabled --quiet nodered; then
+            systemctl disable --now nodered >/dev/null 2>&1
+            echo "IRIV EdgeAI Studio is starting - Node-RED stopped (they share the GPIO)"
+        fi
+        ;;
+esac
+exit 0
+SH
+chmod 755 /usr/local/lib/irivai/nodered-fallback.sh
+chown root:root /usr/local/lib/irivai/nodered-fallback.sh
+
 write_unit /etc/systemd/system/irivai-hub.service "[Unit]
 Description=IRIV EdgeAI Studio hub
 After=network-online.target
@@ -1301,6 +1336,10 @@ WorkingDirectory=${TARGET}
 # root step beyond the restart rule below. A --port on this line would win
 # over the setting and lock it; the page says so if it finds one.
 ExecStart=${PY} hub_server.py
+# Node-RED while the software is off (nodered-fallback.sh, above). '+' = as
+# root: starting and stopping another unit is not the service account's job.
+ExecStartPre=+/usr/local/lib/irivai/nodered-fallback.sh hub-starting
+ExecStopPost=+/usr/local/lib/irivai/nodered-fallback.sh hub-stopped
 # Restarting the dashboard must never take a live detection down with it.
 # Without this, systemd's default (control-group) kill takes every master
 # and app the hub ever spawned down along with it -- meaning a hub crash,
@@ -1750,7 +1789,21 @@ RestartSec=5
 WantedBy=multi-user.target"
 fi
 
+# At boot, while the software is disabled: start Node-RED (nodered-fallback.sh).
+write_unit /etc/systemd/system/irivai-nodered-fallback.service "[Unit]
+Description=Start Node-RED while IRIV EdgeAI Studio is switched off
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/irivai/nodered-fallback.sh boot
+
+[Install]
+WantedBy=multi-user.target"
+
 systemctl daemon-reload
+systemctl enable irivai-nodered-fallback.service >/dev/null
 systemctl enable irivai-hub.service >/dev/null
 # restart, not `enable --now`: --now only starts a STOPPED unit, so a re-install
 # with a different port would leave the old one serving where nobody probes.
